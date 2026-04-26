@@ -6,6 +6,7 @@ import { VoiceController } from '../../utils/voice/voice-controller.js';
 import { Logger } from '../../utils/core/logger.js';
 import { ThemeManager } from '../../utils/core/theme-manager.js';
 import { eventCleanup } from '../../utils/core/event-cleanup.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 import {
   displayContent,
@@ -35,6 +36,9 @@ import {
 document.addEventListener('DOMContentLoaded', async () => {
   // Populate DOM element references
   initElements();
+
+  // Initialize i18n (no language selector on this page, just apply translations)
+  await I18n.init();
 
   try {
     // Initialize voice controller

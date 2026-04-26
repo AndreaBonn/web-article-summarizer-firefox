@@ -237,12 +237,20 @@
             <span id="modalStats"></span>
           </div>
           <div class="modal-tabs">
-            <button class="modal-tab active" data-tab="summary">Riassunto</button>
-            <button class="modal-tab" data-tab="keypoints">Punti Chiave</button>
-            <button class="modal-tab" data-tab="translation">Traduzione</button>
-            <button class="modal-tab" data-tab="qa">Q&A</button>
-            <button class="modal-tab" data-tab="citations">Citazioni</button>
-            <button class="modal-tab" data-tab="notes">Note</button>
+            <button class="modal-tab active" data-tab="summary" data-i18n="tab.summary">
+              Riassunto
+            </button>
+            <button class="modal-tab" data-tab="keypoints" data-i18n="tab.keypoints">
+              Punti Chiave
+            </button>
+            <button class="modal-tab" data-tab="translation" data-i18n="tab.translation">
+              Traduzione
+            </button>
+            <button class="modal-tab" data-tab="qa" data-i18n="tab.qa">Q&A</button>
+            <button class="modal-tab" data-tab="citations" data-i18n="tab.citations">
+              Citazioni
+            </button>
+            <button class="modal-tab" data-tab="notes" data-i18n="tab.notes">Note</button>
           </div>
           <div class="modal-tab-content">
             <div id="modalSummary" class="modal-pane active"></div>
@@ -257,11 +265,13 @@
           <button id="readingModeBtn" class="btn btn-primary" data-i18n="action.readingMode">
             Modalità Lettura
           </button>
-          <button id="exportPdfBtn" class="btn btn-primary">PDF</button>
-          <button id="exportMdBtn" class="btn btn-primary">MD</button>
-          <button id="sendEmailBtn" class="btn btn-primary">Email</button>
-          <button id="copyModalBtn" class="btn btn-secondary">Copia</button>
-          <button id="deleteModalBtn" class="btn btn-danger">Elimina</button>
+          <button id="exportPdfBtn" class="btn btn-primary" data-i18n="action.pdf">PDF</button>
+          <button id="exportMdBtn" class="btn btn-primary" data-i18n="action.md">MD</button>
+          <button id="sendEmailBtn" class="btn btn-primary" data-i18n="action.email">Email</button>
+          <button id="copyModalBtn" class="btn btn-secondary" data-i18n="action.copy">Copia</button>
+          <button id="deleteModalBtn" class="btn btn-danger" data-i18n="action.delete">
+            Elimina
+          </button>
         </div>
       </div>
     </div>
@@ -285,43 +295,52 @@
       <div class="custom-modal-overlay"></div>
       <div class="custom-modal-content email-modal-content">
         <div class="custom-modal-icon"></div>
-        <h3 class="custom-modal-title">Invia Tramite Email</h3>
+        <h3 class="custom-modal-title" data-i18n="email.title">Invia Tramite Email</h3>
 
         <div class="email-input-section">
-          <label for="emailInput">Email destinatario:</label>
-          <input type="email" id="emailInput" placeholder="esempio@email.com" />
+          <label for="emailInput" data-i18n="email.recipient">Email destinatario:</label>
+          <input
+            type="email"
+            id="emailInput"
+            data-i18n="email.placeholder"
+            placeholder="esempio@email.com"
+          />
         </div>
 
         <div id="savedEmailsSection" class="saved-emails-section hidden">
-          <label>Email salvate:</label>
+          <label data-i18n="email.saved">Email salvate:</label>
           <div id="savedEmailsList" class="saved-emails-list"></div>
         </div>
 
         <div class="export-options-section">
-          <label>Contenuto da includere:</label>
+          <label data-i18n="email.includeContent">Contenuto da includere:</label>
           <div class="export-options-list">
             <label class="export-option">
               <input type="checkbox" id="emailIncludeSummary" checked />
-              <span>Riassunto</span>
+              <span data-i18n="email.includeSummary">Riassunto</span>
             </label>
             <label class="export-option">
               <input type="checkbox" id="emailIncludeKeypoints" checked />
-              <span>Punti Chiave</span>
+              <span data-i18n="email.includeKeypoints">Punti Chiave</span>
             </label>
             <label class="export-option" id="emailTranslationOption">
               <input type="checkbox" id="emailIncludeTranslation" checked />
-              <span>Traduzione</span>
+              <span data-i18n="email.includeTranslation">Traduzione</span>
             </label>
             <label class="export-option" id="emailQAOption">
               <input type="checkbox" id="emailIncludeQA" checked />
-              <span>Domande e Risposte</span>
+              <span data-i18n="export.includeQA">Domande e Risposte</span>
             </label>
           </div>
         </div>
 
         <div class="custom-modal-buttons">
-          <button id="emailCancelBtn" class="modal-btn modal-btn-cancel">Annulla</button>
-          <button id="emailSendBtn" class="modal-btn modal-btn-confirm">Invia</button>
+          <button id="emailCancelBtn" class="modal-btn modal-btn-cancel" data-i18n="action.cancel">
+            Annulla
+          </button>
+          <button id="emailSendBtn" class="modal-btn modal-btn-confirm" data-i18n="email.send">
+            Invia
+          </button>
         </div>
       </div>
     </div>
@@ -331,37 +350,45 @@
       <div class="custom-modal-overlay"></div>
       <div class="custom-modal-content export-modal-content">
         <div class="custom-modal-icon"></div>
-        <h3 class="custom-modal-title">Esporta PDF</h3>
+        <h3 class="custom-modal-title" data-i18n="export.pdf">Esporta PDF</h3>
 
         <div class="export-options-section">
-          <label>Seleziona contenuto da esportare:</label>
+          <label data-i18n="export.selectContent">Seleziona contenuto da esportare:</label>
           <div class="export-options-list">
             <label class="export-option">
               <input type="checkbox" id="pdfIncludeSummary" checked />
-              <span>Riassunto</span>
+              <span data-i18n="export.includeSummary">Riassunto</span>
             </label>
             <label class="export-option">
               <input type="checkbox" id="pdfIncludeKeypoints" checked />
-              <span>Punti Chiave</span>
+              <span data-i18n="export.includeKeypoints">Punti Chiave</span>
             </label>
             <label class="export-option" id="pdfTranslationOption">
               <input type="checkbox" id="pdfIncludeTranslation" checked />
-              <span>Traduzione</span>
+              <span data-i18n="export.includeTranslation">Traduzione</span>
             </label>
             <label class="export-option" id="pdfQAOption">
               <input type="checkbox" id="pdfIncludeQA" checked />
-              <span>Domande e Risposte</span>
+              <span data-i18n="export.includeQA">Domande e Risposte</span>
             </label>
             <label class="export-option" id="pdfCitationsOption">
               <input type="checkbox" id="pdfIncludeCitations" checked />
-              <span>Citazioni</span>
+              <span data-i18n="export.includeCitations">Citazioni</span>
             </label>
           </div>
         </div>
 
         <div class="custom-modal-buttons">
-          <button id="exportCancelBtn" class="modal-btn modal-btn-cancel">Annulla</button>
-          <button id="exportConfirmBtn" class="modal-btn modal-btn-confirm">Esporta</button>
+          <button id="exportCancelBtn" class="modal-btn modal-btn-cancel" data-i18n="action.cancel">
+            Annulla
+          </button>
+          <button
+            id="exportConfirmBtn"
+            class="modal-btn modal-btn-confirm"
+            data-i18n="export.button"
+          >
+            Esporta
+          </button>
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Modalità Lettura - AI Article Summarizer</title>
+    <title data-i18n="reading.pageTitle">Modalità Lettura - AI Article Summarizer</title>
     <link rel="stylesheet" href="../../shared/styles/base.css" />
     <link rel="stylesheet" href="reading-mode.css" />
   </head>
@@ -11,18 +11,62 @@
     <!-- Header -->
     <header class="reading-header">
       <div class="header-left">
-        <button id="backBtn" class="icon-btn" title="Torna al popup">← Indietro</button>
-        <h1>Modalità Lettura</h1>
+        <button
+          id="backBtn"
+          class="icon-btn"
+          data-i18n="reading.back"
+          data-i18n-title="reading.backTitle"
+          title="Torna al popup"
+        >
+          ← Indietro
+        </button>
+        <h1 data-i18n="reading.title">Modalità Lettura</h1>
       </div>
       <div class="header-right">
         <div class="font-size-controls">
-          <button id="fontDecreaseBtn" class="icon-btn" title="Riduci dimensione testo">A-</button>
+          <button
+            id="fontDecreaseBtn"
+            class="icon-btn"
+            data-i18n-title="reading.fontDecrease"
+            title="Riduci dimensione testo"
+          >
+            A-
+          </button>
           <span id="fontSizeLabel" class="font-size-label">M</span>
-          <button id="fontIncreaseBtn" class="icon-btn" title="Aumenta dimensione testo">A+</button>
+          <button
+            id="fontIncreaseBtn"
+            class="icon-btn"
+            data-i18n-title="reading.fontIncrease"
+            title="Aumenta dimensione testo"
+          >
+            A+
+          </button>
         </div>
-        <button id="themeToggleBtn" class="icon-btn" title="Cambia tema">◑</button>
-        <button id="copyBtn" class="icon-btn" title="Copia tutto">Copia</button>
-        <button id="exportBtn" class="icon-btn" title="Esporta PDF">PDF</button>
+        <button
+          id="themeToggleBtn"
+          class="icon-btn"
+          data-i18n-title="theme.toggle"
+          title="Cambia tema"
+        >
+          ◑
+        </button>
+        <button
+          id="copyBtn"
+          class="icon-btn"
+          data-i18n="reading.copyBtn"
+          data-i18n-title="reading.copyTitle"
+          title="Copia tutto"
+        >
+          Copia
+        </button>
+        <button
+          id="exportBtn"
+          class="icon-btn"
+          data-i18n-title="reading.exportPdfTitle"
+          title="Esporta PDF"
+        >
+          PDF
+        </button>
       </div>
     </header>
 
@@ -31,17 +75,31 @@
       <!-- Left Panel: Original Article -->
       <div class="panel article-panel">
         <div class="panel-header">
-          <h2>Articolo Originale</h2>
+          <h2 data-i18n="reading.originalArticle">Articolo Originale</h2>
           <div class="article-meta">
             <span id="articleWordCount">0 parole</span>
             <span>•</span>
             <span id="articleReadTime">0 min</span>
           </div>
           <div class="view-toggle">
-            <button id="viewIframeBtn" class="view-btn active" title="Vista pagina originale">
+            <button
+              id="viewIframeBtn"
+              class="view-btn active"
+              data-i18n="reading.viewOriginal"
+              data-i18n-title="reading.viewOriginalTitle"
+              title="Vista pagina originale"
+            >
               Originale
             </button>
-            <button id="viewTextBtn" class="view-btn" title="Vista testo pulito">Testo</button>
+            <button
+              id="viewTextBtn"
+              class="view-btn"
+              data-i18n="reading.viewText"
+              data-i18n-title="reading.viewTextTitle"
+              title="Vista testo pulito"
+            >
+              Testo
+            </button>
           </div>
         </div>
         <div class="panel-content" id="articleContent">
@@ -58,7 +116,7 @@
           <div id="articleText" class="article-text hidden">
             <div class="loading-state">
               <div class="spinner"></div>
-              <p>Caricamento articolo...</p>
+              <p data-i18n="reading.loadingArticle">Caricamento articolo...</p>
             </div>
           </div>
         </div>
@@ -70,7 +128,7 @@
       <!-- Right Panel: Summary -->
       <div class="panel summary-panel">
         <div class="panel-header">
-          <h2>Analisi Articolo</h2>
+          <h2 data-i18n="reading.articleAnalysis">Analisi Articolo</h2>
           <div class="summary-meta">
             <span id="summaryProvider">-</span>
             <span>•</span>
@@ -78,19 +136,51 @@
           </div>
           <!-- Voice Controls -->
           <div class="voice-controls">
-            <button id="ttsPlayBtn" class="voice-btn" title="Leggi ad alta voce">Play</button>
-            <button id="ttsPauseBtn" class="voice-btn hidden" title="Pausa">Pausa</button>
-            <button id="ttsStopBtn" class="voice-btn hidden" title="Stop">Stop</button>
+            <button
+              id="ttsPlayBtn"
+              class="voice-btn"
+              data-i18n="reading.playText"
+              data-i18n-title="reading.ttsPlayTitle"
+              title="Leggi ad alta voce"
+            >
+              Play
+            </button>
+            <button
+              id="ttsPauseBtn"
+              class="voice-btn hidden"
+              data-i18n="reading.pauseText"
+              data-i18n-title="reading.ttsPauseTitle"
+              title="Pausa"
+            >
+              Pausa
+            </button>
+            <button
+              id="ttsStopBtn"
+              class="voice-btn hidden"
+              data-i18n="reading.stopText"
+              data-i18n-title="reading.ttsStopTitle"
+              title="Stop"
+            >
+              Stop
+            </button>
           </div>
         </div>
 
         <!-- Tabs for different views -->
         <div class="summary-tabs">
-          <button class="summary-tab active" data-tab="summary">Riassunto</button>
-          <button class="summary-tab" data-tab="keypoints">Punti Chiave</button>
-          <button class="summary-tab" data-tab="translation">Traduzione</button>
-          <button class="summary-tab" data-tab="citations">Citazioni</button>
-          <button class="summary-tab" data-tab="qa">Q&A</button>
+          <button class="summary-tab active" data-tab="summary" data-i18n="tab.summary">
+            Riassunto
+          </button>
+          <button class="summary-tab" data-tab="keypoints" data-i18n="tab.keypoints">
+            Punti Chiave
+          </button>
+          <button class="summary-tab" data-tab="translation" data-i18n="tab.translation">
+            Traduzione
+          </button>
+          <button class="summary-tab" data-tab="citations" data-i18n="tab.citations">
+            Citazioni
+          </button>
+          <button class="summary-tab" data-tab="qa" data-i18n="tab.qa">Q&A</button>
         </div>
 
         <div class="panel-content" id="summaryContent">
@@ -98,7 +188,7 @@
           <div id="summaryTabContent" class="summary-tab-content active">
             <div class="loading-state">
               <div class="spinner"></div>
-              <p>Caricamento riassunto...</p>
+              <p data-i18n="reading.loadingSummary">Caricamento riassunto...</p>
             </div>
           </div>
 
@@ -106,23 +196,27 @@
           <div id="keypointsTabContent" class="summary-tab-content">
             <div class="loading-state">
               <div class="spinner"></div>
-              <p>Caricamento punti chiave...</p>
+              <p data-i18n="reading.loadingKeypoints">Caricamento punti chiave...</p>
             </div>
           </div>
 
           <!-- Translation Tab -->
           <div id="translationTabContent" class="summary-tab-content">
             <div class="empty-state">
-              <p>Nessuna traduzione disponibile</p>
-              <button id="translateBtn" class="btn btn-primary">Traduci Articolo</button>
+              <p data-i18n="reading.noTranslation">Nessuna traduzione disponibile</p>
+              <button id="translateBtn" class="btn btn-primary" data-i18n="translation.button">
+                Traduci Articolo
+              </button>
             </div>
           </div>
 
           <!-- Citations Tab -->
           <div id="citationsTabContent" class="summary-tab-content">
             <div class="empty-state">
-              <p>Nessuna citazione disponibile</p>
-              <button id="extractCitationsBtn" class="btn btn-primary">Estrai Citazioni</button>
+              <p data-i18n="reading.noCitations">Nessuna citazione disponibile</p>
+              <button id="extractCitationsBtn" class="btn btn-primary" data-i18n="citations.button">
+                Estrai Citazioni
+              </button>
             </div>
           </div>
 
@@ -130,9 +224,22 @@
           <div id="qaTabContent" class="summary-tab-content">
             <div class="qa-section">
               <div class="qa-input-group">
-                <input type="text" id="qaInput" placeholder="Fai una domanda sull'articolo..." />
-                <button id="qaVoiceBtn" class="btn btn-voice" title="Domanda vocale">Voce</button>
-                <button id="qaAskBtn" class="btn btn-primary">Chiedi</button>
+                <input
+                  type="text"
+                  id="qaInput"
+                  data-i18n="qa.placeholder"
+                  placeholder="Fai una domanda sull'articolo..."
+                />
+                <button
+                  id="qaVoiceBtn"
+                  class="btn btn-voice"
+                  data-i18n="reading.voiceText"
+                  data-i18n-title="reading.voiceTitle"
+                  title="Domanda vocale"
+                >
+                  Voce
+                </button>
+                <button id="qaAskBtn" class="btn btn-primary" data-i18n="qa.ask">Chiedi</button>
               </div>
               <div id="qaHistory" class="qa-history"></div>
             </div>
@@ -146,11 +253,23 @@
       <div class="custom-modal-overlay"></div>
       <div class="custom-modal-content">
         <div class="custom-modal-icon" id="modalIcon"></div>
-        <h3 id="modalTitle" class="custom-modal-title">Titolo</h3>
-        <p id="modalMessage" class="custom-modal-message">Messaggio</p>
+        <h3 id="modalTitle" class="custom-modal-title"></h3>
+        <p id="modalMessage" class="custom-modal-message"></p>
         <div class="custom-modal-buttons">
-          <button id="modalCancelBtn" class="modal-btn modal-btn-cancel hidden">Annulla</button>
-          <button id="modalConfirmBtn" class="modal-btn modal-btn-confirm">OK</button>
+          <button
+            id="modalCancelBtn"
+            class="modal-btn modal-btn-cancel hidden"
+            data-i18n="action.cancel"
+          >
+            Annulla
+          </button>
+          <button
+            id="modalConfirmBtn"
+            class="modal-btn modal-btn-confirm"
+            data-i18n="action.confirm"
+          >
+            OK
+          </button>
         </div>
       </div>
     </div>

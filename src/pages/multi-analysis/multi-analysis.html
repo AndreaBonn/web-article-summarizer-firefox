@@ -78,7 +78,9 @@
               <span class="option-icon"></span>
               <div class="option-text">
                 <strong data-i18n="multi.globalSummary">Riassunto Globale</strong>
-                <small>Sintesi unificata di tutti gli articoli selezionati</small>
+                <small data-i18n="multi.globalSummaryDesc"
+                  >Sintesi unificata di tutti gli articoli selezionati</small
+                >
               </div>
             </div>
           </label>
@@ -89,7 +91,9 @@
               <span class="option-icon"></span>
               <div class="option-text">
                 <strong data-i18n="multi.comparison">Confronto Idee</strong>
-                <small>Analisi di idee comuni, conflitti e prospettive diverse</small>
+                <small data-i18n="multi.comparisonDesc"
+                  >Analisi di idee comuni, conflitti e prospettive diverse</small
+                >
               </div>
             </div>
           </label>
@@ -100,7 +104,9 @@
               <span class="option-icon"></span>
               <div class="option-text">
                 <strong data-i18n="multi.qa">Q&A Multi-Articolo</strong>
-                <small>Sistema di domande e risposte basato su tutti gli articoli</small>
+                <small data-i18n="multi.qaDesc"
+                  >Sistema di domande e risposte basato su tutti gli articoli</small
+                >
               </div>
             </div>
           </label>
@@ -121,14 +127,18 @@
     <div id="analysisModal" class="modal hidden">
       <div class="modal-content large">
         <div class="modal-header">
-          <h2 id="modalTitle">Analisi Multi Articolo</h2>
+          <h2 id="modalTitle" data-i18n="multi.title">Analisi Multi Articolo</h2>
           <button id="closeModal" class="btn-close">×</button>
         </div>
         <div class="modal-body">
           <div class="modal-tabs">
-            <button class="modal-tab active" data-tab="summary">Riassunto</button>
-            <button class="modal-tab" data-tab="comparison">Confronto</button>
-            <button class="modal-tab" data-tab="qa">Q&A</button>
+            <button class="modal-tab active" data-tab="summary" data-i18n="tab.summary">
+              Riassunto
+            </button>
+            <button class="modal-tab" data-tab="comparison" data-i18n="multi.comparison">
+              Confronto
+            </button>
+            <button class="modal-tab" data-tab="qa" data-i18n="tab.qa">Q&A</button>
           </div>
           <div class="modal-tab-content">
             <div id="tabSummary" class="modal-pane active"></div>
@@ -137,10 +147,16 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button id="exportPdfBtn" class="btn btn-primary">Esporta PDF</button>
-          <button id="exportMdBtn" class="btn btn-primary">Esporta MD</button>
-          <button id="sendEmailBtn" class="btn btn-primary">Invia Email</button>
-          <button id="copyBtn" class="btn btn-secondary">Copia</button>
+          <button id="exportPdfBtn" class="btn btn-primary" data-i18n="multi.exportPdf">
+            Esporta PDF
+          </button>
+          <button id="exportMdBtn" class="btn btn-primary" data-i18n="multi.exportMd">
+            Esporta MD
+          </button>
+          <button id="sendEmailBtn" class="btn btn-primary" data-i18n="multi.sendEmail">
+            Invia Email
+          </button>
+          <button id="copyBtn" class="btn btn-secondary" data-i18n="action.copy">Copia</button>
         </div>
       </div>
     </div>
@@ -150,8 +166,10 @@
       <div class="custom-modal-overlay"></div>
       <div class="custom-modal-content">
         <div class="custom-modal-icon"></div>
-        <h3 class="custom-modal-title">Analisi in Corso</h3>
-        <p id="progressMessage" class="custom-modal-message">Preparazione analisi...</p>
+        <h3 class="custom-modal-title" data-i18n="multi.analysisInProgress">Analisi in Corso</h3>
+        <p id="progressMessage" class="custom-modal-message" data-i18n="multi.preparingAnalysis">
+          Preparazione analisi...
+        </p>
         <div class="progress-bar">
           <div id="progressFill" class="progress-fill"></div>
         </div>
@@ -178,18 +196,32 @@
       <div class="custom-modal-overlay"></div>
       <div class="custom-modal-content">
         <div class="custom-modal-icon"></div>
-        <h3 class="custom-modal-title">Articoli Non Correlati</h3>
-        <p class="custom-modal-message">
+        <h3 class="custom-modal-title" data-i18n="multi.unrelatedTitle">Articoli Non Correlati</h3>
+        <p class="custom-modal-message" data-i18n="multi.unrelatedMessage">
           Gli articoli selezionati sembrano trattare argomenti completamente scollegati.
         </p>
         <div id="unrelatedReason" class="unrelated-reason"></div>
-        <p class="custom-modal-message modal-message-spaced">Come vuoi procedere?</p>
+        <p class="custom-modal-message modal-message-spaced" data-i18n="multi.unrelatedQuestion">
+          Come vuoi procedere?
+        </p>
         <div class="custom-modal-buttons">
-          <button id="unrelatedQAOnly" class="modal-btn modal-btn-secondary">Solo Q&A</button>
-          <button id="unrelatedFullAnalysis" class="modal-btn modal-btn-confirm">
+          <button
+            id="unrelatedQAOnly"
+            class="modal-btn modal-btn-secondary"
+            data-i18n="multi.qaOnly"
+          >
+            Solo Q&A
+          </button>
+          <button
+            id="unrelatedFullAnalysis"
+            class="modal-btn modal-btn-confirm"
+            data-i18n="multi.fullAnalysis"
+          >
             Analisi Completa
           </button>
-          <button id="unrelatedCancel" class="modal-btn modal-btn-cancel">Annulla</button>
+          <button id="unrelatedCancel" class="modal-btn modal-btn-cancel" data-i18n="action.cancel">
+            Annulla
+          </button>
         </div>
       </div>
     </div>
@@ -199,29 +231,37 @@
       <div class="custom-modal-overlay"></div>
       <div class="custom-modal-content export-modal-content">
         <div class="custom-modal-icon"></div>
-        <h3 id="exportModalTitle" class="custom-modal-title">Esporta</h3>
+        <h3 id="exportModalTitle" class="custom-modal-title"></h3>
 
         <div class="export-options-section">
-          <label>Seleziona contenuto da esportare:</label>
+          <label data-i18n="multi.exportSelectContent">Seleziona contenuto da esportare:</label>
           <div class="export-options-list">
             <label class="export-option" id="exportSummaryOption">
               <input type="checkbox" id="exportIncludeSummary" checked />
-              <span>Riassunto Globale</span>
+              <span data-i18n="multi.exportGlobalSummary">Riassunto Globale</span>
             </label>
             <label class="export-option" id="exportComparisonOption">
               <input type="checkbox" id="exportIncludeComparison" checked />
-              <span>Confronto Idee</span>
+              <span data-i18n="multi.exportComparison">Confronto Idee</span>
             </label>
             <label class="export-option" id="exportQAOption">
               <input type="checkbox" id="exportIncludeQA" checked />
-              <span>Domande e Risposte</span>
+              <span data-i18n="multi.exportQA">Domande e Risposte</span>
             </label>
           </div>
         </div>
 
         <div class="custom-modal-buttons">
-          <button id="exportCancelBtn" class="modal-btn modal-btn-cancel">Annulla</button>
-          <button id="exportConfirmBtn" class="modal-btn modal-btn-confirm">Esporta</button>
+          <button id="exportCancelBtn" class="modal-btn modal-btn-cancel" data-i18n="action.cancel">
+            Annulla
+          </button>
+          <button
+            id="exportConfirmBtn"
+            class="modal-btn modal-btn-confirm"
+            data-i18n="export.button"
+          >
+            Esporta
+          </button>
         </div>
       </div>
     </div>

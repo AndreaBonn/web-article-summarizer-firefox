@@ -11,6 +11,13 @@ import { ThemeManager } from '../../utils/core/theme-manager.js';
 let selectedFile = null;
 let pdfAnalyzer = null;
 
+function updatePrivacyNotice(providerName) {
+  const el = document.getElementById('privacyNoticeText');
+  if (el) {
+    el.textContent = I18n.tf('pdf.privacyNotice', { provider: providerName });
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     Logger.info('PDF Analysis: Inizializzazione...');
@@ -31,9 +38,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const providerSelect = document.getElementById('providerSelect');
     providerSelect.value = settings.selectedProvider || 'claude';
 
-    // Aggiorna il testo del provider nell'info box
-    document.getElementById('currentProvider').textContent =
-      providerSelect.options[providerSelect.selectedIndex].text;
+    // Aggiorna il testo del privacy notice con il provider
+    const providerName = providerSelect.options[providerSelect.selectedIndex].text;
+    updatePrivacyNotice(providerName);
 
     const savedLanguage = await StorageManager.getSelectedLanguage();
     if (savedLanguage) {
@@ -54,8 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const settings = await StorageManager.getSettings();
       settings.selectedProvider = e.target.value;
       await StorageManager.saveSettings(settings);
-      document.getElementById('currentProvider').textContent =
-        e.target.options[e.target.selectedIndex].text;
+      updatePrivacyNotice(e.target.options[e.target.selectedIndex].text);
     });
 
     // Language change
