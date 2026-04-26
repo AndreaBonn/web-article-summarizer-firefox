@@ -27,9 +27,7 @@
 </div>
 
 <p align="center">
-  <img src="./docs/assets/popup-light-en.png" alt="Popup — Light Theme" width="280" />
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="./docs/assets/popup-dark-en.png" alt="Popup — Dark Theme" width="280" />
+  <img src="./docs/assets/popup-light-en.png" alt="Popup" width="320" />
 </p>
 
 ---
