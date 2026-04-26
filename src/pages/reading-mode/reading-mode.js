@@ -274,19 +274,19 @@ function showNoDataMessage() {
     <div class="loading-state">
       <div class="no-data-inner">
         <div class="no-data-emoji">—</div>
-        <h2 class="no-data-title">Modalità Lettura</h2>
+        <h2 class="no-data-title">${I18n.t('reading.noData.title')}</h2>
         <p class="no-data-subtitle">
-          Per usare questa funzionalità:
+          ${I18n.t('reading.noData.subtitle')}
         </p>
         <ol class="no-data-list">
-          <li>Apri un articolo web</li>
-          <li>Clicca sull'icona dell'extension</li>
-          <li>Analizza la pagina</li>
-          <li>Genera il riassunto</li>
-          <li>Clicca su "📖 Modalità Lettura"</li>
+          <li>${I18n.t('reading.noData.step1')}</li>
+          <li>${I18n.t('reading.noData.step2')}</li>
+          <li>${I18n.t('reading.noData.step3')}</li>
+          <li>${I18n.t('reading.noData.step4')}</li>
+          <li>${I18n.t('reading.noData.step5')}</li>
         </ol>
         <p class="no-data-hint">
-          Oppure apri <strong>test-reading-mode.html</strong> per vedere una demo
+          ${I18n.t('reading.noData.hint')}
         </p>
       </div>
     </div>
@@ -295,9 +295,9 @@ function showNoDataMessage() {
     <div class="loading-state">
       <div class="no-data-inner">
         <div class="no-data-emoji">✨</div>
-        <h2 class="no-data-title">Riassunto AI</h2>
+        <h2 class="no-data-title">${I18n.t('reading.noData.summaryTitle')}</h2>
         <p class="no-data-summary-subtitle">
-          Il riassunto apparirà qui dopo aver analizzato un articolo
+          ${I18n.t('reading.noData.summarySubtitle')}
         </p>
       </div>
     </div>

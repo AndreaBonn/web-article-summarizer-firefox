@@ -389,5 +389,16 @@
   "multi.exportMd": "Export MD",
   "multi.sendEmail": "Send Email",
 
-  "common.uiLanguageTitle": "Interface Language"
+  "common.uiLanguageTitle": "Interface Language",
+
+  "reading.noData.title": "Reading Mode",
+  "reading.noData.subtitle": "To use this feature:",
+  "reading.noData.step1": "Open a web article",
+  "reading.noData.step2": "Click the extension icon",
+  "reading.noData.step3": "Analyze the page",
+  "reading.noData.step4": "Generate the summary",
+  "reading.noData.step5": "Click \"📖 Reading Mode\"",
+  "reading.noData.hint": "Or open <strong>test-reading-mode.html</strong> to see a demo",
+  "reading.noData.summaryTitle": "AI Summary",
+  "reading.noData.summarySubtitle": "The summary will appear here after analyzing an article"
 }

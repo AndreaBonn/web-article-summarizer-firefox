@@ -389,5 +389,16 @@
   "multi.exportMd": "Esporta MD",
   "multi.sendEmail": "Invia Email",
 
-  "common.uiLanguageTitle": "Lingua Interfaccia"
+  "common.uiLanguageTitle": "Lingua Interfaccia",
+
+  "reading.noData.title": "Modalità Lettura",
+  "reading.noData.subtitle": "Per usare questa funzionalità:",
+  "reading.noData.step1": "Apri un articolo web",
+  "reading.noData.step2": "Clicca sull'icona dell'extension",
+  "reading.noData.step3": "Analizza la pagina",
+  "reading.noData.step4": "Genera il riassunto",
+  "reading.noData.step5": "Clicca su \"📖 Modalità Lettura\"",
+  "reading.noData.hint": "Oppure apri <strong>test-reading-mode.html</strong> per vedere una demo",
+  "reading.noData.summaryTitle": "Riassunto AI",
+  "reading.noData.summarySubtitle": "Il riassunto apparirà qui dopo aver analizzato un articolo"
 }
