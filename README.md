@@ -26,6 +26,12 @@
 
 </div>
 
+<p align="center">
+  <img src="./docs/assets/popup-light.png" alt="Popup — Light Theme" width="280" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="./docs/assets/popup-dark.png" alt="Popup — Dark Theme" width="280" />
+</p>
+
 ---
 
 ## Table of Contents
@@ -110,6 +116,10 @@
 
 Each provider requires its own API key. You can configure multiple providers and switch between them.
 
+<p align="center">
+  <img src="./docs/assets/options-light.png" alt="Settings — API Key Configuration" width="700" />
+</p>
+
 ---
 
 ## Installation
@@ -162,6 +172,10 @@ Each provider requires its own API key. You can configure multiple providers and
 
 After generating a summary, click **Reading Mode** to open a full-page side-by-side view with the original article on the left and the AI analysis on the right.
 
+<p align="center">
+  <img src="./docs/assets/reading-mode-light.png" alt="Reading Mode — Side-by-side view" width="800" />
+</p>
+
 ### Translate an Article
 
 1. Generate a summary first
@@ -187,6 +201,10 @@ Type a question in the Q&A section at the bottom of the popup or use the microph
 4. Select provider and language
 5. Click **Analyze**
 
+<p align="center">
+  <img src="./docs/assets/pdf-analysis-light.png" alt="PDF Analysis — Drag & drop upload" width="700" />
+</p>
+
 ### Compare Multiple Articles
 
 1. Analyze several articles (they are saved in history)
@@ -195,6 +213,18 @@ Type a question in the Q&A section at the bottom of the popup or use the microph
 4. Select 2+ articles from the list
 5. Choose analysis type (summary, comparison, Q&A)
 6. Click **Start Analysis**
+
+<p align="center">
+  <img src="./docs/assets/multi-analysis-light.png" alt="Multi-Article Analysis — Article selection and analysis options" width="700" />
+</p>
+
+### History
+
+All analyzed articles are automatically saved in a searchable history. You can filter by provider, language, content type, or article status. History supports import/export as JSON for backup and migration.
+
+<p align="center">
+  <img src="./docs/assets/history-light.png" alt="History — Search, filters, and management" width="700" />
+</p>
 
 ---
 

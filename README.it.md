@@ -25,6 +25,12 @@
 
 </div>
 
+<p align="center">
+  <img src="./docs/assets/popup-light.png" alt="Popup — Tema Chiaro" width="280" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="./docs/assets/popup-dark.png" alt="Popup — Tema Scuro" width="280" />
+</p>
+
 ---
 
 ## Indice
@@ -109,6 +115,10 @@
 
 Ogni provider richiede la propria API key. Puoi configurare più provider e passare da uno all'altro.
 
+<p align="center">
+  <img src="./docs/assets/options-light.png" alt="Impostazioni — Configurazione API Key" width="700" />
+</p>
+
 ---
 
 ## Installazione
@@ -161,6 +171,10 @@ Ogni provider richiede la propria API key. Puoi configurare più provider e pass
 
 Dopo aver generato un riassunto, clicca **Modalità Lettura** per aprire una vista a schermo intero con l'articolo originale a sinistra e l'analisi AI a destra.
 
+<p align="center">
+  <img src="./docs/assets/reading-mode-light.png" alt="Modalità Lettura — Vista affiancata" width="800" />
+</p>
+
 ### Tradurre un Articolo
 
 1. Genera prima un riassunto
@@ -186,6 +200,10 @@ Scrivi una domanda nella sezione Q&A in fondo al popup oppure usa il pulsante mi
 4. Seleziona provider e lingua
 5. Clicca **Analizza**
 
+<p align="center">
+  <img src="./docs/assets/pdf-analysis-light.png" alt="Analisi PDF — Caricamento drag & drop" width="700" />
+</p>
+
 ### Confrontare Più Articoli
 
 1. Analizza diversi articoli (vengono salvati nella cronologia)
@@ -194,6 +212,18 @@ Scrivi una domanda nella sezione Q&A in fondo al popup oppure usa il pulsante mi
 4. Seleziona 2+ articoli dalla lista
 5. Scegli il tipo di analisi (riassunto, confronto, Q&A)
 6. Clicca **Avvia Analisi**
+
+<p align="center">
+  <img src="./docs/assets/multi-analysis-light.png" alt="Analisi Multi Articolo — Selezione articoli e opzioni di analisi" width="700" />
+</p>
+
+### Cronologia
+
+Tutti gli articoli analizzati vengono salvati automaticamente in una cronologia ricercabile. Puoi filtrare per provider, lingua, tipo di contenuto o stato dell'articolo. La cronologia supporta import/export in formato JSON per backup e migrazione.
+
+<p align="center">
+  <img src="./docs/assets/history-light.png" alt="Cronologia — Ricerca, filtri e gestione" width="700" />
+</p>
 
 ---
 

@@ -38,6 +38,7 @@ secrets.json
 CLAUDE.md
 
 # Internal development docs (not for public consumption)
-docs/
+docs/*
+!docs/assets/
 !.github/docs/
 public/icons/README.md
