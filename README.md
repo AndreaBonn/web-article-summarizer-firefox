@@ -41,6 +41,7 @@
 - [Export Formats](#export-formats)
 - [Languages](#languages)
 - [Tech Stack](#tech-stack)
+- [Architecture](#architecture-overview)
 - [Development](#development)
 - [Project Structure](#project-structure)
 - [Permissions](#permissions)
@@ -158,6 +159,35 @@ Each provider requires its own API key. You can configure multiple providers and
 
 ## Usage
 
+### How It Works
+
+```mermaid
+sequenceDiagram
+  actor user as User
+  participant popup as Popup
+  participant cs as Content Script
+  participant sw as Service Worker
+  participant llm as LLM Provider
+  participant store as Chrome Storage
+
+  user->>popup: Click Analyze
+  popup->>+cs: extractArticle
+  cs->>cs: Readability extract
+  cs-->>-popup: article data
+
+  popup->>+sw: generateSummary
+  sw->>+store: Check cache
+  store-->>-sw: cache miss
+
+  sw->>+llm: API request
+  llm-->>-sw: AI response
+
+  sw->>store: Save to cache
+  sw->>store: Save to history
+  sw-->>-popup: summary + key points
+  popup->>user: Display results
+```
+
 ### Summarize an Article
 
 1. Navigate to any article or blog post
@@ -266,6 +296,55 @@ Article analysis output can be generated in any of these languages regardless of
 | Linting            | ESLint (flat config)           |
 | Formatting         | Prettier                       |
 | CI/CD              | GitHub Actions                 |
+
+### Architecture Overview
+
+```mermaid
+%%{init: {'theme': 'default'}}%%
+graph LR
+  subgraph pages["Extension Pages"]
+    direction TB
+    popup["Popup"]
+    reading["Reading Mode"]
+    history["History"]
+    multi["Multi-Analysis"]
+    pdf_page["PDF Analysis"]
+    options["Options"]
+  end
+
+  subgraph chrome_layer["Chrome APIs"]
+    direction TB
+    sw["Service Worker"]
+    cs["Content Script"]
+    storage[("Chrome Storage")]
+  end
+
+  subgraph providers["LLM Providers"]
+    direction TB
+    groq["Groq"]
+    openai["OpenAI"]
+    anthropic["Anthropic"]
+    gemini["Gemini"]
+  end
+
+  popup -->|"extractArticle"| cs
+  cs -->|"article data"| popup
+  pages -->|"chrome.runtime<br/>sendMessage"| sw
+  sw --> storage
+  sw -->|"API call"| providers
+
+  classDef core fill:#2563eb,stroke:#1d4ed8,color:#fff
+  classDef data fill:#d97706,stroke:#b45309,color:#fff
+  classDef ext fill:#6b7280,stroke:#4b5563,color:#fff
+  classDef engine fill:#059669,stroke:#047857,color:#fff
+
+  class popup,reading,history,multi,pdf_page,options core
+  class sw,cs engine
+  class storage data
+  class groq,openai,anthropic,gemini ext
+```
+
+For detailed architecture diagrams (AI pipeline, storage layer, message types), see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 

@@ -40,5 +40,6 @@ CLAUDE.md
 # Internal development docs (not for public consumption)
 docs/*
 !docs/assets/
+!docs/ARCHITECTURE.md
 !.github/docs/
 public/icons/README.md
