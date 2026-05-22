@@ -5,7 +5,7 @@
 <h1 align="center">Web Article Summarizer</h1>
 
 <p align="center">
-  Un'estensione Chrome per riassumere articoli web e PDF con l'AI.<br/>
+  Un'estensione Firefox per riassumere articoli web e PDF con l'AI.<br/>
   Supporta Groq, OpenAI, Anthropic (Claude) e Google Gemini.
 </p>
 
@@ -15,8 +15,9 @@
 
 <div align="center">
 
-[![CI](https://github.com/AndreaBonn/web-article-summarizer/actions/workflows/ci.yml/badge.svg)](https://github.com/AndreaBonn/web-article-summarizer/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/AndreaBonn/web-article-summarizer/main/badges/test-badge.json)](https://github.com/AndreaBonn/web-article-summarizer/actions/workflows/ci.yml)
+[![CI](https://github.com/AndreaBonn/web-article-summarizer-firefox/actions/workflows/ci.yml/badge.svg)](https://github.com/AndreaBonn/web-article-summarizer-firefox/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/AndreaBonn/web-article-summarizer-firefox/main/badges/test-badge.json)](https://github.com/AndreaBonn/web-article-summarizer-firefox/actions/workflows/ci.yml)
+[![Firefox Add-on](https://img.shields.io/badge/Firefox-Add--on-FF7139?logo=firefox-browser&logoColor=white)](https://addons.mozilla.org/it/firefox/addon/ai-article-summarizer-by-bonn/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![ESLint](https://img.shields.io/badge/linter-ESLint-4B32C3.svg)](https://eslint.org)
 [![Prettier](https://img.shields.io/badge/formatter-Prettier-F7B93E.svg)](https://prettier.io)
@@ -122,13 +123,17 @@ Ogni provider richiede la propria API key. Puoi configurare più provider e pass
 
 ## Installazione
 
+### Da Firefox Add-ons (Consigliato)
+
+Installa direttamente da [Firefox Add-ons (AMO)](https://addons.mozilla.org/it/firefox/addon/ai-article-summarizer-by-bonn/).
+
 ### Da Sorgente (Modalità Sviluppatore)
 
 1. **Clona il repository**
 
    ```bash
-   git clone https://github.com/AndreaBonn/web-article-summarizer.git
-   cd web-article-summarizer
+   git clone https://github.com/AndreaBonn/web-article-summarizer-firefox.git
+   cd web-article-summarizer-firefox
    ```
 
 2. **Installa le dipendenze**
@@ -143,11 +148,10 @@ Ogni provider richiede la propria API key. Puoi configurare più provider e pass
    npm run build
    ```
 
-4. **Carica in Chrome**
-   - Apri `chrome://extensions/`
-   - Attiva la **Modalità sviluppatore** (toggle in alto a destra)
-   - Clicca **Carica estensione non pacchettizzata**
-   - Seleziona la cartella `dist/`
+4. **Carica in Firefox**
+   - Apri `about:debugging#/runtime/this-firefox`
+   - Clicca **Carica componente aggiuntivo temporaneo**
+   - Seleziona `dist/manifest.json`
 
 5. **Configura le API key**
    - Clicca l'icona dell'estensione nella barra degli strumenti
@@ -167,7 +171,7 @@ sequenceDiagram
   participant cs as Content Script
   participant sw as Service Worker
   participant llm as Provider LLM
-  participant store as Chrome Storage
+  participant store as Browser Storage
 
   user->>popup: Click Analizza
   popup->>+cs: extractArticle
@@ -190,7 +194,7 @@ sequenceDiagram
 ### Riassumere un Articolo
 
 1. Naviga su un qualsiasi articolo o blog post
-2. Clicca l'icona dell'estensione nella barra di Chrome
+2. Clicca l'icona dell'estensione nella barra di Firefox
 3. Seleziona il provider e la lingua preferiti
 4. Clicca **Analizza Pagina**
 5. Visualizza il riassunto, i punti chiave e altro nel popup
@@ -291,18 +295,19 @@ L'output dell'analisi può essere generato in qualsiasi di queste lingue, indipe
 
 ## Stack Tecnologico
 
-| Categoria            | Tecnologia                     |
-| -------------------- | ------------------------------ |
-| Piattaforma          | Chrome Extension (Manifest V3) |
-| Build                | Vite + @crxjs/vite-plugin      |
-| Estrazione Contenuto | @mozilla/readability           |
-| Parsing PDF          | pdfjs-dist                     |
-| Export PDF           | jspdf                          |
-| Compressione         | lz-string                      |
-| Testing              | Vitest + jsdom                 |
-| Linting              | ESLint (flat config)           |
-| Formattazione        | Prettier                       |
-| CI/CD                | GitHub Actions                 |
+| Categoria            | Tecnologia                      |
+| -------------------- | ------------------------------- |
+| Piattaforma          | Firefox Extension (Manifest V3) |
+| Build                | Vite                            |
+| Estrazione Contenuto | @mozilla/readability            |
+| Parsing PDF          | pdfjs-dist                      |
+| Export PDF           | jspdf                           |
+| Compressione         | lz-string                       |
+| Packaging            | web-ext                         |
+| Testing              | Vitest + jsdom                  |
+| Linting              | ESLint (flat config)            |
+| Formattazione        | Prettier                        |
+| CI/CD                | GitHub Actions                  |
 
 ### Panoramica Architettura
 
@@ -319,11 +324,11 @@ graph LR
     options["Impostazioni"]
   end
 
-  subgraph chrome_layer["API Chrome"]
+  subgraph browser_layer["API Browser"]
     direction TB
     sw["Service Worker"]
     cs["Content Script"]
-    storage[("Chrome Storage")]
+    storage[("Browser Storage")]
   end
 
   subgraph providers["Provider LLM"]
@@ -336,7 +341,7 @@ graph LR
 
   popup -->|"extractArticle"| cs
   cs -->|"dati articolo"| popup
-  pages -->|"chrome.runtime<br/>sendMessage"| sw
+  pages -->|"browser.runtime<br/>sendMessage"| sw
   sw --> storage
   sw -->|"chiamata API"| providers
 
@@ -390,8 +395,8 @@ npm run format
 ### Workflow di Sviluppo
 
 1. Esegui `npm run dev` per avviare il server di sviluppo
-2. Carica la cartella `dist/` in Chrome come estensione non pacchettizzata
-3. Le modifiche ai file sorgente attiveranno l'hot module replacement
+2. Carica `dist/manifest.json` in Firefox via `about:debugging#/runtime/this-firefox`
+3. Le modifiche ai file sorgente attiveranno la rebuild
 4. Esegui `npm run test` prima di ogni commit
 
 ---
@@ -412,7 +417,7 @@ src/
 ├── shared/styles/       CSS condiviso (base.css, voice-controls.css)
 └── utils/
     ├── ai/              Client API LLM, prompt, citazioni
-    ├── storage/         Chrome storage, cache, compressione
+    ├── storage/         Browser storage, cache, compressione
     ├── export/          Export PDF, Markdown, email
     ├── pdf/             Parsing e caching PDF
     ├── i18n/            Internazionalizzazione (5 lingue)
@@ -425,7 +430,7 @@ src/
 
 ## Permessi
 
-L'estensione richiede i seguenti permessi Chrome:
+L'estensione richiede i seguenti permessi:
 
 | Permesso    | Motivazione                                                      |
 | ----------- | ---------------------------------------------------------------- |

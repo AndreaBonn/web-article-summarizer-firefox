@@ -5,7 +5,7 @@
 <h1 align="center">Web Article Summarizer</h1>
 
 <p align="center">
-  A Chrome Extension that summarizes web articles and PDFs using AI.<br/>
+  A Firefox Extension that summarizes web articles and PDFs using AI.<br/>
   Supports Groq, OpenAI, Anthropic (Claude), and Google Gemini.
 </p>
 
@@ -15,9 +15,10 @@
 
 <div align="center">
 
-[![CI](https://github.com/AndreaBonn/web-article-summarizer/actions/workflows/ci.yml/badge.svg)](https://github.com/AndreaBonn/web-article-summarizer/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/AndreaBonn/web-article-summarizer/main/badges/test-badge.json)](https://github.com/AndreaBonn/web-article-summarizer/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/AndreaBonn/web-article-summarizer/main/badges/coverage-badge.json)](https://github.com/AndreaBonn/web-article-summarizer/actions/workflows/ci.yml)
+[![CI](https://github.com/AndreaBonn/web-article-summarizer-firefox/actions/workflows/ci.yml/badge.svg)](https://github.com/AndreaBonn/web-article-summarizer-firefox/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/AndreaBonn/web-article-summarizer-firefox/main/badges/test-badge.json)](https://github.com/AndreaBonn/web-article-summarizer-firefox/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/AndreaBonn/web-article-summarizer-firefox/main/badges/coverage-badge.json)](https://github.com/AndreaBonn/web-article-summarizer-firefox/actions/workflows/ci.yml)
+[![Firefox Add-on](https://img.shields.io/badge/Firefox-Add--on-FF7139?logo=firefox-browser&logoColor=white)](https://addons.mozilla.org/it/firefox/addon/ai-article-summarizer-by-bonn/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![ESLint](https://img.shields.io/badge/linter-ESLint-4B32C3.svg)](https://eslint.org)
 [![Prettier](https://img.shields.io/badge/formatter-Prettier-F7B93E.svg)](https://prettier.io)
@@ -123,13 +124,17 @@ Each provider requires its own API key. You can configure multiple providers and
 
 ## Installation
 
+### From Firefox Add-ons (Recommended)
+
+Install directly from [Firefox Add-ons (AMO)](https://addons.mozilla.org/it/firefox/addon/ai-article-summarizer-by-bonn/).
+
 ### From Source (Developer Mode)
 
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/AndreaBonn/web-article-summarizer.git
-   cd web-article-summarizer
+   git clone https://github.com/AndreaBonn/web-article-summarizer-firefox.git
+   cd web-article-summarizer-firefox
    ```
 
 2. **Install dependencies**
@@ -144,11 +149,10 @@ Each provider requires its own API key. You can configure multiple providers and
    npm run build
    ```
 
-4. **Load in Chrome**
-   - Open `chrome://extensions/`
-   - Enable **Developer mode** (toggle in the top right)
-   - Click **Load unpacked**
-   - Select the `dist/` folder
+4. **Load in Firefox**
+   - Open `about:debugging#/runtime/this-firefox`
+   - Click **Load Temporary Add-on**
+   - Select `dist/manifest.json`
 
 5. **Configure API keys**
    - Click the extension icon in the toolbar
@@ -168,7 +172,7 @@ sequenceDiagram
   participant cs as Content Script
   participant sw as Service Worker
   participant llm as LLM Provider
-  participant store as Chrome Storage
+  participant store as Browser Storage
 
   user->>popup: Click Analyze
   popup->>+cs: extractArticle
@@ -191,7 +195,7 @@ sequenceDiagram
 ### Summarize an Article
 
 1. Navigate to any article or blog post
-2. Click the extension icon in the Chrome toolbar
+2. Click the extension icon in the Firefox toolbar
 3. Select your preferred provider and language
 4. Click **Analyze Page**
 5. View the summary, key points, and more in the popup
@@ -284,18 +288,19 @@ Article analysis output can be generated in any of these languages regardless of
 
 ## Tech Stack
 
-| Category           | Technology                     |
-| ------------------ | ------------------------------ |
-| Platform           | Chrome Extension (Manifest V3) |
-| Build              | Vite + @crxjs/vite-plugin      |
-| Content Extraction | @mozilla/readability           |
-| PDF Parsing        | pdfjs-dist                     |
-| PDF Export         | jspdf                          |
-| Compression        | lz-string                      |
-| Testing            | Vitest + jsdom                 |
-| Linting            | ESLint (flat config)           |
-| Formatting         | Prettier                       |
-| CI/CD              | GitHub Actions                 |
+| Category           | Technology                      |
+| ------------------ | ------------------------------- |
+| Platform           | Firefox Extension (Manifest V3) |
+| Build              | Vite                            |
+| Content Extraction | @mozilla/readability            |
+| PDF Parsing        | pdfjs-dist                      |
+| PDF Export         | jspdf                           |
+| Compression        | lz-string                       |
+| Packaging          | web-ext                         |
+| Testing            | Vitest + jsdom                  |
+| Linting            | ESLint (flat config)            |
+| Formatting         | Prettier                        |
+| CI/CD              | GitHub Actions                  |
 
 ### Architecture Overview
 
@@ -312,11 +317,11 @@ graph LR
     options["Options"]
   end
 
-  subgraph chrome_layer["Chrome APIs"]
+  subgraph browser_layer["Browser APIs"]
     direction TB
     sw["Service Worker"]
     cs["Content Script"]
-    storage[("Chrome Storage")]
+    storage[("Browser Storage")]
   end
 
   subgraph providers["LLM Providers"]
@@ -329,7 +334,7 @@ graph LR
 
   popup -->|"extractArticle"| cs
   cs -->|"article data"| popup
-  pages -->|"chrome.runtime<br/>sendMessage"| sw
+  pages -->|"browser.runtime<br/>sendMessage"| sw
   sw --> storage
   sw -->|"API call"| providers
 
@@ -383,8 +388,8 @@ npm run format
 ### Development Workflow
 
 1. Run `npm run dev` to start the development server
-2. Load the `dist/` folder in Chrome as an unpacked extension
-3. Changes to source files will trigger hot module replacement
+2. Load `dist/manifest.json` in Firefox via `about:debugging#/runtime/this-firefox`
+3. Changes to source files will trigger rebuild
 4. Run `npm run test` before committing
 
 ---
@@ -405,7 +410,7 @@ src/
 ├── shared/styles/       Shared CSS (base.css, voice-controls.css)
 └── utils/
     ├── ai/              LLM API client, prompts, citations
-    ├── storage/         Chrome storage, cache, compression
+    ├── storage/         Browser storage, cache, compression
     ├── export/          PDF, Markdown, email export
     ├── pdf/             PDF parsing & caching
     ├── i18n/            Internationalization (5 locales)
@@ -418,7 +423,7 @@ src/
 
 ## Permissions
 
-The extension requests the following Chrome permissions:
+The extension requests the following permissions:
 
 | Permission  | Reason                                            |
 | ----------- | ------------------------------------------------- |

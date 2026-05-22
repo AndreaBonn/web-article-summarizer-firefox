@@ -4,7 +4,7 @@ Technical reference for the internal architecture of Web Article Summarizer.
 
 ## Extension Architecture
 
-How the Chrome Extension components communicate. Pages send messages to the Service Worker via `chrome.runtime.sendMessage`. The Popup also communicates with the Content Script via `chrome.tabs.sendMessage` for article extraction.
+How the Firefox Extension components communicate. Pages send messages to the Service Worker via `browser.runtime.sendMessage`. The Popup also communicates with the Content Script via `browser.tabs.sendMessage` for article extraction.
 
 ```mermaid
 %%{init: {'theme': 'default'}}%%
@@ -19,11 +19,11 @@ graph LR
     options["Options"]
   end
 
-  subgraph chrome_layer["Chrome APIs"]
+  subgraph browser_layer["Browser APIs"]
     direction TB
     sw["Service Worker"]
     cs["Content Script"]
-    storage[("Chrome Storage")]
+    storage[("Browser Storage")]
   end
 
   subgraph providers["LLM Providers"]
@@ -36,7 +36,7 @@ graph LR
 
   popup -->|"extractArticle"| cs
   cs -->|"article data"| popup
-  pages -->|"chrome.runtime<br/>sendMessage"| sw
+  pages -->|"browser.runtime<br/>sendMessage"| sw
   sw --> storage
   sw -->|"API call"| providers
 
@@ -51,7 +51,7 @@ graph LR
   class groq,openai,anthropic,gemini ext
 ```
 
-**Legend:** Blue = UI pages, Green = Chrome runtime components, Amber = storage, Grey = external providers.
+**Legend:** Blue = UI pages, Green = browser runtime components, Amber = storage, Grey = external providers.
 
 ## Article Analysis Flow
 
@@ -64,7 +64,7 @@ sequenceDiagram
   participant cs as Content Script
   participant sw as Service Worker
   participant llm as LLM Provider
-  participant store as Chrome Storage
+  participant store as Browser Storage
 
   user->>popup: Click Analyze
   popup->>+cs: extractArticle
@@ -86,19 +86,19 @@ sequenceDiagram
 
 ### Message Types
 
-The Service Worker handles these message actions via `chrome.runtime.onMessage`:
+The Service Worker handles these message actions via `browser.runtime.onMessage`:
 
-| Action | Direction | Description |
-|--------|-----------|-------------|
-| `extractArticle` | Popup -> Content Script | Extract article from current page DOM |
-| `generateSummary` | Page -> Service Worker | Generate AI summary |
-| `extractCitations` | Page -> Service Worker | Extract bibliographic citations |
-| `translateArticle` | Page -> Service Worker | Translate article content |
-| `askQuestion` | Page -> Service Worker | Q&A on article content |
-| `translatePDF` | Page -> Service Worker | Translate PDF content |
-| `extractPDFCitations` | Page -> Service Worker | Extract citations from PDF |
-| `askPDFQuestion` | Page -> Service Worker | Q&A on PDF content |
-| `testApiKey` | Options -> Service Worker | Validate provider API key |
+| Action                | Direction                 | Description                           |
+| --------------------- | ------------------------- | ------------------------------------- |
+| `extractArticle`      | Popup -> Content Script   | Extract article from current page DOM |
+| `generateSummary`     | Page -> Service Worker    | Generate AI summary                   |
+| `extractCitations`    | Page -> Service Worker    | Extract bibliographic citations       |
+| `translateArticle`    | Page -> Service Worker    | Translate article content             |
+| `askQuestion`         | Page -> Service Worker    | Q&A on article content                |
+| `translatePDF`        | Page -> Service Worker    | Translate PDF content                 |
+| `extractPDFCitations` | Page -> Service Worker    | Extract citations from PDF            |
+| `askPDFQuestion`      | Page -> Service Worker    | Q&A on PDF content                    |
+| `testApiKey`          | Options -> Service Worker | Validate provider API key             |
 
 ## AI Processing Pipeline
 
@@ -148,16 +148,16 @@ graph LR
 
 ### Default Models
 
-| Provider | Model |
-|----------|-------|
-| Groq | `llama-3.3-70b-versatile` |
-| OpenAI | `gpt-4o` |
+| Provider  | Model                        |
+| --------- | ---------------------------- |
+| Groq      | `llama-3.3-70b-versatile`    |
+| OpenAI    | `gpt-4o`                     |
 | Anthropic | `claude-sonnet-4-5-20250514` |
-| Gemini | `gemini-2.5-pro` |
+| Gemini    | `gemini-2.5-pro`             |
 
 ## Storage Architecture
 
-All persistent data flows through CompressionManager (lz-string) before reaching Chrome Storage. CacheManager handles response caching with content hash validation and TTL. HistoryManager delegates to specialized repositories per content type.
+All persistent data flows through CompressionManager (lz-string) before reaching Browser Storage. CacheManager handles response caching with content hash validation and TTL. HistoryManager delegates to specialized repositories per content type.
 
 ```mermaid
 %%{init: {'theme': 'default'}}%%
@@ -182,7 +182,7 @@ graph TD
 
   storage_mgr["StorageManager<br/>settings + API keys"]
   compress["CompressionManager<br/>lz-string"]
-  chrome_store[("Chrome Storage API")]
+  browser_store[("Browser Storage API")]
 
   cache_mgr --> cache_store
   cache_mgr --> cache_stats
@@ -196,7 +196,7 @@ graph TD
   cache_layer --> compress
   history_layer --> compress
   trans_cache --> compress
-  compress --> chrome_store
+  compress --> browser_store
 
   classDef core fill:#2563eb,stroke:#1d4ed8,color:#fff
   classDef data fill:#d97706,stroke:#b45309,color:#fff
@@ -206,8 +206,8 @@ graph TD
   class storage_mgr,cache_mgr,hist_mgr core
   class cache_store,cache_stats,cache_inv,trans_cache,art_hist,pdf_hist,multi_hist data
   class compress engine
-  class chrome_store ext
+  class browser_store ext
   class base_repo data
 ```
 
-**Legend:** Blue = manager facades, Amber = data stores/repositories, Green = processing, Grey = Chrome platform.
+**Legend:** Blue = manager facades, Amber = data stores/repositories, Green = processing, Grey = browser platform.
