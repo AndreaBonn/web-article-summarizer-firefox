@@ -7,10 +7,10 @@
   "description": "Firefox Extension to summarize web articles using AI (Groq, OpenAI, Claude, Gemini)",
   "type": "module",
   "scripts": {
-    "dev": "vite build --watch",
-    "build": "vite build",
+    "dev": "vite build --watch && vite build --config vite.config.content.js --watch",
+    "build": "vite build && vite build --config vite.config.content.js",
     "start:firefox": "web-ext run --source-dir dist",
-    "build:xpi": "vite build && web-ext build --source-dir dist --artifacts-dir web-ext-artifacts",
+    "build:xpi": "npm run build && web-ext build --source-dir dist --artifacts-dir web-ext-artifacts",
     "lint": "eslint src/",
     "format": "prettier --write src/",
     "test": "vitest run",

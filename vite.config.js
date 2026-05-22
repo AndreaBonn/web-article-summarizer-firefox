@@ -32,7 +32,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         'service-worker': resolve(import.meta.dirname, 'src/background/service-worker.js'),
-        'content-script': resolve(import.meta.dirname, 'src/content/content-script.js'),
         popup: resolve(import.meta.dirname, 'src/pages/popup/popup.html'),
         options: resolve(import.meta.dirname, 'src/pages/options/options.html'),
         'reading-mode': resolve(import.meta.dirname, 'src/pages/reading-mode/reading-mode.html'),
@@ -47,9 +46,6 @@ export default defineConfig({
         entryFileNames: (chunkInfo) => {
           if (chunkInfo.name === 'service-worker') {
             return 'src/background/service-worker.js';
-          }
-          if (chunkInfo.name === 'content-script') {
-            return 'src/content/content-script.js';
           }
           return 'assets/[name]-[hash].js';
         },
