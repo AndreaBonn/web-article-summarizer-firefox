@@ -2,11 +2,14 @@
   "manifest_version": 3,
   "name": "AI Article Summarizer",
   "version": "2.2.0",
-  "description": "Riassumi articoli web con AI (Groq, OpenAI, Claude, Gemini) - Ottieni punti chiave e risparmia tempo",
+  "description": "Summarize web articles with AI (Groq, OpenAI, Claude, Gemini) - Get key points and save time",
   "browser_specific_settings": {
     "gecko": {
-      "id": "ai-article-summarizer@example.com",
-      "strict_min_version": "109.0"
+      "id": "ai-article-summarizer@andreabonacci",
+      "strict_min_version": "126.0",
+      "data_collection_permissions": {
+        "required": ["websiteContent"]
+      }
     }
   },
   "permissions": ["activeTab", "storage", "alarms"],
