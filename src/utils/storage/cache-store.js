@@ -126,12 +126,12 @@ export class CacheStore extends CacheInvalidation {
     };
 
     try {
-      const result = await chrome.storage.local.get(['summaryCache']);
+      const result = await browser.storage.local.get(['summaryCache']);
       const cache = result.summaryCache || {};
 
       cache[cacheKey] = cacheEntry;
 
-      await chrome.storage.local.set({ summaryCache: cache });
+      await browser.storage.local.set({ summaryCache: cache });
 
       this.logCacheOperation('write', cacheKey, true);
 
@@ -150,7 +150,7 @@ export class CacheStore extends CacheInvalidation {
     const cacheKey = this.generateCacheKey(url, provider, settings);
 
     try {
-      const result = await chrome.storage.local.get(['summaryCache']);
+      const result = await browser.storage.local.get(['summaryCache']);
       const cache = result.summaryCache || {};
 
       const entry = cache[cacheKey];
@@ -197,12 +197,12 @@ export class CacheStore extends CacheInvalidation {
    */
   async invalidate(cacheKey) {
     try {
-      const result = await chrome.storage.local.get(['summaryCache']);
+      const result = await browser.storage.local.get(['summaryCache']);
       const cache = result.summaryCache || {};
 
       if (cache[cacheKey]) {
         delete cache[cacheKey];
-        await chrome.storage.local.set({ summaryCache: cache });
+        await browser.storage.local.set({ summaryCache: cache });
         this.logCacheOperation('invalidate', cacheKey, true);
         return true;
       }
@@ -237,7 +237,7 @@ export class CacheStore extends CacheInvalidation {
    * Pulisci tutta la cache
    */
   async clearAll() {
-    await chrome.storage.local.remove(['summaryCache']);
+    await browser.storage.local.remove(['summaryCache']);
   }
 
   /**

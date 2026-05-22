@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock chrome APIs
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -283,14 +283,18 @@ describe('PDFAnalyzer', () => {
 
     it('lancia errore se API key non configurata', async () => {
       StorageManager.getApiKey.mockResolvedValue(null);
-      await expect(analyzer.callAnalysisAPI('text', 'claude')).rejects.toThrow('API key non configurata');
+      await expect(analyzer.callAnalysisAPI('text', 'claude')).rejects.toThrow(
+        'API key non configurata',
+      );
     });
 
     it('lancia errore se API fallisce', async () => {
       StorageManager.getApiKey.mockResolvedValue('key');
       APIClient.generateCompletion.mockRejectedValue(new Error('network error'));
 
-      await expect(analyzer.callAnalysisAPI('text', 'claude')).rejects.toThrow("Errore durante l'analisi");
+      await expect(analyzer.callAnalysisAPI('text', 'claude')).rejects.toThrow(
+        "Errore durante l'analisi",
+      );
     });
 
     it('invoca progressCallback durante analisi', async () => {

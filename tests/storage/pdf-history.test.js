@@ -5,7 +5,7 @@ vi.mock('@utils/core/logger.js', () => ({
 }));
 
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -368,7 +368,9 @@ describe('PDFHistory', () => {
 
     it('test_searchPDFHistory_matchesByKeyPointTitle', async () => {
       // Arrange
-      const keyPoints = [{ title: 'Machine Learning Basics', description: 'Desc', paragraphs: '1' }];
+      const keyPoints = [
+        { title: 'Machine Learning Basics', description: 'Desc', paragraphs: '1' },
+      ];
       await PDFHistory.savePDFAnalysis(mockPdfInfo, 'Summary', keyPoints, mockMetadata);
 
       // Act
@@ -380,9 +382,7 @@ describe('PDFHistory', () => {
 
     it('test_searchPDFHistory_matchesByKeyPointDescription', async () => {
       // Arrange
-      const keyPoints = [
-        { title: 'Point', description: 'Uses neural networks', paragraphs: '2' },
-      ];
+      const keyPoints = [{ title: 'Point', description: 'Uses neural networks', paragraphs: '2' }];
       await PDFHistory.savePDFAnalysis(mockPdfInfo, 'Summary', keyPoints, mockMetadata);
 
       // Act

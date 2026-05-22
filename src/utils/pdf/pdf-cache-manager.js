@@ -108,7 +108,7 @@ export class PDFCacheManager {
    */
   async getHistory() {
     try {
-      const result = await chrome.storage.local.get([this.STORAGE_KEY]);
+      const result = await browser.storage.local.get([this.STORAGE_KEY]);
       return result[this.STORAGE_KEY] || [];
     } catch (error) {
       Logger.error('Errore lettura cronologia:', error);
@@ -122,7 +122,7 @@ export class PDFCacheManager {
    */
   async saveHistory(history) {
     try {
-      await chrome.storage.local.set({ [this.STORAGE_KEY]: history });
+      await browser.storage.local.set({ [this.STORAGE_KEY]: history });
     } catch (error) {
       Logger.error('Errore salvataggio cronologia:', error);
       throw error;
@@ -172,7 +172,7 @@ export class PDFCacheManager {
   async getStorageStats() {
     try {
       const history = await this.getHistory();
-      const bytesInUse = await chrome.storage.local.getBytesInUse(this.STORAGE_KEY);
+      const bytesInUse = await browser.storage.local.getBytesInUse(this.STORAGE_KEY);
 
       return {
         totalEntries: history.length,

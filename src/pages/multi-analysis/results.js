@@ -199,11 +199,11 @@ export async function reopenSavedAnalysis(data) {
   `;
 
   document.getElementById('backBtn').addEventListener('click', () => {
-    window.location.href = chrome.runtime.getURL('src/pages/history/history.html');
+    window.location.href = browser.runtime.getURL('src/pages/history/history.html');
   });
 
   document.getElementById('closeModal').addEventListener('click', () => {
-    window.location.href = chrome.runtime.getURL('src/pages/history/history.html');
+    window.location.href = browser.runtime.getURL('src/pages/history/history.html');
   });
 
   document.querySelectorAll('.modal-tab').forEach((tab) => {

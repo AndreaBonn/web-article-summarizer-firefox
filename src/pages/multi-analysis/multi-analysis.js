@@ -24,10 +24,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   await I18n.initPage();
 
   // Controlla se stiamo riaprendo un'analisi salvata
-  const result = await chrome.storage.local.get(['reopenMultiAnalysis']);
+  const result = await browser.storage.local.get(['reopenMultiAnalysis']);
   if (result.reopenMultiAnalysis) {
     await reopenSavedAnalysis(result.reopenMultiAnalysis);
-    await chrome.storage.local.remove(['reopenMultiAnalysis']);
+    await browser.storage.local.remove(['reopenMultiAnalysis']);
     return;
   }
 

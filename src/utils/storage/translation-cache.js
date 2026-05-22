@@ -1,4 +1,4 @@
-// Translation Cache — LRU cache for AI translations stored in chrome.storage.local
+// Translation Cache — LRU cache for AI translations stored in browser.storage.local
 import { Logger } from '../core/logger.js';
 
 const MAX_ENTRIES = 50;
@@ -22,7 +22,7 @@ export class TranslationCache {
   static async get(url, provider, targetLanguage) {
     try {
       const cacheKey = await hashKey(buildCacheId(url, provider, targetLanguage));
-      const result = await chrome.storage.local.get([STORAGE_KEY]);
+      const result = await browser.storage.local.get([STORAGE_KEY]);
       const cache = result[STORAGE_KEY] || {};
 
       if (cache[cacheKey]) {
@@ -41,7 +41,7 @@ export class TranslationCache {
   static async save(url, provider, targetLanguage, translation, originalLanguage) {
     try {
       const cacheKey = await hashKey(buildCacheId(url, provider, targetLanguage));
-      const result = await chrome.storage.local.get([STORAGE_KEY]);
+      const result = await browser.storage.local.get([STORAGE_KEY]);
       let cache = result[STORAGE_KEY] || {};
 
       cache[cacheKey] = {
@@ -60,7 +60,7 @@ export class TranslationCache {
         cache = Object.fromEntries(entries.slice(-MAX_ENTRIES));
       }
 
-      await chrome.storage.local.set({ [STORAGE_KEY]: cache });
+      await browser.storage.local.set({ [STORAGE_KEY]: cache });
     } catch (error) {
       Logger.warn(
         'TranslationCache.save failed (traduzione non in cache, verrà rigenerata):',
@@ -72,10 +72,10 @@ export class TranslationCache {
   static async clearEntry(url, provider, targetLanguage) {
     try {
       const cacheKey = await hashKey(buildCacheId(url, provider, targetLanguage));
-      const result = await chrome.storage.local.get([STORAGE_KEY]);
+      const result = await browser.storage.local.get([STORAGE_KEY]);
       const cache = result[STORAGE_KEY] || {};
       delete cache[cacheKey];
-      await chrome.storage.local.set({ [STORAGE_KEY]: cache });
+      await browser.storage.local.set({ [STORAGE_KEY]: cache });
     } catch (error) {
       Logger.error('TranslationCache.clearEntry failed:', error);
     }

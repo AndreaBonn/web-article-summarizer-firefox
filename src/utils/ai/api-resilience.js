@@ -106,7 +106,7 @@ export class APIResilience {
    */
   async logApiCall(logEntry) {
     try {
-      const result = await chrome.storage.local.get(['apiLogs']);
+      const result = await browser.storage.local.get(['apiLogs']);
       const logs = result.apiLogs || [];
 
       // Mantieni solo gli ultimi MAX_API_LOGS log
@@ -115,7 +115,7 @@ export class APIResilience {
         logs.shift();
       }
 
-      await chrome.storage.local.set({ apiLogs: logs });
+      await browser.storage.local.set({ apiLogs: logs });
     } catch (error) {
       Logger.error('Errore nel salvare log API:', error);
     }
@@ -126,7 +126,7 @@ export class APIResilience {
    */
   async logFallback(logEntry) {
     try {
-      const result = await chrome.storage.local.get(['fallbackLogs']);
+      const result = await browser.storage.local.get(['fallbackLogs']);
       const logs = result.fallbackLogs || [];
 
       logs.push(logEntry);
@@ -134,7 +134,7 @@ export class APIResilience {
         logs.shift();
       }
 
-      await chrome.storage.local.set({ fallbackLogs: logs });
+      await browser.storage.local.set({ fallbackLogs: logs });
     } catch (error) {
       Logger.error('Errore nel salvare log fallback:', error);
     }
@@ -145,7 +145,7 @@ export class APIResilience {
    */
   async getStats() {
     try {
-      const result = await chrome.storage.local.get(['apiLogs', 'fallbackLogs']);
+      const result = await browser.storage.local.get(['apiLogs', 'fallbackLogs']);
       const apiLogs = result.apiLogs || [];
       const fallbackLogs = result.fallbackLogs || [];
 
@@ -178,7 +178,7 @@ export class APIResilience {
    */
   async clearLogs() {
     try {
-      await chrome.storage.local.remove(['apiLogs', 'fallbackLogs']);
+      await browser.storage.local.remove(['apiLogs', 'fallbackLogs']);
     } catch (error) {
       Logger.error('Errore pulizia log API:', error);
     }

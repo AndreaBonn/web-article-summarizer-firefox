@@ -29,7 +29,7 @@ export class AutoMaintenance {
    */
   async shouldRunMaintenance() {
     try {
-      const result = await chrome.storage.local.get([this.lastMaintenanceKey]);
+      const result = await browser.storage.local.get([this.lastMaintenanceKey]);
       const lastRun = result[this.lastMaintenanceKey];
 
       if (!lastRun) {
@@ -117,7 +117,7 @@ export class AutoMaintenance {
       }
 
       // Salva timestamp ultima manutenzione
-      await chrome.storage.local.set({
+      await browser.storage.local.set({
         [this.lastMaintenanceKey]: Date.now(),
         lastMaintenanceResults: results,
       });
@@ -136,7 +136,7 @@ export class AutoMaintenance {
    */
   async deleteOldHistory(daysOld) {
     try {
-      const result = await chrome.storage.local.get(['summaryHistory']);
+      const result = await browser.storage.local.get(['summaryHistory']);
       const history = result.summaryHistory || [];
 
       const cutoffDate = Date.now() - daysOld * 24 * 60 * 60 * 1000;
@@ -145,7 +145,7 @@ export class AutoMaintenance {
       const deletedCount = history.length - filteredHistory.length;
 
       if (deletedCount > 0) {
-        await chrome.storage.local.set({ summaryHistory: filteredHistory });
+        await browser.storage.local.set({ summaryHistory: filteredHistory });
       }
 
       return deletedCount;
@@ -160,7 +160,7 @@ export class AutoMaintenance {
    */
   async getSettings() {
     try {
-      const result = await chrome.storage.local.get(['settings']);
+      const result = await browser.storage.local.get(['settings']);
       return (
         result.settings || {
           autoCleanup: true,
@@ -178,12 +178,12 @@ export class AutoMaintenance {
   }
 
   /**
-   * Programma la prossima manutenzione via chrome.alarms (persistente in MV3)
+   * Programma la prossima manutenzione via browser.alarms (persistente in MV3)
    */
   async scheduleMaintenance() {
-    if (typeof chrome !== 'undefined' && chrome.alarms) {
+    if (typeof browser !== 'undefined' && browser.alarms) {
       try {
-        await chrome.alarms.create('autoMaintenance', {
+        await browser.alarms.create('autoMaintenance', {
           periodInMinutes: this.maintenanceInterval / 60000,
         });
       } catch (error) {
@@ -210,7 +210,7 @@ export class AutoMaintenance {
    */
   async getLastMaintenanceStats() {
     try {
-      const result = await chrome.storage.local.get([
+      const result = await browser.storage.local.get([
         'lastMaintenanceResults',
         this.lastMaintenanceKey,
       ]);

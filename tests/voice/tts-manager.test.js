@@ -1,20 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock chrome.tts + chrome.storage.local + chrome.runtime
+// Mock browser.storage.local
 const store = {};
-global.chrome = {
-  tts: {
-    speak: vi.fn((_text, _opts, cb) => cb && cb()),
-    pause: vi.fn(),
-    resume: vi.fn(),
-    stop: vi.fn(),
-    getVoices: vi.fn((cb) =>
-      cb([
-        { voiceName: 'Google italiano', lang: 'it-IT' },
-        { voiceName: 'Google English', lang: 'en-US' },
-      ]),
-    ),
-  },
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -32,6 +20,41 @@ global.chrome = {
   },
   runtime: { lastError: null },
 };
+
+// Mock SpeechSynthesisUtterance
+class MockUtterance {
+  constructor(text) {
+    this.text = text;
+    this.lang = '';
+    this.rate = 1;
+    this.pitch = 1;
+    this.volume = 1;
+    this.voice = null;
+    this.onstart = null;
+    this.onend = null;
+    this.onerror = null;
+    this.onpause = null;
+    this.onresume = null;
+  }
+}
+global.SpeechSynthesisUtterance = MockUtterance;
+
+// Mock speechSynthesis
+const mockSynth = {
+  speak: vi.fn(),
+  pause: vi.fn(),
+  resume: vi.fn(),
+  cancel: vi.fn(),
+  getVoices: vi.fn(() => [
+    { name: 'Google italiano', lang: 'it-IT' },
+    { name: 'Google English', lang: 'en-US' },
+  ]),
+  addEventListener: vi.fn(),
+};
+Object.defineProperty(window, 'speechSynthesis', {
+  value: mockSynth,
+  writable: true,
+});
 
 // Mock Logger
 vi.mock('@utils/core/logger.js', () => ({
@@ -51,7 +74,10 @@ describe('TTSManager', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     for (const key of Object.keys(store)) delete store[key];
-    chrome.runtime.lastError = null;
+    mockSynth.getVoices.mockReturnValue([
+      { name: 'Google italiano', lang: 'it-IT' },
+      { name: 'Google English', lang: 'en-US' },
+    ]);
     tts = new TTSManager();
   });
 
@@ -78,10 +104,22 @@ describe('TTSManager', () => {
   // ─── loadVoices ───────────────────────────────────
 
   describe('loadVoices', () => {
-    it('carica voci disponibili da chrome.tts', async () => {
+    it('carica voci disponibili da speechSynthesis', async () => {
       const voices = await tts.loadVoices();
       expect(voices).toHaveLength(2);
       expect(tts.availableVoices).toHaveLength(2);
+    });
+
+    it('attende voiceschanged se getVoices ritorna vuoto', async () => {
+      mockSynth.getVoices.mockReturnValueOnce([]);
+      mockSynth.addEventListener.mockImplementation((event, cb) => {
+        if (event === 'voiceschanged') {
+          mockSynth.getVoices.mockReturnValue([{ name: 'V1', lang: 'it-IT' }]);
+          cb();
+        }
+      });
+      const voices = await tts.loadVoices();
+      expect(voices).toHaveLength(1);
     });
   });
 
@@ -99,10 +137,10 @@ describe('TTSManager', () => {
       expect(tts.preferences).toEqual({ 'it-IT': 'Google italiano' });
     });
 
-    it('salva preferenze in chrome.storage', async () => {
+    it('salva preferenze in browser.storage', async () => {
       tts.preferences = { 'en-US': 'Google English' };
       await tts.savePreferences();
-      expect(chrome.storage.local.set).toHaveBeenCalledWith({
+      expect(browser.storage.local.set).toHaveBeenCalledWith({
         ttsPreferences: { 'en-US': 'Google English' },
       });
     });
@@ -115,7 +153,7 @@ describe('TTSManager', () => {
       tts.preferences = {};
       await tts.setPreferredVoice('it-IT', 'Google italiano');
       expect(tts.preferences['it-IT']).toBe('Google italiano');
-      expect(chrome.storage.local.set).toHaveBeenCalled();
+      expect(browser.storage.local.set).toHaveBeenCalled();
     });
   });
 
@@ -136,16 +174,16 @@ describe('TTSManager', () => {
   describe('getVoicesForLanguage', () => {
     it('filtra voci per lingua', () => {
       tts.availableVoices = [
-        { voiceName: 'V1', lang: 'it-IT' },
-        { voiceName: 'V2', lang: 'en-US' },
-        { voiceName: 'V3', lang: 'it-CH' },
+        { name: 'V1', lang: 'it-IT' },
+        { name: 'V2', lang: 'en-US' },
+        { name: 'V3', lang: 'it-CH' },
       ];
       const itVoices = tts.getVoicesForLanguage('it-IT');
       expect(itVoices).toHaveLength(2);
-      expect(itVoices.map((v) => v.voiceName)).toEqual(['V1', 'V3']);
+      expect(itVoices.map((v) => v.name)).toEqual(['V1', 'V3']);
     });
 
-    it('ritorna array vuoto se availableVoices è undefined', () => {
+    it('ritorna array vuoto se availableVoices e undefined', () => {
       tts.availableVoices = undefined;
       expect(tts.getVoicesForLanguage('it-IT')).toEqual([]);
     });
@@ -154,52 +192,45 @@ describe('TTSManager', () => {
   // ─── speak ────────────────────────────────────────
 
   describe('speak', () => {
-    it('chiama chrome.tts.speak con testo pulito', () => {
+    it('chiama speechSynthesis.speak con SpeechSynthesisUtterance', () => {
       tts.speak('Ciao mondo');
-      expect(chrome.tts.speak).toHaveBeenCalledWith(
-        'Ciao mondo',
-        expect.objectContaining({ lang: 'it-IT', rate: 1.0 }),
-        expect.any(Function),
-      );
+      expect(mockSynth.speak).toHaveBeenCalledTimes(1);
+      const utterance = mockSynth.speak.mock.calls[0][0];
+      expect(utterance).toBeInstanceOf(MockUtterance);
+      expect(utterance.text).toBe('Ciao mondo');
+      expect(utterance.lang).toBe('it-IT');
       expect(tts.isSpeaking).toBe(true);
     });
 
     it('ignora testo vuoto', () => {
       tts.speak('');
-      expect(chrome.tts.speak).not.toHaveBeenCalled();
+      expect(mockSynth.speak).not.toHaveBeenCalled();
     });
 
     it('ignora testo solo spazi', () => {
       tts.speak('   ');
-      expect(chrome.tts.speak).not.toHaveBeenCalled();
+      expect(mockSynth.speak).not.toHaveBeenCalled();
     });
 
     it('usa lingua custom da options', () => {
       tts.speak('Hello', { lang: 'en-US' });
-      expect(chrome.tts.speak).toHaveBeenCalledWith(
-        'Hello',
-        expect.objectContaining({ lang: 'en-US' }),
-        expect.any(Function),
-      );
+      const utterance = mockSynth.speak.mock.calls[0][0];
+      expect(utterance.lang).toBe('en-US');
     });
 
     it('usa voce specificata nelle options', () => {
+      tts.availableVoices = [{ name: 'CustomVoice', lang: 'it-IT' }];
       tts.speak('Test', { voiceName: 'CustomVoice' });
-      expect(chrome.tts.speak).toHaveBeenCalledWith(
-        'Test',
-        expect.objectContaining({ voiceName: 'CustomVoice' }),
-        expect.any(Function),
-      );
+      const utterance = mockSynth.speak.mock.calls[0][0];
+      expect(utterance.voice).toEqual({ name: 'CustomVoice', lang: 'it-IT' });
     });
 
     it('usa voce preferita se non specificata', () => {
       tts.preferences = { 'it-IT': 'Google italiano' };
+      tts.availableVoices = [{ name: 'Google italiano', lang: 'it-IT' }];
       tts.speak('Test');
-      expect(chrome.tts.speak).toHaveBeenCalledWith(
-        'Test',
-        expect.objectContaining({ voiceName: 'Google italiano' }),
-        expect.any(Function),
-      );
+      const utterance = mockSynth.speak.mock.calls[0][0];
+      expect(utterance.voice).toEqual({ name: 'Google italiano', lang: 'it-IT' });
     });
 
     it('dispatcha evento tts:started', () => {
@@ -213,15 +244,7 @@ describe('TTSManager', () => {
     it('ferma lettura precedente prima di avviare nuova', () => {
       tts.isSpeaking = true;
       tts.speak('Nuovo testo');
-      expect(chrome.tts.stop).toHaveBeenCalled();
-    });
-
-    it('gestisce chrome.runtime.lastError nel callback', () => {
-      chrome.runtime.lastError = { message: 'TTS error' };
-      chrome.tts.speak.mockImplementation((_t, _o, cb) => cb());
-      tts.speak('Test');
-      // handleError viene invocato, isSpeaking torna false
-      expect(tts.isSpeaking).toBe(false);
+      expect(mockSynth.cancel).toHaveBeenCalled();
     });
   });
 
@@ -232,21 +255,21 @@ describe('TTSManager', () => {
       tts.isSpeaking = true;
       tts.isPaused = false;
       tts.pause();
-      expect(chrome.tts.pause).toHaveBeenCalled();
+      expect(mockSynth.pause).toHaveBeenCalled();
       expect(tts.isPaused).toBe(true);
     });
 
     it('non fa nulla se non sta parlando', () => {
       tts.isSpeaking = false;
       tts.pause();
-      expect(chrome.tts.pause).not.toHaveBeenCalled();
+      expect(mockSynth.pause).not.toHaveBeenCalled();
     });
 
-    it('non fa nulla se già in pausa', () => {
+    it('non fa nulla se gia in pausa', () => {
       tts.isSpeaking = true;
       tts.isPaused = true;
       tts.pause();
-      expect(chrome.tts.pause).not.toHaveBeenCalled();
+      expect(mockSynth.pause).not.toHaveBeenCalled();
     });
   });
 
@@ -257,7 +280,7 @@ describe('TTSManager', () => {
       tts.isSpeaking = true;
       tts.isPaused = true;
       tts.resume();
-      expect(chrome.tts.resume).toHaveBeenCalled();
+      expect(mockSynth.resume).toHaveBeenCalled();
       expect(tts.isPaused).toBe(false);
     });
 
@@ -265,7 +288,7 @@ describe('TTSManager', () => {
       tts.isSpeaking = true;
       tts.isPaused = false;
       tts.resume();
-      expect(chrome.tts.resume).not.toHaveBeenCalled();
+      expect(mockSynth.resume).not.toHaveBeenCalled();
     });
   });
 
@@ -277,7 +300,7 @@ describe('TTSManager', () => {
       tts.isPaused = true;
       tts.currentUtterance = { text: 'test' };
       tts.stop();
-      expect(chrome.tts.stop).toHaveBeenCalled();
+      expect(mockSynth.cancel).toHaveBeenCalled();
       expect(tts.isSpeaking).toBe(false);
       expect(tts.isPaused).toBe(false);
       expect(tts.currentUtterance).toBeNull();
@@ -295,7 +318,7 @@ describe('TTSManager', () => {
     it('non fa nulla se non sta parlando', () => {
       tts.isSpeaking = false;
       tts.stop();
-      expect(chrome.tts.stop).not.toHaveBeenCalled();
+      expect(mockSynth.cancel).not.toHaveBeenCalled();
     });
   });
 
@@ -310,7 +333,7 @@ describe('TTSManager', () => {
       expect(tts.cleanText('Hello&nbsp;World')).toBe('Hello World');
     });
 
-    it('rimuove entità HTML', () => {
+    it('rimuove entita HTML', () => {
       expect(tts.cleanText('A &amp; B &lt; C')).toBe('A B C');
     });
 
@@ -324,28 +347,6 @@ describe('TTSManager', () => {
 
     it('fa trim del risultato', () => {
       expect(tts.cleanText('  spazi  ')).toBe('spazi');
-    });
-  });
-
-  // ─── handleTTSEvent ───────────────────────────────
-
-  describe('handleTTSEvent', () => {
-    it('end: resetta stato e dispatcha tts:ended', () => {
-      const handler = vi.fn();
-      window.addEventListener('tts:ended', handler);
-      tts.isSpeaking = true;
-      tts.isPaused = true;
-      tts.handleTTSEvent({ type: 'end' });
-      expect(tts.isSpeaking).toBe(false);
-      expect(tts.isPaused).toBe(false);
-      expect(handler).toHaveBeenCalled();
-      window.removeEventListener('tts:ended', handler);
-    });
-
-    it('error: invoca handleError', () => {
-      const spy = vi.spyOn(tts, 'handleError');
-      tts.handleTTSEvent({ type: 'error', message: 'fail' });
-      expect(spy).toHaveBeenCalled();
     });
   });
 
@@ -390,17 +391,18 @@ describe('TTSManager', () => {
       tts.updateConfig({ rate: 1.5, lang: 'en-US' });
       expect(tts.config.rate).toBe(1.5);
       expect(tts.config.lang).toBe('en-US');
-      expect(tts.config.pitch).toBe(1.0); // non modificato
+      expect(tts.config.pitch).toBe(1.0);
     });
   });
 
   // ─── getAvailableVoices ───────────────────────────
 
   describe('getAvailableVoices', () => {
-    it('ritorna voci da chrome.tts.getVoices', async () => {
+    it('ritorna voci gia caricate', async () => {
+      tts.availableVoices = [{ name: 'V1', lang: 'it-IT' }];
       const voices = await tts.getAvailableVoices();
-      expect(voices).toHaveLength(2);
-      expect(voices[0].voiceName).toBe('Google italiano');
+      expect(voices).toHaveLength(1);
+      expect(voices[0].name).toBe('V1');
     });
   });
 });

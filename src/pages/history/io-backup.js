@@ -70,7 +70,7 @@ export async function downloadHistory() {
 
     // Ottieni anche le impostazioni e statistiche
     const settings = await StorageManager.getSettings();
-    const statsResult = await chrome.storage.local.get(['stats']);
+    const statsResult = await browser.storage.local.get(['stats']);
     const stats = statsResult.stats || {};
 
     // Crea oggetto backup completo

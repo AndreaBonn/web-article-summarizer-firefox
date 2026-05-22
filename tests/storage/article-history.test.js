@@ -4,7 +4,7 @@ vi.spyOn(console, 'debug').mockImplementation(() => {});
 vi.spyOn(console, 'info').mockImplementation(() => {});
 
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -52,7 +52,7 @@ describe('ArticleHistory', () => {
         mockArticle,
         'Summary text',
         ['point1'],
-        mockMetadata
+        mockMetadata,
       );
 
       expect(typeof id).toBe('string');
@@ -84,7 +84,7 @@ describe('ArticleHistory', () => {
         { ...mockArticle, title: 'Second' },
         'Summary 2',
         [],
-        mockMetadata
+        mockMetadata,
       );
 
       const history = await ArticleHistory.getHistory();
@@ -147,13 +147,13 @@ describe('ArticleHistory', () => {
         { ...mockArticle, title: 'React Hooks Guide' },
         'Learn about hooks',
         [{ title: 'useState', description: 'State management hook' }],
-        mockMetadata
+        mockMetadata,
       );
       await ArticleHistory.saveSummary(
         { ...mockArticle, title: 'Python ML Tutorial', url: 'https://example.com/python' },
         'Machine learning basics',
         [],
-        mockMetadata
+        mockMetadata,
       );
     });
 

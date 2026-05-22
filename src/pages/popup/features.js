@@ -72,7 +72,7 @@ export async function askQuestion() {
     settings.outputLanguage = state.selectedLanguage;
 
     // Delegate to service worker (API key stays in background)
-    const response = await chrome.runtime.sendMessage({
+    const response = await browser.runtime.sendMessage({
       action: 'askQuestion',
       question: cleanQuestion,
       article: state.currentArticle,
@@ -194,7 +194,7 @@ export async function translateArticle() {
       }
 
       // Delegate to service worker (API key stays in background)
-      const translateResponse = await chrome.runtime.sendMessage({
+      const translateResponse = await browser.runtime.sendMessage({
         action: 'translateArticle',
         article: state.currentArticle,
         targetLanguage,

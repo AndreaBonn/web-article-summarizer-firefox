@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     eventCleanup.addEventListener(elements.themeToggleBtn, 'click', () => ThemeManager.toggle());
     eventCleanup.addEventListener(elements.settingsBtn, 'click', async () => {
       try {
-        await chrome.runtime.openOptionsPage();
+        await browser.runtime.openOptionsPage();
       } catch (error) {
         Logger.error('Impossibile aprire le impostazioni:', error);
         showError('Impossibile aprire le impostazioni. Riprova.');
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     eventCleanup.addEventListener(elements.historyBtn, 'click', async () => {
       try {
-        await chrome.tabs.create({ url: 'src/pages/history/history.html' });
+        await browser.tabs.create({ url: 'src/pages/history/history.html' });
       } catch (error) {
         Logger.error('Impossibile aprire la cronologia:', error);
         showError('Impossibile aprire la cronologia. Riprova.');
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     eventCleanup.addEventListener(elements.multiAnalysisBtn, 'click', async () => {
       try {
-        await chrome.tabs.create({ url: 'src/pages/multi-analysis/multi-analysis.html' });
+        await browser.tabs.create({ url: 'src/pages/multi-analysis/multi-analysis.html' });
       } catch (error) {
         Logger.error('Impossibile aprire multi-analisi:', error);
         showError('Impossibile aprire multi-analisi. Riprova.');
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     eventCleanup.addEventListener(elements.pdfAnalysisBtn, 'click', async () => {
       try {
-        await chrome.tabs.create({ url: 'src/pages/pdf-analysis/pdf-analysis.html' });
+        await browser.tabs.create({ url: 'src/pages/pdf-analysis/pdf-analysis.html' });
       } catch (error) {
         Logger.error('Impossibile aprire analisi PDF:', error);
         showError('Impossibile aprire analisi PDF. Riprova.');
@@ -241,9 +241,9 @@ async function openReadingMode() {
     },
   };
 
-  // Save to chrome.storage.local (persists across tabs)
+  // Save to browser.storage.local (persists across tabs)
   try {
-    await chrome.storage.local.set({ readingModeData: readingData });
+    await browser.storage.local.set({ readingModeData: readingData });
   } catch (error) {
     Logger.error('Errore apertura reading mode:', error);
     const isQuotaError = error.message?.includes('QUOTA') || error.message?.includes('quota');
@@ -256,5 +256,5 @@ async function openReadingMode() {
   }
 
   // Open reading mode in new tab
-  await chrome.tabs.create({ url: 'src/pages/reading-mode/reading-mode.html' });
+  await browser.tabs.create({ url: 'src/pages/reading-mode/reading-mode.html' });
 }

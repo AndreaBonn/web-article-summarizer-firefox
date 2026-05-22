@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock Chrome APIs
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn(),
@@ -21,54 +21,54 @@ const { EmailManager } = await import('@utils/export/email-manager.js');
 describe('EmailManager.saveEmail()', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    chrome.storage.local.set.mockResolvedValue(undefined);
+    browser.storage.local.set.mockResolvedValue(undefined);
   });
 
   it('salva nuova email in lista vuota', async () => {
-    chrome.storage.local.get.mockResolvedValue({ savedEmails: [] });
+    browser.storage.local.get.mockResolvedValue({ savedEmails: [] });
     await EmailManager.saveEmail('test@example.com');
 
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({
+    expect(browser.storage.local.set).toHaveBeenCalledWith({
       savedEmails: ['test@example.com'],
     });
   });
 
   it('aggiunge email all inizio della lista', async () => {
-    chrome.storage.local.get.mockResolvedValue({
+    browser.storage.local.get.mockResolvedValue({
       savedEmails: ['old@example.com'],
     });
     await EmailManager.saveEmail('new@example.com');
 
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({
+    expect(browser.storage.local.set).toHaveBeenCalledWith({
       savedEmails: ['new@example.com', 'old@example.com'],
     });
   });
 
   it('non aggiunge email duplicata', async () => {
-    chrome.storage.local.get.mockResolvedValue({
+    browser.storage.local.get.mockResolvedValue({
       savedEmails: ['dup@example.com'],
     });
     await EmailManager.saveEmail('dup@example.com');
 
-    expect(chrome.storage.local.set).not.toHaveBeenCalled();
+    expect(browser.storage.local.set).not.toHaveBeenCalled();
   });
 
   it('mantiene massimo 10 email', async () => {
     const existing = Array.from({ length: 10 }, (_, i) => `e${i}@test.com`);
-    chrome.storage.local.get.mockResolvedValue({ savedEmails: existing });
+    browser.storage.local.get.mockResolvedValue({ savedEmails: existing });
     await EmailManager.saveEmail('new@test.com');
 
-    const saved = chrome.storage.local.set.mock.calls[0][0].savedEmails;
+    const saved = browser.storage.local.set.mock.calls[0][0].savedEmails;
     expect(saved).toHaveLength(10);
     expect(saved[0]).toBe('new@test.com');
     expect(saved[9]).toBe('e8@test.com');
   });
 
   it('gestisce storage vuoto (savedEmails undefined)', async () => {
-    chrome.storage.local.get.mockResolvedValue({});
+    browser.storage.local.get.mockResolvedValue({});
     await EmailManager.saveEmail('first@test.com');
 
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({
+    expect(browser.storage.local.set).toHaveBeenCalledWith({
       savedEmails: ['first@test.com'],
     });
   });
@@ -79,7 +79,7 @@ describe('EmailManager.saveEmail()', () => {
 // ---------------------------------------------------------------------------
 describe('EmailManager.getSavedEmails()', () => {
   it('ritorna lista email salvate', async () => {
-    chrome.storage.local.get.mockResolvedValue({
+    browser.storage.local.get.mockResolvedValue({
       savedEmails: ['a@b.com', 'c@d.com'],
     });
     const result = await EmailManager.getSavedEmails();
@@ -87,7 +87,7 @@ describe('EmailManager.getSavedEmails()', () => {
   });
 
   it('ritorna array vuoto se nessuna email salvata', async () => {
-    chrome.storage.local.get.mockResolvedValue({});
+    browser.storage.local.get.mockResolvedValue({});
     const result = await EmailManager.getSavedEmails();
     expect(result).toEqual([]);
   });
@@ -98,36 +98,36 @@ describe('EmailManager.getSavedEmails()', () => {
 // ---------------------------------------------------------------------------
 describe('EmailManager.removeEmail()', () => {
   beforeEach(() => {
-    chrome.storage.local.set.mockResolvedValue(undefined);
+    browser.storage.local.set.mockResolvedValue(undefined);
   });
 
   it('rimuove email specifica dalla lista', async () => {
-    chrome.storage.local.get.mockResolvedValue({
+    browser.storage.local.get.mockResolvedValue({
       savedEmails: ['a@b.com', 'c@d.com', 'e@f.com'],
     });
     await EmailManager.removeEmail('c@d.com');
 
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({
+    expect(browser.storage.local.set).toHaveBeenCalledWith({
       savedEmails: ['a@b.com', 'e@f.com'],
     });
   });
 
   it('non modifica lista se email non presente', async () => {
-    chrome.storage.local.get.mockResolvedValue({
+    browser.storage.local.get.mockResolvedValue({
       savedEmails: ['a@b.com'],
     });
     await EmailManager.removeEmail('nonexist@b.com');
 
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({
+    expect(browser.storage.local.set).toHaveBeenCalledWith({
       savedEmails: ['a@b.com'],
     });
   });
 
   it('gestisce lista vuota', async () => {
-    chrome.storage.local.get.mockResolvedValue({});
+    browser.storage.local.get.mockResolvedValue({});
     await EmailManager.removeEmail('a@b.com');
 
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({
+    expect(browser.storage.local.set).toHaveBeenCalledWith({
       savedEmails: [],
     });
   });
@@ -215,12 +215,7 @@ describe('EmailManager.formatEmailContent()', () => {
   });
 
   it('include traduzione se fornita', () => {
-    const { body } = EmailManager.formatEmailContent(
-      article,
-      'sum',
-      [],
-      'The translation here.',
-    );
+    const { body } = EmailManager.formatEmailContent(article, 'sum', [], 'The translation here.');
     expect(body).toContain('TRADUZIONE');
     expect(body).toContain('The translation here.');
   });
@@ -263,8 +258,8 @@ describe('EmailManager.openEmailClient()', () => {
   it('crea tab con link mailto corretto', () => {
     EmailManager.openEmailClient('user@test.com', 'Subject', 'Body');
 
-    expect(chrome.tabs.create).toHaveBeenCalledTimes(1);
-    const { url, active } = chrome.tabs.create.mock.calls[0][0];
+    expect(browser.tabs.create).toHaveBeenCalledTimes(1);
+    const { url, active } = browser.tabs.create.mock.calls[0][0];
     expect(url).toContain('mailto:');
     expect(url).toContain('user%40test.com');
     expect(active).toBe(false);
@@ -273,7 +268,7 @@ describe('EmailManager.openEmailClient()', () => {
   it('codifica subject e body nel mailto', () => {
     EmailManager.openEmailClient('u@t.com', 'Spazi & simboli', 'Body con\nnewline');
 
-    const { url } = chrome.tabs.create.mock.calls[0][0];
+    const { url } = browser.tabs.create.mock.calls[0][0];
     expect(url).toContain('subject=');
     expect(url).toContain('body=');
   });
@@ -289,7 +284,7 @@ describe('EmailManager.openEmailClient()', () => {
     // 'user\t@\nevil.com' diventa 'user@evil.com' che è valida, quindi non lancia
     // Testiamo che l'email risultante sia effettivamente pulita
     EmailManager.openEmailClient('user\t@\nevil.com', 'Sub', 'Body');
-    const { url } = chrome.tabs.create.mock.calls[0][0];
+    const { url } = browser.tabs.create.mock.calls[0][0];
     // L'email sanitizzata non contiene tab/newline
     expect(url).not.toContain('%09'); // tab encoded
     expect(url).not.toContain('%0A'); // newline encoded

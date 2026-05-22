@@ -51,7 +51,7 @@ export async function askQuestion() {
 
     if (state.currentData.isPDF) {
       // Delegate to service worker (API key stays in background)
-      const pdfResponse = await chrome.runtime.sendMessage({
+      const pdfResponse = await browser.runtime.sendMessage({
         action: 'askPDFQuestion',
         question,
         extractedText: state.currentData.extractedText,
@@ -87,7 +87,7 @@ export async function askQuestion() {
       }
 
       // Delegate to service worker (API key stays in background)
-      const qaResponse = await chrome.runtime.sendMessage({
+      const qaResponse = await browser.runtime.sendMessage({
         action: 'askQuestion',
         question,
         article: articleWithParagraphs,

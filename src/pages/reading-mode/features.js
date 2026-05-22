@@ -42,7 +42,7 @@ export async function translateArticle() {
 
     if (state.currentData.isPDF) {
       // Delegate to service worker (API key stays in background)
-      const pdfResponse = await chrome.runtime.sendMessage({
+      const pdfResponse = await browser.runtime.sendMessage({
         action: 'translatePDF',
         text: extractedText,
         targetLanguage,
@@ -64,7 +64,7 @@ export async function translateArticle() {
         const choice = await showSameLanguageModal(targetLanguage);
 
         if (choice === 'translate') {
-          const forceResponse = await chrome.runtime.sendMessage({
+          const forceResponse = await browser.runtime.sendMessage({
             action: 'translatePDF',
             text: state.currentData.extractedText,
             targetLanguage,
@@ -89,7 +89,7 @@ export async function translateArticle() {
       }
     } else {
       // For articles, delegate to service worker (API key stays in background)
-      const translateResponse = await chrome.runtime.sendMessage({
+      const translateResponse = await browser.runtime.sendMessage({
         action: 'translateArticle',
         article: state.currentData.article,
         targetLanguage,
@@ -174,7 +174,7 @@ export async function extractCitations() {
     if (state.currentData.isPDF) {
       // Delegate to service worker (API key stays in background)
       const filename = state.currentData.filename || state.currentData.pdf?.name || 'PDF';
-      const pdfResponse = await chrome.runtime.sendMessage({
+      const pdfResponse = await browser.runtime.sendMessage({
         action: 'extractPDFCitations',
         text: extractedText,
         filename,
@@ -191,7 +191,7 @@ export async function extractCitations() {
       citations = pdfResponse.result;
     } else {
       // For articles, call background script
-      const response = await chrome.runtime.sendMessage({
+      const response = await browser.runtime.sendMessage({
         action: 'extractCitations',
         article: state.currentData.article,
         provider: provider,
@@ -349,7 +349,7 @@ export async function updateDataInStorage() {
       Logger.info('Dati PDF aggiornati nella cronologia');
     } else {
       // For articles, update in article history
-      const result = await chrome.storage.local.get(['summaryHistory']);
+      const result = await browser.storage.local.get(['summaryHistory']);
       const history = result.summaryHistory || [];
 
       // Find existing entry by URL
@@ -367,7 +367,7 @@ export async function updateDataInStorage() {
           timestamp: Date.now(),
         };
 
-        await chrome.storage.local.set({ summaryHistory: history });
+        await browser.storage.local.set({ summaryHistory: history });
         Logger.info('Dati aggiornati nella cronologia');
       } else {
         Logger.warn('⚠️ Articolo non trovato nella cronologia');

@@ -20,7 +20,7 @@ export async function analyzeArticle() {
 
   try {
     // Get current tab
-    const [tab] = await chrome.tabs.query({
+    const [tab] = await browser.tabs.query({
       active: true,
       currentWindow: true,
     });
@@ -33,7 +33,7 @@ export async function analyzeArticle() {
     // Extract article
     let response;
     try {
-      response = await chrome.tabs.sendMessage(tab.id, {
+      response = await browser.tabs.sendMessage(tab.id, {
         action: 'extractArticle',
       });
     } catch (msgError) {
@@ -164,7 +164,7 @@ export async function generateSummary() {
     state.progressTracker.setStep('generate');
     settings.contentType = finalContentType;
 
-    const response = await chrome.runtime.sendMessage({
+    const response = await browser.runtime.sendMessage({
       action: 'generateSummary',
       article: state.currentArticle,
       provider: provider,
@@ -237,11 +237,11 @@ export async function displayResults() {
     el.addEventListener('click', async () => {
       try {
         const paragraph = el.dataset.paragraph;
-        const [tab] = await chrome.tabs.query({
+        const [tab] = await browser.tabs.query({
           active: true,
           currentWindow: true,
         });
-        await chrome.tabs.sendMessage(tab.id, {
+        await browser.tabs.sendMessage(tab.id, {
           action: 'highlightParagraph',
           paragraphNumber: paragraph,
         });

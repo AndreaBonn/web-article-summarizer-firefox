@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock chrome.storage.local
+// Mock browser.storage.local
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {

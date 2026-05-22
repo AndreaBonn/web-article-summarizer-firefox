@@ -11,7 +11,7 @@ vi.mock('@utils/ai/api-orchestrator.js', () => ({
 const store = {};
 beforeEach(() => {
   Object.keys(store).forEach((k) => delete store[k]);
-  global.chrome = {
+  global.browser = {
     storage: {
       local: {
         get: vi.fn((keys) => {
@@ -135,9 +135,7 @@ describe('FallbackStrategy', () => {
 
     it('test_callWithFallback_allProvidersFail_throwsWithLastError', async () => {
       // Arrange
-      const callWithRetry = vi
-        .fn()
-        .mockRejectedValue(new Error('All providers down'));
+      const callWithRetry = vi.fn().mockRejectedValue(new Error('All providers down'));
       const logFallback = vi.fn().mockResolvedValue(undefined);
       const params = {
         primaryProvider: 'groq',
@@ -148,9 +146,7 @@ describe('FallbackStrategy', () => {
       };
 
       // Act & Assert
-      await expect(
-        strategy.callWithFallback(params, callWithRetry, logFallback),
-      ).rejects.toThrow();
+      await expect(strategy.callWithFallback(params, callWithRetry, logFallback)).rejects.toThrow();
     });
 
     it('test_callWithFallback_onFallbackCallback_calledOnFallback', async () => {

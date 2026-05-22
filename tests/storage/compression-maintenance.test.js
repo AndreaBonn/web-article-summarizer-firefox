@@ -5,7 +5,7 @@ vi.spyOn(console, 'info').mockImplementation(() => {});
 vi.spyOn(console, 'error').mockImplementation(() => {});
 
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -80,7 +80,7 @@ describe('CompressionMaintenance', () => {
     });
 
     it('test_compressOldHistory_storageError_returnsZero', async () => {
-      chrome.storage.local.get.mockRejectedValueOnce(new Error('fail'));
+      browser.storage.local.get.mockRejectedValueOnce(new Error('fail'));
       const count = await maintenance.compressOldHistory(30);
       expect(count).toBe(0);
     });
@@ -130,7 +130,9 @@ describe('CompressionMaintenance', () => {
       // Mock lazy import of CacheManager
       vi.doMock('@utils/storage/cache-manager.js', () => ({
         CacheManager: class {
-          cleanLRU() { return Promise.resolve(0); }
+          cleanLRU() {
+            return Promise.resolve(0);
+          }
         },
       }));
 

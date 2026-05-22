@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Firefox extension build artifacts
+web-ext-artifacts/
+
 # OS files
 .DS_Store
 Thumbs.db

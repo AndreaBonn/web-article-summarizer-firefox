@@ -1,14 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock chrome APIs
-global.chrome = {
-  tts: {
-    speak: vi.fn((_t, _o, cb) => cb && cb()),
-    pause: vi.fn(),
-    resume: vi.fn(),
-    stop: vi.fn(),
-    getVoices: vi.fn((cb) => cb([{ voiceName: 'V1', lang: 'it-IT' }])),
-  },
+// Mock browser APIs
+global.browser = {
   storage: {
     local: {
       get: vi.fn(() => Promise.resolve({})),
@@ -17,6 +10,36 @@ global.chrome = {
   },
   runtime: { lastError: null },
 };
+
+// Mock Web Speech API
+class MockUtterance {
+  constructor(text) {
+    this.text = text;
+    this.lang = '';
+    this.rate = 1;
+    this.pitch = 1;
+    this.volume = 1;
+    this.voice = null;
+    this.onstart = null;
+    this.onend = null;
+    this.onerror = null;
+    this.onpause = null;
+    this.onresume = null;
+  }
+}
+global.SpeechSynthesisUtterance = MockUtterance;
+
+Object.defineProperty(window, 'speechSynthesis', {
+  value: {
+    speak: vi.fn(),
+    pause: vi.fn(),
+    resume: vi.fn(),
+    cancel: vi.fn(),
+    getVoices: vi.fn(() => [{ name: 'V1', lang: 'it-IT' }]),
+    addEventListener: vi.fn(),
+  },
+  writable: true,
+});
 
 // Mock SpeechRecognition
 class MockSpeechRecognition {
@@ -87,7 +110,7 @@ function createMockButtons() {
 describe('voice-page-helper', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    chrome.runtime.lastError = null;
+    browser.runtime.lastError = null;
   });
 
   // ─── initVoiceForPage ─────────────────────────────

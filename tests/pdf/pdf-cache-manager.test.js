@@ -10,9 +10,9 @@ vi.mock('@utils/core/logger.js', () => ({
   },
 }));
 
-// Mock chrome.storage.local
+// Mock browser.storage.local
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -142,7 +142,7 @@ describe('PDFCacheManager', () => {
       expect(entry.apiProvider).toBe('claude');
 
       // Verifica che sia salvato in storage
-      expect(chrome.storage.local.set).toHaveBeenCalled();
+      expect(browser.storage.local.set).toHaveBeenCalled();
     });
 
     it('calcola hash se non fornito', async () => {
@@ -177,10 +177,16 @@ describe('PDFCacheManager', () => {
         arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(10)),
       };
 
-      await cache.saveAnalysis(file, 'text', { summary: 'new', keyPoints: [] }, 'claude', 'new_hash');
+      await cache.saveAnalysis(
+        file,
+        'text',
+        { summary: 'new', keyPoints: [] },
+        'claude',
+        'new_hash',
+      );
 
       // Verifica che il set sia stato chiamato con max 50 entry
-      const savedData = chrome.storage.local.set.mock.calls[0][0];
+      const savedData = browser.storage.local.set.mock.calls[0][0];
       expect(savedData.pdf_analysis_history).toHaveLength(50);
       expect(savedData.pdf_analysis_history[0].filename).toBe('new.pdf');
     });
@@ -201,7 +207,7 @@ describe('PDFCacheManager', () => {
     });
 
     it('ritorna array vuoto su errore', async () => {
-      chrome.storage.local.get.mockRejectedValueOnce(new Error('fail'));
+      browser.storage.local.get.mockRejectedValueOnce(new Error('fail'));
       const history = await cache.getHistory();
       expect(history).toEqual([]);
     });
@@ -210,15 +216,15 @@ describe('PDFCacheManager', () => {
   // ─── saveHistory ──────────────────────────────────
 
   describe('saveHistory', () => {
-    it('salva array in chrome.storage', async () => {
+    it('salva array in browser.storage', async () => {
       await cache.saveHistory([{ id: 'pdf_1' }]);
-      expect(chrome.storage.local.set).toHaveBeenCalledWith({
+      expect(browser.storage.local.set).toHaveBeenCalledWith({
         pdf_analysis_history: [{ id: 'pdf_1' }],
       });
     });
 
     it('propaga errore se storage fallisce', async () => {
-      chrome.storage.local.set.mockRejectedValueOnce(new Error('quota exceeded'));
+      browser.storage.local.set.mockRejectedValueOnce(new Error('quota exceeded'));
       await expect(cache.saveHistory([])).rejects.toThrow('quota exceeded');
     });
   });
@@ -234,7 +240,7 @@ describe('PDFCacheManager', () => {
 
       await cache.deleteEntry('pdf_1');
 
-      const savedData = chrome.storage.local.set.mock.calls[0][0];
+      const savedData = browser.storage.local.set.mock.calls[0][0];
       expect(savedData.pdf_analysis_history).toHaveLength(1);
       expect(savedData.pdf_analysis_history[0].id).toBe('pdf_2');
     });
@@ -242,7 +248,7 @@ describe('PDFCacheManager', () => {
     it('non modifica nulla se id non trovato', async () => {
       store.pdf_analysis_history = [{ id: 'pdf_1' }];
       await cache.deleteEntry('nonexistent');
-      const savedData = chrome.storage.local.set.mock.calls[0][0];
+      const savedData = browser.storage.local.set.mock.calls[0][0];
       expect(savedData.pdf_analysis_history).toHaveLength(1);
     });
   });
@@ -262,7 +268,7 @@ describe('PDFCacheManager', () => {
 
       await cache.cleanOldEntries(30);
 
-      const savedData = chrome.storage.local.set.mock.calls[0][0];
+      const savedData = browser.storage.local.set.mock.calls[0][0];
       expect(savedData.pdf_analysis_history).toHaveLength(1);
       expect(savedData.pdf_analysis_history[0].id).toBe('pdf_new');
     });
@@ -272,25 +278,23 @@ describe('PDFCacheManager', () => {
       store.pdf_analysis_history = [{ id: 'pdf_1', timestamp: now }];
 
       await cache.cleanOldEntries(30);
-      expect(chrome.storage.local.set).not.toHaveBeenCalled();
+      expect(browser.storage.local.set).not.toHaveBeenCalled();
     });
 
     it('accetta daysToKeep personalizzato', async () => {
       const now = Date.now();
       const fiveDaysAgo = now - 5 * 24 * 60 * 60 * 1000;
 
-      store.pdf_analysis_history = [
-        { id: 'pdf_1', timestamp: fiveDaysAgo },
-      ];
+      store.pdf_analysis_history = [{ id: 'pdf_1', timestamp: fiveDaysAgo }];
 
       await cache.cleanOldEntries(3);
 
-      const savedData = chrome.storage.local.set.mock.calls[0][0];
+      const savedData = browser.storage.local.set.mock.calls[0][0];
       expect(savedData.pdf_analysis_history).toHaveLength(0);
     });
 
     it('non crasha su errore', async () => {
-      chrome.storage.local.get.mockRejectedValueOnce(new Error('fail'));
+      browser.storage.local.get.mockRejectedValueOnce(new Error('fail'));
       await expect(cache.cleanOldEntries()).resolves.toBeUndefined();
     });
   });
@@ -310,7 +314,7 @@ describe('PDFCacheManager', () => {
 
     it('ritorna null su errore di getBytesInUse', async () => {
       store.pdf_analysis_history = [{ id: 'pdf_1' }];
-      chrome.storage.local.getBytesInUse.mockRejectedValueOnce(new Error('fail'));
+      browser.storage.local.getBytesInUse.mockRejectedValueOnce(new Error('fail'));
       const stats = await cache.getStorageStats();
       expect(stats).toBeNull();
     });

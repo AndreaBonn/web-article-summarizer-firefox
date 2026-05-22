@@ -1,4 +1,4 @@
-// Compression Storage - Salvataggio/caricamento dati compressi in chrome.storage e IndexedDB
+// Compression Storage - Salvataggio/caricamento dati compressi in browser.storage e IndexedDB
 import { Logger } from '../core/logger.js';
 import { CompressionCore } from './compression-core.js';
 
@@ -20,8 +20,8 @@ export class CompressionStorage extends CompressionCore {
         // Usa IndexedDB per dati grandi
         await this.saveToIndexedDB(key, entry);
 
-        // Salva riferimento in chrome.storage
-        await chrome.storage.local.set({
+        // Salva riferimento in browser.storage
+        await browser.storage.local.set({
           [`${key}_ref`]: {
             inIndexedDB: true,
             timestamp: Date.now(),
@@ -29,8 +29,8 @@ export class CompressionStorage extends CompressionCore {
           },
         });
       } else {
-        // Usa chrome.storage per dati piccoli
-        await chrome.storage.local.set({ [key]: entry });
+        // Usa browser.storage per dati piccoli
+        await browser.storage.local.set({ [key]: entry });
       }
 
       return {
@@ -38,7 +38,7 @@ export class CompressionStorage extends CompressionCore {
         compressed: compressed.compressed,
         originalSize: compressed.originalSize,
         compressedSize: compressed.compressedSize,
-        savedTo: useIndexedDB && compressed.originalSize > 50000 ? 'IndexedDB' : 'chrome.storage',
+        savedTo: useIndexedDB && compressed.originalSize > 50000 ? 'IndexedDB' : 'browser.storage',
       };
     } catch (error) {
       Logger.error('Errore nel salvare dati compressi:', error);
@@ -52,7 +52,7 @@ export class CompressionStorage extends CompressionCore {
   async loadCompressed(key) {
     try {
       // Controlla se è in IndexedDB
-      const refResult = await chrome.storage.local.get([`${key}_ref`]);
+      const refResult = await browser.storage.local.get([`${key}_ref`]);
       const ref = refResult[`${key}_ref`];
 
       let entry;
@@ -61,8 +61,8 @@ export class CompressionStorage extends CompressionCore {
         // Carica da IndexedDB
         entry = await this.loadFromIndexedDB(key);
       } else {
-        // Carica da chrome.storage
-        const result = await chrome.storage.local.get([key]);
+        // Carica da browser.storage
+        const result = await browser.storage.local.get([key]);
         entry = result[key];
       }
 

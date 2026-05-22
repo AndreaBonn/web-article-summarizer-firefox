@@ -4,11 +4,11 @@ vi.mock('@utils/core/logger.js', () => ({
   Logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-// Mock chrome.storage con serializzazione JSON reale e beforeEach reset
+// Mock browser.storage con serializzazione JSON reale e beforeEach reset
 const store = {};
 beforeEach(() => {
   Object.keys(store).forEach((k) => delete store[k]);
-  global.chrome = {
+  global.browser = {
     storage: {
       local: {
         get: vi.fn((keys) => {

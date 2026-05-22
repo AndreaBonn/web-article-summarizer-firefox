@@ -9,7 +9,7 @@ export class CacheInvalidation {
    */
   async invalidateByUrl(normalizedUrl, normalizeUrl) {
     try {
-      const result = await chrome.storage.local.get(['summaryCache']);
+      const result = await browser.storage.local.get(['summaryCache']);
       const cache = result.summaryCache || {};
 
       let invalidatedCount = 0;
@@ -22,7 +22,7 @@ export class CacheInvalidation {
       }
 
       if (invalidatedCount > 0) {
-        await chrome.storage.local.set({ summaryCache: cache });
+        await browser.storage.local.set({ summaryCache: cache });
       }
 
       return invalidatedCount;
@@ -40,7 +40,7 @@ export class CacheInvalidation {
    */
   async invalidateIfContentChanged(normalizedUrl, newContentHash, normalizeUrl) {
     try {
-      const result = await chrome.storage.local.get(['summaryCache']);
+      const result = await browser.storage.local.get(['summaryCache']);
       const cache = result.summaryCache || {};
 
       let invalidatedCount = 0;
@@ -55,7 +55,7 @@ export class CacheInvalidation {
       }
 
       if (invalidatedCount > 0) {
-        await chrome.storage.local.set({ summaryCache: cache });
+        await browser.storage.local.set({ summaryCache: cache });
       }
 
       return invalidatedCount;
@@ -70,7 +70,7 @@ export class CacheInvalidation {
    */
   async cleanExpired() {
     try {
-      const result = await chrome.storage.local.get(['summaryCache']);
+      const result = await browser.storage.local.get(['summaryCache']);
       const cache = result.summaryCache || {};
 
       const now = Date.now();
@@ -84,7 +84,7 @@ export class CacheInvalidation {
       }
 
       if (cleanedCount > 0) {
-        await chrome.storage.local.set({ summaryCache: cache });
+        await browser.storage.local.set({ summaryCache: cache });
       }
 
       return cleanedCount;
@@ -99,7 +99,7 @@ export class CacheInvalidation {
    */
   async cleanLRU(maxEntries = 100) {
     try {
-      const result = await chrome.storage.local.get(['summaryCache']);
+      const result = await browser.storage.local.get(['summaryCache']);
       const cache = result.summaryCache || {};
 
       const entries = Object.entries(cache);
@@ -118,7 +118,7 @@ export class CacheInvalidation {
         newCache[entries[i][0]] = entries[i][1];
       }
 
-      await chrome.storage.local.set({ summaryCache: newCache });
+      await browser.storage.local.set({ summaryCache: newCache });
 
       return toRemove;
     } catch (error) {

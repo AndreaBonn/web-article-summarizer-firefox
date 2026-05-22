@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock chrome.storage.local — simula serializzazione reale (JSON round-trip)
+// Mock browser.storage.local — simula serializzazione reale (JSON round-trip)
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {

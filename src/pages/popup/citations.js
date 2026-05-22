@@ -28,7 +28,7 @@ export async function extractCitations() {
     const provider = elements.providerSelect.value;
 
     // Invia richiesta al background script (come per i riassunti)
-    const response = await chrome.runtime.sendMessage({
+    const response = await browser.runtime.sendMessage({
       action: 'extractCitations',
       article: state.currentArticle,
       provider: provider,
@@ -251,10 +251,10 @@ async function copyCitationsData(citationsData) {
 
 async function highlightParagraph(paragraphNumber) {
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
 
     // Invia messaggio al content script per evidenziare il paragrafo
-    await chrome.tabs.sendMessage(tab.id, {
+    await browser.tabs.sendMessage(tab.id, {
       action: 'highlightParagraph',
       paragraphNumber: paragraphNumber,
     });
@@ -270,12 +270,12 @@ async function highlightParagraph(paragraphNumber) {
 
 async function highlightCitationInArticle(citationText) {
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
 
     Logger.debug('🔍 Ricerca citazione nella pagina:', citationText.substring(0, 50) + '...');
 
     // Invia messaggio al content script per evidenziare il testo
-    const response = await chrome.tabs.sendMessage(tab.id, {
+    const response = await browser.tabs.sendMessage(tab.id, {
       action: 'highlightText',
       text: citationText,
     });

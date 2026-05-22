@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock Chrome APIs
-global.chrome = {
+global.browser = {
   storage: { local: { get: vi.fn(), set: vi.fn() } },
   runtime: { id: 'test-id' },
 };

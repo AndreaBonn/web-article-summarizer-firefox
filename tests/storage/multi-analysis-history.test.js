@@ -4,7 +4,7 @@ vi.spyOn(console, 'debug').mockImplementation(() => {});
 vi.spyOn(console, 'info').mockImplementation(() => {});
 
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {

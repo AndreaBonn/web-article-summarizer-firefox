@@ -2,7 +2,7 @@
 export class EmailManager {
   // Salva una nuova email nella lista
   static async saveEmail(email) {
-    const result = await chrome.storage.local.get(['savedEmails']);
+    const result = await browser.storage.local.get(['savedEmails']);
     let emails = result.savedEmails || [];
 
     // Aggiungi solo se non esiste già
@@ -14,22 +14,22 @@ export class EmailManager {
         emails = emails.slice(0, 10);
       }
 
-      await chrome.storage.local.set({ savedEmails: emails });
+      await browser.storage.local.set({ savedEmails: emails });
     }
   }
 
   // Ottieni tutte le email salvate
   static async getSavedEmails() {
-    const result = await chrome.storage.local.get(['savedEmails']);
+    const result = await browser.storage.local.get(['savedEmails']);
     return result.savedEmails || [];
   }
 
   // Rimuovi un'email dalla lista
   static async removeEmail(email) {
-    const result = await chrome.storage.local.get(['savedEmails']);
+    const result = await browser.storage.local.get(['savedEmails']);
     let emails = result.savedEmails || [];
     emails = emails.filter((e) => e !== email);
-    await chrome.storage.local.set({ savedEmails: emails });
+    await browser.storage.local.set({ savedEmails: emails });
   }
 
   // Valida formato email
@@ -121,6 +121,6 @@ export class EmailManager {
     const encodedBody = encodeURIComponent(body);
     const mailtoLink = `mailto:${encodeURIComponent(cleanEmail)}?subject=${encodedSubject}&body=${encodedBody}`;
 
-    chrome.tabs.create({ url: mailtoLink, active: false });
+    browser.tabs.create({ url: mailtoLink, active: false });
   }
 }

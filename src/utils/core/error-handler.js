@@ -105,7 +105,7 @@ export class ErrorHandler {
    */
   static async logError(error, context = '') {
     try {
-      const result = await chrome.storage.local.get(['errorLogs']);
+      const result = await browser.storage.local.get(['errorLogs']);
       const logs = result.errorLogs || [];
 
       const entry = {
@@ -142,7 +142,7 @@ export class ErrorHandler {
         logs.shift();
       }
 
-      await chrome.storage.local.set({ errorLogs: logs });
+      await browser.storage.local.set({ errorLogs: logs });
     } catch (logError) {
       Logger.error('Impossibile salvare log errore:', logError);
     }
@@ -153,7 +153,7 @@ export class ErrorHandler {
    */
   static async getErrorStats() {
     try {
-      const result = await chrome.storage.local.get(['errorLogs']);
+      const result = await browser.storage.local.get(['errorLogs']);
       const logs = result.errorLogs || [];
 
       const last24h = logs.filter((log) => Date.now() - log.timestamp < 24 * 60 * 60 * 1000);
@@ -199,7 +199,7 @@ export class ErrorHandler {
    */
   static async clearErrorLogs() {
     try {
-      await chrome.storage.local.remove(['errorLogs']);
+      await browser.storage.local.remove(['errorLogs']);
     } catch (error) {
       Logger.warn('Impossibile pulire log errori:', error);
     }

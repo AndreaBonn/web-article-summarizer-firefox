@@ -8,7 +8,7 @@ export class CompressionManager extends CompressionMaintenance {
    */
   async getStats() {
     try {
-      const result = await chrome.storage.local.get(['summaryHistory', 'summaryCache']);
+      const result = await browser.storage.local.get(['summaryHistory', 'summaryCache']);
       const history = result.summaryHistory || [];
       const cache = result.summaryCache || {};
 

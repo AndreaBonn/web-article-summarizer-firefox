@@ -17,7 +17,7 @@ vi.mock('@utils/i18n/i18n-extended.js', () => ({
 const store = {};
 beforeEach(() => {
   Object.keys(store).forEach((k) => delete store[k]);
-  global.chrome = {
+  global.browser = {
     storage: {
       local: {
         get: vi.fn((keys) => {

@@ -4,19 +4,19 @@
   "private": true,
   "license": "Apache-2.0",
   "author": "Andrea Bonacci (https://github.com/AndreaBonn)",
-  "description": "Chrome Extension to summarize web articles using AI (Groq, OpenAI, Claude, Gemini)",
+  "description": "Firefox Extension to summarize web articles using AI (Groq, OpenAI, Claude, Gemini)",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite build --watch",
     "build": "vite build",
-    "preview": "vite preview",
+    "start:firefox": "web-ext run --source-dir dist",
+    "build:xpi": "vite build && web-ext build --source-dir dist --artifacts-dir web-ext-artifacts",
     "lint": "eslint src/",
     "format": "prettier --write src/",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@crxjs/vite-plugin": "^2.4.0",
     "@eslint/js": "^10.0.1",
     "@vitest/coverage-v8": "^4.1.5",
     "eslint": "^10.2.0",
@@ -24,7 +24,8 @@
     "jsdom": "^29.0.2",
     "prettier": "^3.8.1",
     "vite": "^8.0.7",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.4",
+    "web-ext": "^8.4.0"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",

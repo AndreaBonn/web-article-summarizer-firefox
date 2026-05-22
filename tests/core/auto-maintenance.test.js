@@ -7,20 +7,28 @@ vi.spyOn(console, 'error').mockImplementation(() => {});
 
 vi.mock('@utils/storage/cache-manager.js', () => ({
   CacheManager: class {
-    cleanExpired() { return Promise.resolve(5); }
-    cleanLRU() { return Promise.resolve(3); }
+    cleanExpired() {
+      return Promise.resolve(5);
+    }
+    cleanLRU() {
+      return Promise.resolve(3);
+    }
   },
 }));
 
 vi.mock('@utils/storage/compression-manager.js', () => ({
   CompressionManager: class {
-    compressOldHistory() { return Promise.resolve(2); }
-    compressOldCache() { return Promise.resolve(1); }
+    compressOldHistory() {
+      return Promise.resolve(2);
+    }
+    compressOldCache() {
+      return Promise.resolve(1);
+    }
   },
 }));
 
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -68,7 +76,7 @@ describe('AutoMaintenance', () => {
     });
 
     it('test_shouldRunMaintenance_storageError_returnsFalse', async () => {
-      chrome.storage.local.get.mockRejectedValueOnce(new Error('Storage error'));
+      browser.storage.local.get.mockRejectedValueOnce(new Error('Storage error'));
       expect(await maintenance.shouldRunMaintenance()).toBe(false);
     });
   });
@@ -86,7 +94,7 @@ describe('AutoMaintenance', () => {
     });
 
     it('test_getSettings_error_returnsSafeDefaults', async () => {
-      chrome.storage.local.get.mockRejectedValueOnce(new Error('fail'));
+      browser.storage.local.get.mockRejectedValueOnce(new Error('fail'));
       const settings = await maintenance.getSettings();
       expect(settings).toEqual({ autoCleanup: false, enableCompression: false });
     });
@@ -99,10 +107,7 @@ describe('AutoMaintenance', () => {
     });
 
     it('test_deleteOldHistory_allRecent_deletesNone', async () => {
-      store.summaryHistory = [
-        { timestamp: Date.now() },
-        { timestamp: Date.now() - 1000 },
-      ];
+      store.summaryHistory = [{ timestamp: Date.now() }, { timestamp: Date.now() - 1000 }];
       const count = await maintenance.deleteOldHistory(180);
       expect(count).toBe(0);
     });
@@ -119,7 +124,7 @@ describe('AutoMaintenance', () => {
     });
 
     it('test_deleteOldHistory_storageError_returnsZero', async () => {
-      chrome.storage.local.get.mockRejectedValueOnce(new Error('fail'));
+      browser.storage.local.get.mockRejectedValueOnce(new Error('fail'));
       const count = await maintenance.deleteOldHistory(180);
       expect(count).toBe(0);
     });
@@ -180,7 +185,7 @@ describe('AutoMaintenance', () => {
   describe('scheduleMaintenance()', () => {
     it('test_scheduleMaintenance_createsAlarm', async () => {
       await maintenance.scheduleMaintenance();
-      expect(chrome.alarms.create).toHaveBeenCalledWith('autoMaintenance', {
+      expect(browser.alarms.create).toHaveBeenCalledWith('autoMaintenance', {
         periodInMinutes: 1440,
       });
     });

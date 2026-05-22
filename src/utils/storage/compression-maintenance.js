@@ -8,7 +8,7 @@ export class CompressionMaintenance extends CompressionStorage {
    */
   async compressOldHistory(daysOld = 30) {
     try {
-      const result = await chrome.storage.local.get(['summaryHistory']);
+      const result = await browser.storage.local.get(['summaryHistory']);
       const history = result.summaryHistory || [];
 
       const cutoffDate = Date.now() - daysOld * 24 * 60 * 60 * 1000;
@@ -29,7 +29,7 @@ export class CompressionMaintenance extends CompressionStorage {
       }
 
       if (compressedCount > 0) {
-        await chrome.storage.local.set({ summaryHistory: history });
+        await browser.storage.local.set({ summaryHistory: history });
       }
 
       return compressedCount;
@@ -44,7 +44,7 @@ export class CompressionMaintenance extends CompressionStorage {
    */
   async compressOldCache(daysOld = 7) {
     try {
-      const result = await chrome.storage.local.get(['summaryCache']);
+      const result = await browser.storage.local.get(['summaryCache']);
       const cache = result.summaryCache || {};
 
       const cutoffDate = Date.now() - daysOld * 24 * 60 * 60 * 1000;
@@ -65,7 +65,7 @@ export class CompressionMaintenance extends CompressionStorage {
       }
 
       if (compressedCount > 0) {
-        await chrome.storage.local.set({ summaryCache: cache });
+        await browser.storage.local.set({ summaryCache: cache });
       }
 
       return compressedCount;
@@ -102,7 +102,7 @@ export class CompressionMaintenance extends CompressionStorage {
 
       // Elimina cronologia molto vecchia
       if (deleteHistoryOlderThan > 0) {
-        const result = await chrome.storage.local.get(['summaryHistory']);
+        const result = await browser.storage.local.get(['summaryHistory']);
         const history = result.summaryHistory || [];
         const cutoffDate = Date.now() - deleteHistoryOlderThan * 24 * 60 * 60 * 1000;
 
@@ -110,7 +110,7 @@ export class CompressionMaintenance extends CompressionStorage {
         results.deletedHistory = history.length - filteredHistory.length;
 
         if (results.deletedHistory > 0) {
-          await chrome.storage.local.set({ summaryHistory: filteredHistory });
+          await browser.storage.local.set({ summaryHistory: filteredHistory });
         }
       }
 

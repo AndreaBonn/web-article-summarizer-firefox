@@ -8,7 +8,7 @@ export class BaseHistoryRepository {
 
   async _safeStorageSet(data) {
     try {
-      await chrome.storage.local.set(data);
+      await browser.storage.local.set(data);
     } catch (error) {
       if (error.message?.includes('QUOTA_BYTES')) {
         throw new Error(
@@ -22,7 +22,7 @@ export class BaseHistoryRepository {
 
   async _getAll() {
     try {
-      const result = await chrome.storage.local.get([this.storageKey]);
+      const result = await browser.storage.local.get([this.storageKey]);
       return result[this.storageKey] || [];
     } catch (error) {
       throw new Error(`Impossibile leggere la cronologia: ${error.message}`, { cause: error });

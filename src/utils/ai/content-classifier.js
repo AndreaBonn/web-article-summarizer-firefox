@@ -93,7 +93,7 @@ export class ContentClassifier {
    */
   static async saveUserCorrection(articleUrl, detectedCategory, userCategory) {
     try {
-      const result = await chrome.storage.local.get(['classificationCorrections']);
+      const result = await browser.storage.local.get(['classificationCorrections']);
       const corrections = result.classificationCorrections || [];
 
       corrections.push({
@@ -108,7 +108,7 @@ export class ContentClassifier {
         corrections.shift();
       }
 
-      await chrome.storage.local.set({ classificationCorrections: corrections });
+      await browser.storage.local.set({ classificationCorrections: corrections });
     } catch (error) {
       Logger.warn('Impossibile salvare correzione classificazione:', error);
     }

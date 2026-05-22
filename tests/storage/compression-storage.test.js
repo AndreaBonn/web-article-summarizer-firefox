@@ -4,7 +4,7 @@ vi.spyOn(console, 'debug').mockImplementation(() => {});
 vi.spyOn(console, 'error').mockImplementation(() => {});
 
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -38,7 +38,7 @@ describe('CompressionStorage', () => {
       const result = await storage.saveCompressed('testKey', 'Hello world');
 
       expect(result.success).toBe(true);
-      expect(result.savedTo).toBe('chrome.storage');
+      expect(result.savedTo).toBe('browser.storage');
       expect(store.testKey).toBeDefined();
       expect(store.testKey.key).toBe('testKey');
     });
@@ -52,10 +52,10 @@ describe('CompressionStorage', () => {
     });
 
     it('test_saveCompressed_storageError_throws', async () => {
-      chrome.storage.local.set.mockRejectedValueOnce(new Error('Quota exceeded'));
+      browser.storage.local.set.mockRejectedValueOnce(new Error('Quota exceeded'));
 
       await expect(storage.saveCompressed('testKey', 'data')).rejects.toThrow(
-        'Salvataggio compresso fallito'
+        'Salvataggio compresso fallito',
       );
     });
   });
@@ -76,7 +76,8 @@ describe('CompressionStorage', () => {
     });
 
     it('test_loadCompressed_roundTrip_preservesData', async () => {
-      const originalData = 'This is a longer text that we want to compress and then decompress to verify the round-trip works correctly.';
+      const originalData =
+        'This is a longer text that we want to compress and then decompress to verify the round-trip works correctly.';
       await storage.saveCompressed('roundTrip', originalData);
       const loaded = await storage.loadCompressed('roundTrip');
 
@@ -114,7 +115,7 @@ describe('CompressionStorage', () => {
       });
 
       await expect(storage.loadCompressed('badKey')).rejects.toThrow(
-        'Dati compressi corrotti o illeggibili'
+        'Dati compressi corrotti o illeggibili',
       );
     });
   });
@@ -124,7 +125,7 @@ describe('CompressionStorage', () => {
       const result = await storage.saveCompressed('smallKey', 'small data', true);
 
       expect(result.success).toBe(true);
-      expect(result.savedTo).toBe('chrome.storage');
+      expect(result.savedTo).toBe('browser.storage');
       expect(store.smallKey).toBeDefined();
     });
 
@@ -138,7 +139,7 @@ describe('CompressionStorage', () => {
       expect(spy).toHaveBeenCalledWith('largeKey', expect.objectContaining({ key: 'largeKey' }));
       expect(result.success).toBe(true);
       expect(result.savedTo).toBe('IndexedDB');
-      // Verifica che il ref sia salvato in chrome.storage
+      // Verifica che il ref sia salvato in browser.storage
       expect(store['largeKey_ref']).toBeDefined();
       expect(store['largeKey_ref'].inIndexedDB).toBe(true);
 
@@ -150,7 +151,7 @@ describe('CompressionStorage', () => {
       vi.spyOn(storage, 'saveToIndexedDB').mockRejectedValue(new Error('IndexedDB failed'));
 
       await expect(storage.saveCompressed('failKey', largeData, true)).rejects.toThrow(
-        'Salvataggio compresso fallito'
+        'Salvataggio compresso fallito',
       );
     });
   });

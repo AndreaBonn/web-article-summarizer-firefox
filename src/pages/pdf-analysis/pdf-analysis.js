@@ -25,9 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await I18n.initPage();
 
     // Configura PDF.js worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL(
-      'public/workers/pdf.worker.min.js',
-    );
+    pdfjsLib.GlobalWorkerOptions.workerSrc = browser.runtime.getURL('workers/pdf.worker.min.js');
     Logger.debug('PDF.js configurato con worker:', pdfjsLib.GlobalWorkerOptions.workerSrc);
 
     // Inizializza PDF Analyzer
@@ -253,12 +251,12 @@ async function openReadingMode(analysisData) {
   delete dataToSave.pdfFile;
 
   // Salva dati per reading mode
-  await chrome.storage.local.set({
+  await browser.storage.local.set({
     pdfReadingMode: dataToSave,
   });
 
   // Apri reading mode
-  chrome.tabs.create({ url: 'src/pages/reading-mode/reading-mode.html?source=pdf' });
+  browser.tabs.create({ url: 'src/pages/reading-mode/reading-mode.html?source=pdf' });
 }
 
 // Theme managed by ThemeManager (auto-init on import)

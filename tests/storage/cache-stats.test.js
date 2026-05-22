@@ -7,7 +7,7 @@ vi.mock('@utils/core/logger.js', () => ({
 const store = {};
 beforeEach(() => {
   Object.keys(store).forEach((k) => delete store[k]);
-  global.chrome = {
+  global.browser = {
     storage: {
       local: {
         get: vi.fn((keys) => {
@@ -153,16 +153,14 @@ describe('CacheStats', () => {
   describe('clearLogs', () => {
     it('test_clearLogs_existingLogs_removesAll', async () => {
       // Arrange
-      store.cacheLogs = [
-        { operation: 'get', key: 'k1', success: true, timestamp: Date.now() },
-      ];
+      store.cacheLogs = [{ operation: 'get', key: 'k1', success: true, timestamp: Date.now() }];
       const stats = new CacheStats();
 
       // Act
       await stats.clearLogs();
 
       // Assert
-      const result = await chrome.storage.local.get(['cacheLogs']);
+      const result = await browser.storage.local.get(['cacheLogs']);
       // cacheLogs rimosso oppure vuoto
       expect(!result.cacheLogs || result.cacheLogs.length === 0).toBe(true);
     });

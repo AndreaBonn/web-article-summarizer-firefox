@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock chrome.storage.local — simula serializzazione reale (JSON round-trip)
+// Mock browser.storage.local — simula serializzazione reale (JSON round-trip)
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -161,7 +161,7 @@ describe('ErrorHandler', () => {
     });
 
     it('survives chrome storage failures gracefully', async () => {
-      chrome.storage.local.get.mockRejectedValueOnce(new Error('Storage failed'));
+      browser.storage.local.get.mockRejectedValueOnce(new Error('Storage failed'));
 
       // Should not throw
       await expect(ErrorHandler.logError(new Error('Test'))).resolves.not.toThrow();
@@ -298,7 +298,7 @@ describe('ErrorHandler', () => {
     });
 
     it('returns null when chrome storage throws', async () => {
-      chrome.storage.local.get.mockRejectedValueOnce(new Error('Storage down'));
+      browser.storage.local.get.mockRejectedValueOnce(new Error('Storage down'));
 
       const stats = await ErrorHandler.getErrorStats();
 
@@ -350,17 +350,17 @@ describe('ErrorHandler', () => {
 
   describe('clearErrorLogs', () => {
     beforeEach(() => {
-      global.chrome.storage.local.remove = vi.fn().mockResolvedValue(undefined);
+      global.browser.storage.local.remove = vi.fn().mockResolvedValue(undefined);
     });
 
-    it('calls chrome.storage.local.remove with errorLogs key', async () => {
+    it('calls browser.storage.local.remove with errorLogs key', async () => {
       await ErrorHandler.clearErrorLogs();
 
-      expect(chrome.storage.local.remove).toHaveBeenCalledWith(['errorLogs']);
+      expect(browser.storage.local.remove).toHaveBeenCalledWith(['errorLogs']);
     });
 
     it('survives chrome storage remove failure gracefully', async () => {
-      chrome.storage.local.remove.mockRejectedValueOnce(new Error('remove failed'));
+      browser.storage.local.remove.mockRejectedValueOnce(new Error('remove failed'));
 
       await expect(ErrorHandler.clearErrorLogs()).resolves.not.toThrow();
     });

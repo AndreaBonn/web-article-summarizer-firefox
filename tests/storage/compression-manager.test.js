@@ -5,7 +5,7 @@ vi.spyOn(console, 'info').mockImplementation(() => {});
 vi.spyOn(console, 'error').mockImplementation(() => {});
 
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -57,9 +57,7 @@ describe('CompressionManager', () => {
     });
 
     it('test_getStats_withCompressedHistory_tracksCompression', async () => {
-      store.summaryHistory = [
-        { compressed: true, originalSize: 1000, compressedSize: 500 },
-      ];
+      store.summaryHistory = [{ compressed: true, originalSize: 1000, compressedSize: 500 }];
 
       const stats = await manager.getStats();
       expect(stats.compressedItems).toBe(1);
@@ -76,7 +74,7 @@ describe('CompressionManager', () => {
     });
 
     it('test_getStats_storageError_returnsNull', async () => {
-      chrome.storage.local.get.mockRejectedValueOnce(new Error('fail'));
+      browser.storage.local.get.mockRejectedValueOnce(new Error('fail'));
       const stats = await manager.getStats();
       expect(stats).toBeNull();
     });

@@ -7,7 +7,7 @@ export class CacheStats {
    */
   async getStats() {
     try {
-      const result = await chrome.storage.local.get(['summaryCache', 'cacheLogs']);
+      const result = await browser.storage.local.get(['summaryCache', 'cacheLogs']);
       const cache = result.summaryCache || {};
       const logs = result.cacheLogs || [];
 
@@ -78,7 +78,7 @@ export class CacheStats {
    */
   async logCacheOperation(operation, key, success, reason = null) {
     try {
-      const result = await chrome.storage.local.get(['cacheLogs']);
+      const result = await browser.storage.local.get(['cacheLogs']);
       const logs = result.cacheLogs || [];
 
       logs.push({
@@ -94,7 +94,7 @@ export class CacheStats {
         logs.shift();
       }
 
-      await chrome.storage.local.set({ cacheLogs: logs });
+      await browser.storage.local.set({ cacheLogs: logs });
     } catch (error) {
       Logger.error('Errore nel salvare log cache:', error);
     }
@@ -104,6 +104,6 @@ export class CacheStats {
    * Pulisci tutti i log
    */
   async clearLogs() {
-    await chrome.storage.local.remove(['cacheLogs']);
+    await browser.storage.local.remove(['cacheLogs']);
   }
 }

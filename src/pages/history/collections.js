@@ -150,10 +150,10 @@ async function openPDF(id) {
   };
 
   // Salva in storage
-  await chrome.storage.local.set({ pdfReadingMode: readingData });
+  await browser.storage.local.set({ pdfReadingMode: readingData });
 
   // Apri reading mode
-  chrome.tabs.create({ url: 'src/pages/reading-mode/reading-mode.html?source=pdf' });
+  browser.tabs.create({ url: 'src/pages/reading-mode/reading-mode.html?source=pdf' });
 }
 
 async function deletePDF(id) {
@@ -291,7 +291,7 @@ async function openMultiAnalysis(id) {
   }
 
   // Apri la pagina multi-analysis con i dati salvati
-  chrome.storage.local.set(
+  browser.storage.local.set(
     {
       reopenMultiAnalysis: {
         id: entry.id,
@@ -301,7 +301,7 @@ async function openMultiAnalysis(id) {
     },
     () => {
       Logger.debug('Reindirizzamento a multi-analysis.html');
-      window.location.href = chrome.runtime.getURL('src/pages/multi-analysis/multi-analysis.html');
+      window.location.href = browser.runtime.getURL('src/pages/multi-analysis/multi-analysis.html');
     },
   );
 }

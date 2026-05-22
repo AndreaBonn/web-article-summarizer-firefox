@@ -10,7 +10,7 @@ const TTL_MS = 24 * 60 * 60 * 1000;
 const store = {};
 beforeEach(() => {
   Object.keys(store).forEach((k) => delete store[k]);
-  global.chrome = {
+  global.browser = {
     storage: {
       local: {
         get: vi.fn((keys) => {
@@ -97,7 +97,7 @@ describe('TranslationCache', () => {
 
   it('test_get_storageError_returnsNull', async () => {
     // Arrange
-    global.chrome.storage.local.get = vi.fn().mockRejectedValue(new Error('Storage error'));
+    global.browser.storage.local.get = vi.fn().mockRejectedValue(new Error('Storage error'));
 
     // Act
     const result = await TranslationCache.get('https://example.com', 'groq', 'en');

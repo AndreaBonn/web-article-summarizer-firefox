@@ -81,21 +81,21 @@ async function loadData() {
     const source = params.get('source');
 
     // Check if loading PDF analysis
-    if (source === 'pdf' && typeof chrome !== 'undefined' && chrome.storage) {
-      const result = await chrome.storage.local.get(['pdfReadingMode']);
+    if (source === 'pdf' && typeof chrome !== 'undefined' && browser.storage) {
+      const result = await browser.storage.local.get(['pdfReadingMode']);
       if (result.pdfReadingMode) {
         state.currentData = result.pdfReadingMode;
         state.currentData.isPDF = true;
         // Clean up after loading
-        await chrome.storage.local.remove(['pdfReadingMode']);
+        await browser.storage.local.remove(['pdfReadingMode']);
         Logger.info('Dati PDF caricati:', state.currentData);
         return;
       }
     }
 
-    if (historyId && typeof chrome !== 'undefined' && chrome.storage) {
-      // Load from history using chrome.storage (use summaryHistory)
-      const result = await chrome.storage.local.get(['summaryHistory']);
+    if (historyId && typeof chrome !== 'undefined' && browser.storage) {
+      // Load from history using browser.storage (use summaryHistory)
+      const result = await browser.storage.local.get(['summaryHistory']);
       const history = result.summaryHistory || [];
       state.currentData = history.find((item) => String(item.id) === String(historyId));
 
@@ -104,13 +104,13 @@ async function loadData() {
       }
 
       Logger.info('Dati caricati dalla cronologia:', state.currentData);
-    } else if (typeof chrome !== 'undefined' && chrome.storage) {
-      // Try to load from chrome.storage (passed from popup)
-      const result = await chrome.storage.local.get(['readingModeData']);
+    } else if (typeof chrome !== 'undefined' && browser.storage) {
+      // Try to load from browser.storage (passed from popup)
+      const result = await browser.storage.local.get(['readingModeData']);
       if (result.readingModeData) {
         state.currentData = result.readingModeData;
         // Clean up after loading
-        await chrome.storage.local.remove(['readingModeData']);
+        await browser.storage.local.remove(['readingModeData']);
       } else {
         // No data available - show helpful message
         throw new Error('NODATA');

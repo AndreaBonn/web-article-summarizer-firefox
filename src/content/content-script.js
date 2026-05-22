@@ -10,9 +10,9 @@ const paragraphMap = new Map();
 let extractedArticle = null;
 
 // Listener per messaggi dal popup
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // Accetta solo messaggi dalla propria estensione
-  if (sender.id !== chrome.runtime.id) {
+  if (sender.id !== browser.runtime.id) {
     return false;
   }
 

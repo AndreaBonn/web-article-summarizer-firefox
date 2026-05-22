@@ -3,7 +3,7 @@ import { ContentClassifier } from '@utils/ai/content-classifier.js';
 
 // Mock Chrome APIs usate da saveUserCorrection
 beforeEach(() => {
-  global.chrome = {
+  global.browser = {
     storage: {
       local: {
         get: vi.fn(),
@@ -237,21 +237,21 @@ describe('ContentClassifier.classifyArticle() — AI classification', () => {
 });
 
 // ---------------------------------------------------------------------------
-// saveUserCorrection — verifica interazione con chrome.storage
+// saveUserCorrection — verifica interazione con browser.storage
 // ---------------------------------------------------------------------------
 
 describe('ContentClassifier.saveUserCorrection()', () => {
   it('test_saveUserCorrection_withEmptyStorage_savesFirstCorrection', async () => {
     // Arrange
-    chrome.storage.local.get.mockResolvedValue({ classificationCorrections: [] });
-    chrome.storage.local.set.mockResolvedValue(undefined);
+    browser.storage.local.get.mockResolvedValue({ classificationCorrections: [] });
+    browser.storage.local.set.mockResolvedValue(undefined);
 
     // Act
     await ContentClassifier.saveUserCorrection('https://example.com', 'general', 'scientific');
 
     // Assert
-    expect(chrome.storage.local.set).toHaveBeenCalledOnce();
-    const [savedData] = chrome.storage.local.set.mock.calls[0];
+    expect(browser.storage.local.set).toHaveBeenCalledOnce();
+    const [savedData] = browser.storage.local.set.mock.calls[0];
     const corrections = savedData.classificationCorrections;
     expect(corrections).toHaveLength(1);
     expect(corrections[0]).toMatchObject({
@@ -264,14 +264,14 @@ describe('ContentClassifier.saveUserCorrection()', () => {
 
   it('test_saveUserCorrection_withMissingStorageKey_initializesArray', async () => {
     // Arrange: nessuna chiave in storage
-    chrome.storage.local.get.mockResolvedValue({});
-    chrome.storage.local.set.mockResolvedValue(undefined);
+    browser.storage.local.get.mockResolvedValue({});
+    browser.storage.local.set.mockResolvedValue(undefined);
 
     // Act
     await ContentClassifier.saveUserCorrection('https://test.com', 'news', 'opinion');
 
     // Assert
-    const [savedData] = chrome.storage.local.set.mock.calls[0];
+    const [savedData] = browser.storage.local.set.mock.calls[0];
     expect(savedData.classificationCorrections).toHaveLength(1);
   });
 
@@ -283,14 +283,14 @@ describe('ContentClassifier.saveUserCorrection()', () => {
       corrected: 'news',
       timestamp: Date.now() - i * 1000,
     }));
-    chrome.storage.local.get.mockResolvedValue({ classificationCorrections: existing });
-    chrome.storage.local.set.mockResolvedValue(undefined);
+    browser.storage.local.get.mockResolvedValue({ classificationCorrections: existing });
+    browser.storage.local.set.mockResolvedValue(undefined);
 
     // Act
     await ContentClassifier.saveUserCorrection('https://new.com', 'tutorial', 'scientific');
 
     // Assert
-    const [savedData] = chrome.storage.local.set.mock.calls[0];
+    const [savedData] = browser.storage.local.set.mock.calls[0];
     const corrections = savedData.classificationCorrections;
     expect(corrections).toHaveLength(100);
     // La nuova correzione è l'ultima

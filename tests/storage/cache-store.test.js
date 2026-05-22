@@ -6,7 +6,7 @@ vi.mock('@utils/core/logger.js', () => ({
 
 // Chrome storage mock con store condiviso
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -111,15 +111,12 @@ describe('CacheStore', () => {
 
     it('test_set_storageError_returnsFalse', async () => {
       // Arrange
-      chrome.storage.local.set.mockRejectedValueOnce(new Error('storage full'));
+      browser.storage.local.set.mockRejectedValueOnce(new Error('storage full'));
 
       // Act
-      const result = await cacheStore.set(
-        'https://example.com',
-        'groq',
-        settings,
-        { summary: 'x' },
-      );
+      const result = await cacheStore.set('https://example.com', 'groq', settings, {
+        summary: 'x',
+      });
 
       // Assert
       expect(result).toBe(false);
@@ -215,14 +212,7 @@ describe('CacheStore', () => {
     it('test_get_noContentHashProvided_ignoresHashValidation', async () => {
       // Arrange
       const data = { summary: 'any hash' };
-      await cacheStore.set(
-        'https://example.com',
-        'groq',
-        settings,
-        data,
-        null,
-        'some-hash',
-      );
+      await cacheStore.set('https://example.com', 'groq', settings, data, null, 'some-hash');
 
       // Act — no hash arg → skip hash validation
       const result = await cacheStore.get('https://example.com', 'groq', settings);
@@ -247,7 +237,7 @@ describe('CacheStore', () => {
 
     it('test_get_storageError_returnsNull', async () => {
       // Arrange
-      chrome.storage.local.get.mockRejectedValueOnce(new Error('storage error'));
+      browser.storage.local.get.mockRejectedValueOnce(new Error('storage error'));
 
       // Act
       const result = await cacheStore.get('https://example.com', 'groq', settings);
@@ -283,7 +273,7 @@ describe('CacheStore', () => {
       // Arrange
       await cacheStore.set('https://example.com', 'groq', settings, { summary: 'x' });
       const key = cacheStore.generateCacheKey('https://example.com', 'groq', settings);
-      chrome.storage.local.get.mockRejectedValueOnce(new Error('error'));
+      browser.storage.local.get.mockRejectedValueOnce(new Error('error'));
 
       // Act
       const result = await cacheStore.invalidate(key);
@@ -379,9 +369,7 @@ describe('CacheStore', () => {
       await cacheStore.set('https://example.com/page', 'groq', settings, { summary: 'x' });
 
       // Act — URL with UTM params should still match
-      const count = await cacheStore.invalidateByUrl(
-        'https://example.com/page?utm_source=twitter',
-      );
+      const count = await cacheStore.invalidateByUrl('https://example.com/page?utm_source=twitter');
 
       // Assert
       expect(count).toBe(1);
@@ -412,10 +400,7 @@ describe('CacheStore', () => {
       );
 
       // Act
-      const count = await cacheStore.invalidateIfContentChanged(
-        'https://example.com',
-        'hash-new',
-      );
+      const count = await cacheStore.invalidateIfContentChanged('https://example.com', 'hash-new');
 
       // Assert
       expect(count).toBe(1);
@@ -433,10 +418,7 @@ describe('CacheStore', () => {
       );
 
       // Act
-      const count = await cacheStore.invalidateIfContentChanged(
-        'https://example.com',
-        'hash-1',
-      );
+      const count = await cacheStore.invalidateIfContentChanged('https://example.com', 'hash-1');
 
       // Assert
       expect(count).toBe(0);
@@ -447,10 +429,7 @@ describe('CacheStore', () => {
       await cacheStore.set('https://example.com', 'groq', settings, { summary: 'no hash' });
 
       // Act
-      const count = await cacheStore.invalidateIfContentChanged(
-        'https://example.com',
-        'hash-new',
-      );
+      const count = await cacheStore.invalidateIfContentChanged('https://example.com', 'hash-new');
 
       // Assert — entry without contentHash is not invalidated
       expect(count).toBe(0);

@@ -157,7 +157,7 @@ Rispondi SOLO con il JSON.`;
   }
 
   static async saveAnalysis(analysis) {
-    const result = await chrome.storage.local.get(['multiAnalysisHistory']);
+    const result = await browser.storage.local.get(['multiAnalysisHistory']);
     let history = result.multiAnalysisHistory || [];
 
     analysis.id = Date.now();
@@ -168,11 +168,11 @@ Rispondi SOLO con il JSON.`;
       history = history.slice(0, 30);
     }
 
-    await chrome.storage.local.set({ multiAnalysisHistory: history });
+    await browser.storage.local.set({ multiAnalysisHistory: history });
   }
 
   static async getAnalysisHistory() {
-    const result = await chrome.storage.local.get(['multiAnalysisHistory']);
+    const result = await browser.storage.local.get(['multiAnalysisHistory']);
     return result.multiAnalysisHistory || [];
   }
 
@@ -184,6 +184,6 @@ Rispondi SOLO con il JSON.`;
   static async deleteAnalysis(id) {
     const history = await this.getAnalysisHistory();
     const filtered = history.filter((a) => a.id !== id);
-    await chrome.storage.local.set({ multiAnalysisHistory: filtered });
+    await browser.storage.local.set({ multiAnalysisHistory: filtered });
   }
 }

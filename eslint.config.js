@@ -16,8 +16,8 @@ export default [
       globals: {
         // Browser standard
         ...globals.browser,
-        // Chrome Extension API
-        chrome: 'readonly',
+        // Firefox WebExtension API
+        browser: 'readonly',
       },
     },
     rules: {

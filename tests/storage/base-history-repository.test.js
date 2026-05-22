@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock chrome.storage.local — simula serializzazione reale (JSON round-trip)
+// Mock browser.storage.local — simula serializzazione reale (JSON round-trip)
 const store = {};
-global.chrome = {
+global.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -73,7 +73,7 @@ describe('BaseHistoryRepository', () => {
     });
 
     it('throws on QUOTA_BYTES error', async () => {
-      chrome.storage.local.set.mockRejectedValueOnce(new Error('QUOTA_BYTES quota exceeded'));
+      browser.storage.local.set.mockRejectedValueOnce(new Error('QUOTA_BYTES quota exceeded'));
 
       await expect(repo.save({ title: 'Big' })).rejects.toThrow('Spazio di archiviazione esaurito');
     });
@@ -81,8 +81,8 @@ describe('BaseHistoryRepository', () => {
     it('actually persists data (not just in-memory mutation)', async () => {
       await repo.save({ title: 'Persisted' });
 
-      // Verify chrome.storage.local.set was called with the data
-      expect(chrome.storage.local.set).toHaveBeenCalledWith(
+      // Verify browser.storage.local.set was called with the data
+      expect(browser.storage.local.set).toHaveBeenCalledWith(
         expect.objectContaining({
           testHistory: expect.arrayContaining([
             expect.objectContaining({ title: 'Persisted', id: 'uuid-1' }),

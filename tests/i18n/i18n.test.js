@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock Chrome APIs
-global.chrome = {
+global.browser = {
   storage: { local: { get: vi.fn(), set: vi.fn() } },
   runtime: { id: 'test-id' },
 };
@@ -155,22 +155,19 @@ describe('I18n.updateUI()', () => {
   });
 
   it('aggiorna placeholder di input con data-i18n', () => {
-    document.body.innerHTML =
-      '<input data-i18n="initial.welcome" placeholder="old" />';
+    document.body.innerHTML = '<input data-i18n="initial.welcome" placeholder="old" />';
     I18n.updateUI();
     expect(document.querySelector('input').getAttribute('placeholder')).toBe('Benvenuto');
   });
 
   it('aggiorna textContent di option con data-i18n', () => {
-    document.body.innerHTML =
-      '<select><option data-i18n="initial.welcome">old</option></select>';
+    document.body.innerHTML = '<select><option data-i18n="initial.welcome">old</option></select>';
     I18n.updateUI();
     expect(document.querySelector('option').textContent).toBe('Benvenuto');
   });
 
   it('aggiorna attributo title di elementi con data-i18n-title', () => {
-    document.body.innerHTML =
-      '<button data-i18n-title="initial.welcome" title="old">btn</button>';
+    document.body.innerHTML = '<button data-i18n-title="initial.welcome" title="old">btn</button>';
     I18n.updateUI();
     expect(document.querySelector('button').getAttribute('title')).toBe('Benvenuto');
   });

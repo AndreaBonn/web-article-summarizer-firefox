@@ -129,7 +129,7 @@ async function loadApiKeys() {
 
 async function loadStats() {
   try {
-    const result = await chrome.storage.local.get(['stats']);
+    const result = await browser.storage.local.get(['stats']);
     const stats = result.stats || {
       totalSummaries: 0,
       totalWords: 0,
@@ -251,7 +251,7 @@ async function testApiKey(provider) {
   showStatus(provider, 'loading', I18n.t('settings.test.testing'));
 
   try {
-    const response = await chrome.runtime.sendMessage({
+    const response = await browser.runtime.sendMessage({
       action: 'testApiKey',
       provider: provider,
       apiKey: key,

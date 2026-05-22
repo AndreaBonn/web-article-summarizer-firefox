@@ -28,25 +28,25 @@ const autoMaintenance = new AutoMaintenance();
 autoMaintenance.initialize().catch((err) => Logger.error('AutoMaintenance init failed:', err));
 
 // Persistent alarm listener for MV3 (survives service worker restarts)
-chrome.alarms.onAlarm.addListener((alarm) => {
+browser.alarms.onAlarm.addListener((alarm) => {
   autoMaintenance.handleAlarm(alarm);
 });
 
 // MV3 Lifecycle Events
-chrome.runtime.onInstalled.addListener((details) => {
+browser.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     Logger.info('AI Article Summarizer installato');
   } else if (details.reason === 'update') {
     Logger.info(
       'AI Article Summarizer aggiornato alla versione',
-      chrome.runtime.getManifest().version,
+      browser.runtime.getManifest().version,
     );
   }
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // Validate that the message comes from this extension
-  if (sender.id !== chrome.runtime.id) {
+  if (sender.id !== browser.runtime.id) {
     return false;
   }
 

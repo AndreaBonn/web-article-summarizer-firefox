@@ -24,8 +24,8 @@ vi.mock('@utils/core/multi-analysis-generators.js', () => ({
   generateQA: vi.fn(),
 }));
 
-// Mock chrome.storage.local
-global.chrome = {
+// Mock browser.storage.local
+global.browser = {
   storage: {
     local: {
       get: vi.fn(),
@@ -60,8 +60,8 @@ const articles = [
 describe('MultiAnalysisManager', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    chrome.storage.local.get.mockResolvedValue({});
-    chrome.storage.local.set.mockResolvedValue(undefined);
+    browser.storage.local.get.mockResolvedValue({});
+    browser.storage.local.set.mockResolvedValue(undefined);
   });
 
   // ---------------------------------------------------------------------------
@@ -194,11 +194,7 @@ describe('MultiAnalysisManager', () => {
         '{"related": true, "confidence": 0.9, "reason": "OK"}',
       );
 
-      await MultiAnalysisManager.checkCorrelationWithAI(
-        articlesWithTranslation,
-        'groq',
-        'key',
-      );
+      await MultiAnalysisManager.checkCorrelationWithAI(articlesWithTranslation, 'groq', 'key');
 
       const userPrompt = APIClient.generateCompletion.mock.calls[0][3];
       expect(userPrompt).toContain('Translated content');
@@ -343,11 +339,7 @@ describe('MultiAnalysisManager', () => {
     });
 
     it('costruisce result.articles con id, title, url', async () => {
-      const result = await MultiAnalysisManager.analyzeArticles(
-        articles,
-        {},
-        progressCallback,
-      );
+      const result = await MultiAnalysisManager.analyzeArticles(articles, {}, progressCallback);
 
       expect(result.articles).toEqual([
         { id: 1, title: 'Articolo Uno', url: 'https://example.com' },
@@ -357,11 +349,7 @@ describe('MultiAnalysisManager', () => {
 
     it('imposta timestamp e metadata.provider nel risultato', async () => {
       const before = Date.now();
-      const result = await MultiAnalysisManager.analyzeArticles(
-        articles,
-        {},
-        progressCallback,
-      );
+      const result = await MultiAnalysisManager.analyzeArticles(articles, {}, progressCallback);
       const after = Date.now();
 
       expect(result.timestamp).toBeGreaterThanOrEqual(before);
@@ -393,50 +381,50 @@ describe('MultiAnalysisManager', () => {
   // ---------------------------------------------------------------------------
 
   describe('saveAnalysis', () => {
-    it('salva analisi in chrome.storage.local con id = Date.now()', async () => {
+    it('salva analisi in browser.storage.local con id = Date.now()', async () => {
       const analysis = { articles: [], globalSummary: 'test' };
       const before = Date.now();
 
       await MultiAnalysisManager.saveAnalysis(analysis);
 
       expect(analysis.id).toBeGreaterThanOrEqual(before);
-      expect(chrome.storage.local.set).toHaveBeenCalledWith({
+      expect(browser.storage.local.set).toHaveBeenCalledWith({
         multiAnalysisHistory: [analysis],
       });
     });
 
     it('inserisce nuova analisi in testa alla history esistente', async () => {
       const existing = { id: 1, articles: [] };
-      chrome.storage.local.get.mockResolvedValue({
+      browser.storage.local.get.mockResolvedValue({
         multiAnalysisHistory: [existing],
       });
 
       const newAnalysis = { articles: [], globalSummary: 'nuova' };
       await MultiAnalysisManager.saveAnalysis(newAnalysis);
 
-      const saved = chrome.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
+      const saved = browser.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
       expect(saved[0]).toBe(newAnalysis);
       expect(saved[1]).toBe(existing);
     });
 
     it('limita history a 30 elementi', async () => {
       const existingHistory = Array.from({ length: 35 }, (_, i) => ({ id: i, articles: [] }));
-      chrome.storage.local.get.mockResolvedValue({
+      browser.storage.local.get.mockResolvedValue({
         multiAnalysisHistory: existingHistory,
       });
 
       await MultiAnalysisManager.saveAnalysis({ articles: [] });
 
-      const saved = chrome.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
+      const saved = browser.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
       expect(saved).toHaveLength(30);
     });
 
     it('gestisce history vuota (prima analisi)', async () => {
-      chrome.storage.local.get.mockResolvedValue({});
+      browser.storage.local.get.mockResolvedValue({});
 
       await MultiAnalysisManager.saveAnalysis({ articles: [] });
 
-      const saved = chrome.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
+      const saved = browser.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
       expect(saved).toHaveLength(1);
     });
   });
@@ -447,7 +435,7 @@ describe('MultiAnalysisManager', () => {
 
   describe('getAnalysisHistory', () => {
     it('restituisce array vuoto se nessuna history salvata', async () => {
-      chrome.storage.local.get.mockResolvedValue({});
+      browser.storage.local.get.mockResolvedValue({});
 
       const result = await MultiAnalysisManager.getAnalysisHistory();
 
@@ -456,7 +444,7 @@ describe('MultiAnalysisManager', () => {
 
     it('restituisce history salvata', async () => {
       const history = [{ id: 1 }, { id: 2 }];
-      chrome.storage.local.get.mockResolvedValue({ multiAnalysisHistory: history });
+      browser.storage.local.get.mockResolvedValue({ multiAnalysisHistory: history });
 
       const result = await MultiAnalysisManager.getAnalysisHistory();
 
@@ -475,7 +463,7 @@ describe('MultiAnalysisManager', () => {
         { id: 100, title: 'prima' },
         { id: 200, title: 'seconda' },
       ];
-      chrome.storage.local.get.mockResolvedValue({ multiAnalysisHistory: history });
+      browser.storage.local.get.mockResolvedValue({ multiAnalysisHistory: history });
 
       const result = await MultiAnalysisManager.getAnalysisById(200);
 
@@ -483,7 +471,7 @@ describe('MultiAnalysisManager', () => {
     });
 
     it('restituisce undefined se id non trovato', async () => {
-      chrome.storage.local.get.mockResolvedValue({
+      browser.storage.local.get.mockResolvedValue({
         multiAnalysisHistory: [{ id: 1 }],
       });
 
@@ -493,7 +481,7 @@ describe('MultiAnalysisManager', () => {
     });
 
     it('restituisce undefined se history vuota', async () => {
-      chrome.storage.local.get.mockResolvedValue({});
+      browser.storage.local.get.mockResolvedValue({});
 
       const result = await MultiAnalysisManager.getAnalysisById(1);
 
@@ -507,7 +495,7 @@ describe('MultiAnalysisManager', () => {
 
   describe('deleteAnalysis', () => {
     it('rimuove analisi con id specificato', async () => {
-      chrome.storage.local.get.mockResolvedValue({
+      browser.storage.local.get.mockResolvedValue({
         multiAnalysisHistory: [
           { id: 1, title: 'keep' },
           { id: 2, title: 'delete' },
@@ -517,28 +505,28 @@ describe('MultiAnalysisManager', () => {
 
       await MultiAnalysisManager.deleteAnalysis(2);
 
-      const saved = chrome.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
+      const saved = browser.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
       expect(saved).toHaveLength(2);
       expect(saved.find((a) => a.id === 2)).toBeUndefined();
     });
 
     it('non modifica history se id non presente', async () => {
-      chrome.storage.local.get.mockResolvedValue({
+      browser.storage.local.get.mockResolvedValue({
         multiAnalysisHistory: [{ id: 1 }, { id: 2 }],
       });
 
       await MultiAnalysisManager.deleteAnalysis(999);
 
-      const saved = chrome.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
+      const saved = browser.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
       expect(saved).toHaveLength(2);
     });
 
     it('gestisce history vuota senza errore', async () => {
-      chrome.storage.local.get.mockResolvedValue({});
+      browser.storage.local.get.mockResolvedValue({});
 
       await MultiAnalysisManager.deleteAnalysis(1);
 
-      const saved = chrome.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
+      const saved = browser.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
       expect(saved).toEqual([]);
     });
   });
