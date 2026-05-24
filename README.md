@@ -18,7 +18,7 @@
 [![CI](https://github.com/AndreaBonn/web-article-summarizer-firefox/actions/workflows/ci.yml/badge.svg)](https://github.com/AndreaBonn/web-article-summarizer-firefox/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/AndreaBonn/web-article-summarizer-firefox/main/badges/test-badge.json)](https://github.com/AndreaBonn/web-article-summarizer-firefox/actions/workflows/ci.yml)
 [![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/AndreaBonn/web-article-summarizer-firefox/main/badges/coverage-badge.json)](https://github.com/AndreaBonn/web-article-summarizer-firefox/actions/workflows/ci.yml)
-[![Firefox Add-on](https://img.shields.io/badge/Firefox-Add--on-FF7139?logo=firefox-browser&logoColor=white)](https://addons.mozilla.org/it/firefox/addon/ai-article-summarizer-by-bonn/)
+[![AMO](https://img.shields.io/amo/v/ai-article-summarizer-by-bonn?label=AMO&logo=firefox-browser&logoColor=white)](https://addons.mozilla.org/firefox/addon/ai-article-summarizer-by-bonn/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![ESLint](https://img.shields.io/badge/linter-ESLint-4B32C3.svg)](https://eslint.org)
 [![Prettier](https://img.shields.io/badge/formatter-Prettier-F7B93E.svg)](https://prettier.io)
@@ -35,9 +35,10 @@
 
 ## Table of Contents
 
+- [Install](#install)
 - [Features](#features)
 - [Supported Providers](#supported-providers)
-- [Installation](#installation)
+- [Development Setup](#development-setup)
 - [Usage](#usage)
 - [Export Formats](#export-formats)
 - [Languages](#languages)
@@ -49,6 +50,12 @@
 - [Security](#security)
 - [Contributing](#contributing)
 - [Author](#author)
+
+---
+
+## Install
+
+Get it from [Firefox Add-ons (AMO)](https://addons.mozilla.org/firefox/addon/ai-article-summarizer-by-bonn/).
 
 ---
 
@@ -122,13 +129,7 @@ Each provider requires its own API key. You can configure multiple providers and
 
 ---
 
-## Installation
-
-### From Firefox Add-ons (Recommended)
-
-Install directly from [Firefox Add-ons (AMO)](https://addons.mozilla.org/it/firefox/addon/ai-article-summarizer-by-bonn/).
-
-### From Source (Developer Mode)
+## Development Setup
 
 1. **Clone the repository**
 
