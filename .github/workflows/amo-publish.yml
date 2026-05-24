@@ -1,0 +1,99 @@
+name: Publish to AMO
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Verify tag matches manifest version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          MANIFEST_VERSION=$(node -p "require('./manifest.json').version")
+          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match manifest version ($MANIFEST_VERSION)"
+            exit 1
+          fi
+          echo "Version verified: $TAG_VERSION"
+
+      - name: Install web-ext
+        run: npm install -g web-ext
+
+      - name: Build extension package
+        run: |
+          web-ext build \
+            --source-dir=. \
+            --artifacts-dir=web-ext-artifacts \
+            --overwrite-dest \
+            --ignore-files \
+              "tests/**" \
+              "docs/**" \
+              "badges/**" \
+              "coverage/**" \
+              "coverage-tmp/**" \
+              "scripts/**" \
+              ".github/**" \
+              ".claude/**" \
+              ".vscode/**" \
+              "node_modules/**" \
+              "dist/**" \
+              "web-ext-artifacts/**" \
+              "package.json" \
+              "package-lock.json" \
+              "eslint.config.js" \
+              ".prettierrc" \
+              ".prettierignore" \
+              ".gitignore" \
+              ".env.example" \
+              "*.md" \
+              "build.sh" \
+              "vite.config.js" \
+              "vite.config.content.js" \
+              "vitest.config.js" \
+              "settings.local.json"
+
+      - name: Submit to AMO
+        run: |
+          web-ext sign \
+            --source-dir=. \
+            --artifacts-dir=web-ext-artifacts \
+            --channel=listed \
+            --ignore-files \
+              "tests/**" \
+              "docs/**" \
+              "badges/**" \
+              "coverage/**" \
+              "coverage-tmp/**" \
+              "scripts/**" \
+              ".github/**" \
+              ".claude/**" \
+              ".vscode/**" \
+              "node_modules/**" \
+              "dist/**" \
+              "web-ext-artifacts/**" \
+              "package.json" \
+              "package-lock.json" \
+              "eslint.config.js" \
+              ".prettierrc" \
+              ".prettierignore" \
+              ".gitignore" \
+              ".env.example" \
+              "*.md" \
+              "build.sh" \
+              "vite.config.js" \
+              "vite.config.content.js" \
+              "vitest.config.js" \
+              "settings.local.json"
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
