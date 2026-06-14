@@ -474,6 +474,18 @@ Assicurati che tutti i test passino e il linting sia pulito prima di inviare.
 
 ---
 
+## Sostieni il progetto
+
+Web Article Summarizer è gratuita. Se ti è utile e vuoi contribuire, puoi lasciare un'offerta tramite PayPal. L'importo lo scegli tu ed è del tutto facoltativo.
+
+<div align="center">
+
+[![Dona con PayPal](https://img.shields.io/badge/Dona-PayPal-00457C?logo=paypal&logoColor=white&style=for-the-badge)](https://paypal.me/AndreaBonacci19)
+
+</div>
+
+---
+
 ## Licenza
 
 Questo progetto è distribuito sotto licenza Apache 2.0. Vedi il file [LICENSE](LICENSE) per i dettagli.
