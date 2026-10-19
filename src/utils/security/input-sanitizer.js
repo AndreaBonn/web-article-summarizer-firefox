@@ -203,9 +203,11 @@ export class InputSanitizer {
       /ignorier[en]?\s+(alle\s+)?(vorherigen?\s+)?anweisungen/gi,
       /vergiss\s+(alle\s+)?(vorherigen?\s+)?anweisungen/gi,
       // Special tokens and role markers
-      /system\s*:\s*/gi,
-      /assistant\s*:\s*/gi,
-      /user\s*:\s*/gi,
+      // Role markers at line start or after a sentence end (titles and questions are
+      // collapsed to one line), not inside sentences like "operating system: Linux"
+      /(?<=^|[.!?;][ \t]+)[ \t]*system\s*:\s*/gim,
+      /(?<=^|[.!?;][ \t]+)[ \t]*assistant\s*:\s*/gim,
+      /(?<=^|[.!?;][ \t]+)[ \t]*user\s*:\s*/gim,
       /<\|.*?\|>/g, // Special tokens tipo <|endoftext|>
       /\[INST\]/gi,
       /\[\/INST\]/gi,
