@@ -4,6 +4,7 @@
 import { Logger } from '../../utils/core/logger.js';
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { state } from './state.js';
+import { buildReopenedAnalysis } from './analysis-model.js';
 import { exportPdf, exportMarkdown, sendEmail, copyContent } from './export.js';
 import { submitQuestion } from './qa.js';
 
@@ -168,26 +169,10 @@ export function switchTab(tabName) {
 export async function reopenSavedAnalysis(data) {
   Logger.info('Riapertura analisi salvata:', data);
 
-  state.currentAnalysis = {
-    id: data.id,
-    timestamp: Date.now(),
-    globalSummary: data.analysis.globalSummary,
-    comparison: data.analysis.comparison,
-    qa: data.analysis.qa,
-    metadata: {
-      provider: data.analysis.metadata?.provider || 'unknown',
-    },
-  };
-
-  state.selectedArticles = data.articles.map((a) => a.id);
-  state.allArticles = data.articles.map((a) => ({
-    id: a.id,
-    article: {
-      title: a.title,
-      url: a.url,
-      wordCount: a.wordCount,
-    },
-  }));
+  const reopened = buildReopenedAnalysis(data, Date.now());
+  state.currentAnalysis = reopened.currentAnalysis;
+  state.selectedArticles = reopened.selectedArticles;
+  state.allArticles = reopened.allArticles;
 
   document.querySelector('.selection-panel').style.display = 'none';
   document.querySelector('.analysis-panel').style.display = 'none';
