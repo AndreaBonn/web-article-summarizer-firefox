@@ -7,6 +7,11 @@ export const KEY_PREFIXES = {
   gemini: 'AIza',
 };
 
+// Prefixes that share the provider prefix but belong to another provider.
+const FOREIGN_PREFIXES = {
+  openai: ['sk-ant-'],
+};
+
 export const KEY_MIN_LENGTHS = {
   groq: 40,
   openai: 40,
@@ -30,6 +35,9 @@ export function validateApiKeyFormat(provider, rawKey) {
   if (!key) return { code: 'empty' };
   const expected = KEY_PREFIXES[provider];
   if (expected && !key.startsWith(expected)) return { code: 'prefix', expected };
+  if (FOREIGN_PREFIXES[provider]?.some((p) => key.startsWith(p))) {
+    return { code: 'prefix', expected };
+  }
   const min = KEY_MIN_LENGTHS[provider];
   if (min && key.length < min) return { code: 'length', min };
   return null;
