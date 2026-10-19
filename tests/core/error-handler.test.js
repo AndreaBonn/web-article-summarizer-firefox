@@ -431,7 +431,9 @@ describe('ErrorHandler', () => {
 
   describe('classifyError', () => {
     it('test_classifyError_missingKey_returnsMissingKey', () => {
-      expect(ErrorHandler.classifyError(new Error('API key non configurata. Vai nelle impostazioni.'))).toBe('missing_key');
+      expect(
+        ErrorHandler.classifyError(new Error('API key non configurata. Vai nelle impostazioni.')),
+      ).toBe('missing_key');
     });
 
     it('test_classifyError_unsupportedPage_returnsUnsupportedPage', () => {
@@ -440,7 +442,9 @@ describe('ErrorHandler', () => {
 
     it('test_classifyError_receivingEndMissing_returnsPageUnreachable', () => {
       expect(
-        ErrorHandler.classifyError(new Error('Could not establish connection. Receiving end does not exist.')),
+        ErrorHandler.classifyError(
+          new Error('Could not establish connection. Receiving end does not exist.'),
+        ),
       ).toBe('page_unreachable');
     });
 
