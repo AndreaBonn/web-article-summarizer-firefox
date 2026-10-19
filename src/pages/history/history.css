@@ -329,7 +329,6 @@ header h1 {
 }
 
 .header-toolbar {
-  flex-wrap: wrap;
   display: flex;
   gap: 12px;
   align-items: center;
