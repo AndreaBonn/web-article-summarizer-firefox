@@ -71,7 +71,7 @@ export async function translateArticle() {
         if (choice === 'translate') {
           const forceResponse = await browser.runtime.sendMessage({
             action: 'translatePDF',
-            text: state.currentData.extractedText,
+            text: extractedText,
             targetLanguage,
             provider,
             forceTranslate: true,
@@ -296,7 +296,8 @@ export async function updateDataInStorage() {
   try {
     if (state.currentData.isPDF) {
       // Delegate to HistoryManager (uses correct key 'pdfHistory' and flat structure)
-      const pdfId = state.currentData.id;
+      // PDF reading data carries the history entry id as `historyId`
+      const pdfId = state.currentData.historyId || state.currentData.id;
       if (!pdfId) {
         Logger.warn('PDF senza ID cronologia, aggiornamento saltato');
         return;
