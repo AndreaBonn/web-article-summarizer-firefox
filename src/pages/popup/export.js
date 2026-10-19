@@ -2,6 +2,7 @@
 // Gestisce: exportToPDF, showExportOptionsModal, exportToMarkdown, showMarkdownExportModal, openEmailModal
 
 import { state, elements, showError } from './state.js';
+import { buildExportMetadata, mergeEmailOptions, hasAnySelected } from './export-options.js';
 import { translationState, citationsState } from './features.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { PDFExporter } from '../../utils/export/pdf-exporter.js';
@@ -10,26 +11,22 @@ import { EmailManager } from '../../utils/export/email-manager.js';
 import { Modal } from '../../utils/core/modal.js';
 import { Toast } from '../../utils/core/toast.js';
 import { Logger } from '../../utils/core/logger.js';
-import { showExportModal } from '../../shared/export-modal.js';
+import { showExportModal, computeExportAvailability } from '../../shared/export-modal.js';
 
 function _getAvailability() {
-  return {
-    translation: !!translationState.value,
-    qa: !!(state.currentQA && state.currentQA.length > 0),
-    citations: !!(
-      citationsState.value &&
-      citationsState.value.citations &&
-      citationsState.value.citations.length > 0
-    ),
-  };
+  return computeExportAvailability({
+    translation: translationState.value,
+    qa: state.currentQA,
+    citations: citationsState.value,
+  });
 }
 
 function _buildMetadata() {
-  return {
-    provider: elements.providerSelect.value,
-    language: state.selectedLanguage,
-    contentType: state.selectedContentType !== 'auto' ? state.selectedContentType : 'auto',
-  };
+  return buildExportMetadata({
+    providerValue: elements.providerSelect.value,
+    selectedLanguage: state.selectedLanguage,
+    selectedContentType: state.selectedContentType,
+  });
 }
 
 // Export to PDF
@@ -133,26 +130,15 @@ function _configureEmailCheckboxes() {
 
 function _collectEmailOptions() {
   const availability = _getAvailability();
-  return {
-    includeSummary: !!document.getElementById('emailIncludeSummary')?.checked,
-    includeKeypoints: !!document.getElementById('emailIncludeKeypoints')?.checked,
-    includeTranslation: !!(
-      document.getElementById('emailIncludeTranslation')?.checked && availability.translation
-    ),
-    includeQA: !!(document.getElementById('emailIncludeQA')?.checked && availability.qa),
-    includeCitations: !!(
-      document.getElementById('emailIncludeCitations')?.checked && availability.citations
-    ),
-  };
-}
-
-function _hasAnySelected(options) {
-  return (
-    options.includeSummary ||
-    options.includeKeypoints ||
-    options.includeTranslation ||
-    options.includeQA ||
-    options.includeCitations
+  return mergeEmailOptions(
+    {
+      includeSummary: document.getElementById('emailIncludeSummary')?.checked,
+      includeKeypoints: document.getElementById('emailIncludeKeypoints')?.checked,
+      includeTranslation: document.getElementById('emailIncludeTranslation')?.checked,
+      includeQA: document.getElementById('emailIncludeQA')?.checked,
+      includeCitations: document.getElementById('emailIncludeCitations')?.checked,
+    },
+    availability,
   );
 }
 
@@ -268,7 +254,7 @@ export async function openEmailModal() {
 
     // Raccogli opzioni selezionate
     const options = _collectEmailOptions();
-    if (!_hasAnySelected(options)) {
+    if (!hasAnySelected(options)) {
       Toast.show(I18n.t('email.noSection'), 'error');
       return;
     }

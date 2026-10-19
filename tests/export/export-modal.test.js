@@ -7,7 +7,7 @@ vi.mock('../../src/utils/core/modal.js', () => ({
   },
 }));
 
-const { showExportModal } = await import('@shared/export-modal.js');
+const { showExportModal, computeExportAvailability } = await import('@shared/export-modal.js');
 const { Modal } = await import('../../src/utils/core/modal.js');
 
 // ---------------------------------------------------------------------------
@@ -295,5 +295,19 @@ describe('showExportModal() cleanup listeners', () => {
     btn.click();
     // Potrebbe non avere listener, o avere nuovo listener — verifichiamo max 1 call
     expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('computeExportAvailability()', () => {
+  it('marks empty and missing optional sections unavailable', () => {
+    expect(computeExportAvailability({ translation: null, qa: [], citations: { citations: [] } }))
+      .toEqual({ translation: false, qa: false, citations: false });
+    expect(computeExportAvailability({})).toEqual({ translation: false, qa: false, citations: false });
+    expect(computeExportAvailability({ citations: {} })).toEqual({ translation: false, qa: false, citations: false });
+  });
+
+  it('marks populated optional sections available', () => {
+    expect(computeExportAvailability({ translation: { text: 'Ciao' }, qa: [{ question: 'Why?', answer: 'Because' }], citations: { citations: [{ id: 1 }] } }))
+      .toEqual({ translation: true, qa: true, citations: true });
   });
 });

@@ -9,7 +9,7 @@ import { CitationExtractor } from '../../utils/ai/citation-extractor.js';
 import { PDFExporter } from '../../utils/export/pdf-exporter.js';
 import { MarkdownExporter } from '../../utils/export/markdown-exporter.js';
 import { Modal } from '../../utils/core/modal.js';
-import { showExportModal } from '../../shared/export-modal.js';
+import { showExportModal, computeExportAvailability } from '../../shared/export-modal.js';
 import { formatSummaryWithKeyPointsText } from '../../shared/export-formatters.js';
 
 export async function openDetail(id) {
@@ -274,15 +274,11 @@ export function exportCurrentMarkdown() {
 }
 
 function _getEntryAvailability() {
-  return {
-    translation: !!state.currentEntry.translation,
-    qa: !!(state.currentEntry.qa && state.currentEntry.qa.length > 0),
-    citations: !!(
-      state.currentEntry.citations &&
-      state.currentEntry.citations.citations &&
-      state.currentEntry.citations.citations.length > 0
-    ),
-  };
+  return computeExportAvailability({
+    translation: state.currentEntry.translation,
+    qa: state.currentEntry.qa,
+    citations: state.currentEntry.citations,
+  });
 }
 
 export async function copyCurrentSummary() {

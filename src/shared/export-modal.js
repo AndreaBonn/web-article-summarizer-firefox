@@ -144,3 +144,15 @@ function _close(modal, modalTitle, resetTitle) {
     modalTitle.textContent = resetTitle;
   }
 }
+
+export function computeExportAvailability({ translation, qa, citations }) {
+  return {
+    translation: !!translation,
+    qa: !!(qa && qa.length > 0),
+    citations: !!(
+      citations &&
+      citations.citations &&
+      citations.citations.length > 0
+    ),
+  };
+}
