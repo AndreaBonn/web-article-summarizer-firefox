@@ -19,7 +19,11 @@ import {
 import { Logger } from '../../utils/core/logger.js';
 import { unwrapServiceResponse } from '../../utils/core/service-response.js';
 import { addTTSButtons } from './voice.js';
-import { formatQAText, formatTranslationText } from '../../shared/export-formatters.js';
+import {
+  formatQAText,
+  formatTranslationText,
+  formatSummaryWithKeyPointsText,
+} from '../../shared/export-formatters.js';
 
 export async function analyzeArticle() {
   showState('loading');
@@ -326,11 +330,10 @@ export function switchTab(tabName) {
 export async function copyToClipboard() {
   if (!state.currentResults) return;
 
-  let text = `RIASSUNTO:\n${state.currentResults.summary}\n\n`;
-  text += `PUNTI CHIAVE:\n`;
-  state.currentResults.keyPoints.forEach((point, index) => {
-    text += `${index + 1}. ${point.title} (§${point.paragraphs})\n   ${point.description}\n\n`;
-  });
+  let text = formatSummaryWithKeyPointsText(
+    state.currentResults.summary,
+    state.currentResults.keyPoints,
+  );
 
   // Aggiungi traduzione se presente
   if (translationState.value) {

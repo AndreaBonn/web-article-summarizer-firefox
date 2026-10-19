@@ -4,7 +4,33 @@ import {
   formatQAText,
   formatTranslationText,
   formatKeyPointsText,
+  formatSummaryWithKeyPointsText,
 } from '@shared/export-formatters.js';
+
+describe('formatSummaryWithKeyPointsText()', () => {
+  it('formats a summary and two numbered key points with paragraph references', () => {
+    const points = [
+      { title: 'First point', paragraphs: '1', description: 'First description.' },
+      { title: 'Second point', paragraphs: '2-3', description: 'Second description.' },
+    ];
+
+    expect(formatSummaryWithKeyPointsText('A summary.', points)).toBe(
+      'RIASSUNTO:\nA summary.\n\nPUNTI CHIAVE:\n' +
+        '1. First point (§1)\n   First description.\n\n' +
+        '2. Second point (§2-3)\n   Second description.\n\n',
+    );
+  });
+
+  it('retains the undefined paragraph reference when paragraphs are absent', () => {
+    expect(
+      formatSummaryWithKeyPointsText('Summary', [{ title: 'Point', description: 'Details' }]),
+    ).toBe('RIASSUNTO:\nSummary\n\nPUNTI CHIAVE:\n1. Point (§undefined)\n   Details\n\n');
+  });
+
+  it('retains both headings for an empty summary and empty key points', () => {
+    expect(formatSummaryWithKeyPointsText('', [])).toBe('RIASSUNTO:\n\n\nPUNTI CHIAVE:\n');
+  });
+});
 
 // ---------------------------------------------------------------------------
 // formatCitationsText()

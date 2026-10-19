@@ -10,6 +10,7 @@ import { PDFExporter } from '../../utils/export/pdf-exporter.js';
 import { MarkdownExporter } from '../../utils/export/markdown-exporter.js';
 import { Modal } from '../../utils/core/modal.js';
 import { showExportModal } from '../../shared/export-modal.js';
+import { formatSummaryWithKeyPointsText } from '../../shared/export-formatters.js';
 
 export async function openDetail(id) {
   state.currentEntry = await HistoryManager.getSummaryById(id);
@@ -287,11 +288,10 @@ function _getEntryAvailability() {
 export async function copyCurrentSummary() {
   if (!state.currentEntry) return;
 
-  let text = `RIASSUNTO:\n${state.currentEntry.summary}\n\n`;
-  text += `PUNTI CHIAVE:\n`;
-  state.currentEntry.keyPoints.forEach((point, index) => {
-    text += `${index + 1}. ${point.title} (§${point.paragraphs})\n   ${point.description}\n\n`;
-  });
+  let text = formatSummaryWithKeyPointsText(
+    state.currentEntry.summary,
+    state.currentEntry.keyPoints,
+  );
 
   // Aggiungi traduzione se presente
   if (state.currentEntry.translation) {

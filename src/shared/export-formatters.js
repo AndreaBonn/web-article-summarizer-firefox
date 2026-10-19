@@ -3,6 +3,15 @@
 
 const SEPARATOR = '='.repeat(60);
 
+export function formatSummaryWithKeyPointsText(summary, keyPoints) {
+  let text = `RIASSUNTO:\n${summary}\n\n`;
+  text += `PUNTI CHIAVE:\n`;
+  keyPoints.forEach((point, index) => {
+    text += `${index + 1}. ${point.title} (§${point.paragraphs})\n   ${point.description}\n\n`;
+  });
+  return text;
+}
+
 /**
  * Formatta citazioni come testo per clipboard/email.
  * @param {Array} citations - Array di oggetti citazione (con author, year, source, quote_text)
