@@ -39,8 +39,12 @@ describe('ThemeManager', () => {
       ThemeManager.applyTheme(true);
 
       const btn = document.getElementById('themeToggleBtn');
-      expect(btn.textContent).toBe('◐');
-      expect(btn.title).toBe('Tema Chiaro');
+      const svg = btn.querySelector('svg');
+      expect(svg).not.toBeNull();
+      expect(svg.dataset.icon).toBe('sun');
+      expect(btn.textContent).not.toContain('◐');
+      expect(btn.title).toBe('Tema chiaro');
+      expect(btn.getAttribute('aria-label')).toBe('Tema chiaro');
     });
 
     it('test_applyTheme_false_updatesButtonIcon', () => {
@@ -48,8 +52,18 @@ describe('ThemeManager', () => {
       ThemeManager.applyTheme(false);
 
       const btn = document.getElementById('themeToggleBtn');
-      expect(btn.textContent).toBe('◑');
-      expect(btn.title).toBe('Tema Scuro');
+      const svg = btn.querySelector('svg');
+      expect(svg).not.toBeNull();
+      expect(svg.dataset.icon).toBe('moon');
+      expect(btn.textContent).not.toContain('◑');
+      expect(btn.title).toBe('Tema scuro');
+      expect(btn.getAttribute('aria-label')).toBe('Tema scuro');
+    });
+
+    it('test_applyTheme_dataThemeToggleButton_alsoGetsIcon', () => {
+      document.body.innerHTML = '<button data-theme-toggle></button>';
+      ThemeManager.applyTheme(false);
+      expect(document.querySelector('[data-theme-toggle] svg')).not.toBeNull();
     });
 
     it('test_applyTheme_noButton_noError', () => {

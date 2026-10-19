@@ -3,6 +3,7 @@ import { Modal } from './modal.js';
 import { Logger } from './logger.js';
 
 const MAX_ERROR_LOGS = 50;
+export const UNSUPPORTED_PAGE_MARKER = '[UNSUPPORTED_PAGE]';
 
 export class ErrorHandler {
   /**
@@ -26,6 +27,24 @@ export class ErrorHandler {
   }
 
   /**
+   * Error kind that decides which recovery action the UI offers.
+   * @returns {'missing_key'|'unsupported_page'|'page_unreachable'|'generic'}
+   */
+  static classifyError(error) {
+    const message = error?.message || String(error);
+    if (message.includes('API key non configurata')) return 'missing_key';
+    if (message.includes(UNSUPPORTED_PAGE_MARKER)) return 'unsupported_page';
+    if (
+      message.includes('Could not establish connection') ||
+      message.includes('Receiving end does not exist') ||
+      message.includes('Impossibile comunicare con la pagina')
+    ) {
+      return 'page_unreachable';
+    }
+    return 'generic';
+  }
+
+  /**
    * Converte errori tecnici in messaggi user-friendly
    */
   static getErrorMessage(error) {
@@ -41,7 +60,7 @@ export class ErrorHandler {
 
     // Errori API
     if (message.includes('API key non configurata')) {
-      return "API key non configurata. Clicca sull'icona ⚙️ per configurare.";
+      return 'Manca la chiave del servizio AI scelto. Si configura una volta sola.';
     }
     if (message.includes('401') || message.includes('Unauthorized')) {
       return 'API key non valida. Verifica la configurazione nelle impostazioni.';
@@ -79,9 +98,13 @@ export class ErrorHandler {
       return 'Richiesta scaduta. Il server ha impiegato troppo tempo a rispondere.';
     }
 
-    // Errori di Chrome Extension
-    if (message.includes('chrome://') || message.includes('chrome-extension://')) {
-      return 'Impossibile analizzare pagine interne di Chrome.';
+    // Pagine che lo script di estrazione non può leggere
+    if (message.includes(UNSUPPORTED_PAGE_MARKER)) {
+      return (
+        "Questa pagina non si può riassumere: l'estensione legge gli articoli dei siti https. " +
+        'Le pagine di Firefox (about:) e i siti http non sono supportati. ' +
+        'Per un documento PDF usa «Analisi PDF».'
+      );
     }
     if (
       message.includes('Could not establish connection') ||

@@ -1,6 +1,7 @@
 // Progress Tracker - Sistema di tracking progresso granulare
 // Mostra step dettagliati durante operazioni lunghe
-import { HtmlSanitizer } from "../security/html-sanitizer.js";
+import { HtmlSanitizer } from '../security/html-sanitizer.js';
+import { I18n } from '../i18n/i18n.js';
 
 export class ProgressTracker {
   constructor(containerEl, messageEl, progressBarEl, percentEl) {
@@ -38,7 +39,7 @@ export class ProgressTracker {
   start() {
     this.isActive = true;
     this.currentStep = 0;
-    this.container.classList.remove("hidden");
+    this.container.classList.remove('hidden');
     this.updateUI();
   }
 
@@ -89,25 +90,29 @@ export class ProgressTracker {
     const currentStepProgress = step.weight * 0.5;
     const totalProgress = completedWeight + currentStepProgress;
 
-    const percent = Math.min(
-      Math.round((totalProgress / this.totalWeight) * 100),
-      99,
-    );
+    const percent = Math.min(Math.round((totalProgress / this.totalWeight) * 100), 99);
 
-    // Aggiorna messaggio
-    this.messageEl.innerHTML = `
-      <div class="progress-step-indicator">
-        <span class="progress-step-number">${this.currentStep + 1}/${this.steps.length}</span>
-        <span class="progress-step-label">${HtmlSanitizer.escape(customMessage || step.label)}</span>
-      </div>
-    `;
+    // Every step stays visible, so the user sees what is done and what is left
+    const items = this.steps
+      .map((s, index) => {
+        if (index < this.currentStep) {
+          return `<li class="progress-step progress-step--done">✓ ${HtmlSanitizer.escape(s.label)}</li>`;
+        }
+        if (index === this.currentStep) {
+          const label = HtmlSanitizer.escape(customMessage || s.label);
+          return `<li class="progress-step progress-step--current" aria-current="step">● ${label}</li>`;
+        }
+        return `<li class="progress-step progress-step--pending">○ ${HtmlSanitizer.escape(s.label)}</li>`;
+      })
+      .join('');
+    this.messageEl.innerHTML = `<ol class="progress-steps">${items}</ol>`;
 
     // Aggiorna progress bar con animazione
-    this.progressBarEl.style.width = percent + "%";
-    this.percentEl.textContent = percent + "%";
+    this.progressBarEl.style.width = percent + '%';
+    this.percentEl.textContent = percent + '%';
 
     // Animazione smooth
-    this.progressBarEl.style.transition = "width 0.3s ease";
+    this.progressBarEl.style.transition = 'width 0.3s ease';
   }
 
   /**
@@ -115,18 +120,18 @@ export class ProgressTracker {
    */
   complete() {
     this.isActive = false;
-    this.progressBarEl.style.width = "100%";
-    this.percentEl.textContent = "100%";
+    this.progressBarEl.style.width = '100%';
+    this.percentEl.textContent = '100%';
     this.messageEl.innerHTML = `
       <div class="progress-complete">
         <span class="progress-complete-icon">✓</span>
-        <span class="progress-complete-text">Completato!</span>
+        <span class="progress-complete-text">${HtmlSanitizer.escape(I18n.t('progress.done'))}</span>
       </div>
     `;
 
     // Nascondi dopo un breve delay
     setTimeout(() => {
-      this.container.classList.add("hidden");
+      this.container.classList.add('hidden');
       this.reset();
     }, 800);
   }
@@ -143,8 +148,8 @@ export class ProgressTracker {
         <span class="progress-error-text">${HtmlSanitizer.escape(message)}</span>
       </div>
     `;
-    this.progressBarEl.style.backgroundColor = "#e74c3c";
-    this.progressBarEl.style.width = "100%";
+    this.progressBarEl.style.backgroundColor = '#e74c3c';
+    this.progressBarEl.style.width = '100%';
 
     // Mantieni visibile per permettere all'utente di leggere l'errore
     // Non nascondere automaticamente
@@ -155,10 +160,10 @@ export class ProgressTracker {
    */
   reset() {
     this.currentStep = 0;
-    this.progressBarEl.style.width = "0%";
-    this.progressBarEl.style.backgroundColor = "";
-    this.percentEl.textContent = "0%";
-    this.messageEl.innerHTML = "";
+    this.progressBarEl.style.width = '0%';
+    this.progressBarEl.style.backgroundColor = '';
+    this.percentEl.textContent = '0%';
+    this.messageEl.innerHTML = '';
   }
 
   /**
@@ -166,14 +171,14 @@ export class ProgressTracker {
    */
   hide() {
     this.isActive = false;
-    this.container.classList.add("hidden");
+    this.container.classList.add('hidden');
   }
 
   /**
    * Mostra il tracker
    */
   show() {
-    this.container.classList.remove("hidden");
+    this.container.classList.remove('hidden');
   }
 
   /**
@@ -184,8 +189,8 @@ export class ProgressTracker {
   setProgress(percent, message) {
     if (!this.isActive) return;
 
-    this.progressBarEl.style.width = Math.min(percent, 100) + "%";
-    this.percentEl.textContent = Math.min(percent, 100) + "%";
+    this.progressBarEl.style.width = Math.min(percent, 100) + '%';
+    this.percentEl.textContent = Math.min(percent, 100) + '%';
 
     if (message) {
       this.messageEl.innerHTML = `

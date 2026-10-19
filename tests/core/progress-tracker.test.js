@@ -119,11 +119,36 @@ describe('ProgressTracker', () => {
       expect(percentEl.textContent).toBe('0%');
     });
 
-    it('test_updateUI_showsStepNumber', () => {
+    it('test_updateUI_showsEveryStepWithItsState', () => {
       tracker.defineSteps(steps);
       tracker.start();
+      tracker.setStep('generate');
 
-      expect(messageEl.innerHTML).toContain('1/4');
+      const html = messageEl.innerHTML;
+      expect(html).toContain('progress-steps');
+      expect(html).toMatch(/progress-step--done[^>]*>[^<]*Estrazione articolo/);
+      expect(html).toMatch(/progress-step--done[^>]*>[^<]*Classificazione tipo/);
+      expect(html).toMatch(/progress-step--current[^>]*>[^<]*Generazione riassunto/);
+      expect(html).toMatch(/progress-step--pending[^>]*>[^<]*Salvataggio/);
+    });
+
+    it('test_updateUI_customMessage_replacesOnlyCurrentStepLabel', () => {
+      tracker.defineSteps(steps);
+      tracker.start();
+      tracker.setStep('classify', 'Rilevato: Notizia');
+
+      const html = messageEl.innerHTML;
+      expect(html).toMatch(/progress-step--current[^>]*>[^<]*Rilevato: Notizia/);
+      expect(html).not.toContain('Classificazione tipo');
+      expect(html).toContain('Estrazione articolo');
+    });
+
+    it('test_updateUI_escapesStepLabels', async () => {
+      const { HtmlSanitizer } = await import('@utils/security/html-sanitizer.js');
+      tracker.defineSteps(steps);
+      tracker.start();
+      expect(HtmlSanitizer.escape).toHaveBeenCalledWith('Estrazione articolo');
+      expect(HtmlSanitizer.escape).toHaveBeenCalledWith('Salvataggio');
     });
   });
 

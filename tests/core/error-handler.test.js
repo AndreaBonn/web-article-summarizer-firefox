@@ -46,9 +46,10 @@ describe('ErrorHandler', () => {
       expect(msg).toContain('troppo breve');
     });
 
-    it('maps "API key non configurata" correctly', () => {
+    it('maps "API key non configurata" to a message that names the missing key, not the gear icon', () => {
       const msg = ErrorHandler.getErrorMessage(new Error('API key non configurata'));
-      expect(msg).toContain('API key non configurata');
+      expect(msg).toContain('chiave');
+      expect(msg).not.toContain('⚙️');
     });
 
     it('maps 401/Unauthorized to API key error', () => {
@@ -96,10 +97,10 @@ describe('ErrorHandler', () => {
       );
     });
 
-    it('maps chrome:// URLs to internal page error', () => {
-      expect(ErrorHandler.getErrorMessage(new Error('chrome://extensions'))).toContain(
-        'pagine interne di Chrome',
-      );
+    it('maps unsupported pages to a message that explains https-only support', () => {
+      const msg = ErrorHandler.getErrorMessage(new Error('[UNSUPPORTED_PAGE]'));
+      expect(msg).toContain('https');
+      expect(msg).not.toContain('F5');
     });
 
     it('maps connection errors to reload message', () => {
@@ -425,6 +426,27 @@ describe('ErrorHandler', () => {
       const msgNoCtx = await ErrorHandler.showError(new Error('No article found'), '');
 
       expect(msgWithCtx).toBe(msgNoCtx);
+    });
+  });
+
+  describe('classifyError', () => {
+    it('test_classifyError_missingKey_returnsMissingKey', () => {
+      expect(ErrorHandler.classifyError(new Error('API key non configurata. Vai nelle impostazioni.'))).toBe('missing_key');
+    });
+
+    it('test_classifyError_unsupportedPage_returnsUnsupportedPage', () => {
+      expect(ErrorHandler.classifyError(new Error('[UNSUPPORTED_PAGE]'))).toBe('unsupported_page');
+    });
+
+    it('test_classifyError_receivingEndMissing_returnsPageUnreachable', () => {
+      expect(
+        ErrorHandler.classifyError(new Error('Could not establish connection. Receiving end does not exist.')),
+      ).toBe('page_unreachable');
+    });
+
+    it('test_classifyError_otherError_returnsGeneric', () => {
+      expect(ErrorHandler.classifyError(new Error('500 Internal Server Error'))).toBe('generic');
+      expect(ErrorHandler.classifyError('plain string')).toBe('generic');
     });
   });
 });

@@ -6,7 +6,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: #4285f4;
+  background: var(--color-accent);
   color: white;
   border: none;
   border-radius: 6px;
@@ -17,7 +17,7 @@
 }
 
 .tts-button:hover {
-  background: #3367d6;
+  background: var(--color-accent-hover);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }

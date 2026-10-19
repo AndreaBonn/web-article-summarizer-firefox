@@ -1,6 +1,7 @@
 // History Lazy Loader - Virtual Scrolling per cronologia
 // Carica progressivamente gli articoli per migliorare performance
 import { HistoryManager } from '../storage/history-manager.js';
+import { getProviderLabel, getLanguageLabel, getContentTypeLabel } from './display-labels.js';
 import { I18n } from '../i18n/i18n.js';
 
 export class HistoryLazyLoader {
@@ -116,15 +117,15 @@ export class HistoryLazyLoader {
           <button class="btn-favorite ${entry.favorite ? 'active' : ''}"
                   data-id="${this.escapeHtml(entry.id)}"
                   title="${entry.favorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}">
-            ${entry.favorite ? '⭐' : '☆'}
+            ${entry.favorite ? '★' : '☆'}
           </button>
           <span class="history-item-date">${HistoryManager.formatDate(entry.timestamp)}</span>
         </div>
       </div>
       <div class="history-item-meta">
-        <span class="meta-badge provider">${this.escapeHtml(entry.metadata.provider)}</span>
-        <span class="meta-badge language">${this.escapeHtml(entry.metadata.language)}</span>
-        ${entry.metadata.contentType ? `<span class="meta-badge type">${this.escapeHtml(entry.metadata.contentType)}</span>` : ''}
+        <span class="meta-badge provider">${this.escapeHtml(getProviderLabel(entry.metadata.provider))}</span>
+        <span class="meta-badge language">${this.escapeHtml(getLanguageLabel(entry.metadata.language, I18n.currentLanguage))}</span>
+        ${entry.metadata.contentType ? `<span class="meta-badge type">${this.escapeHtml(getContentTypeLabel(entry.metadata.contentType, I18n.currentLanguage))}</span>` : ''}
         <span class="meta-badge">${entry.article.wordCount} ${I18n.t('article.words')}</span>
       </div>
       <div class="history-item-preview">${this.escapeHtml(entry.summary.substring(0, 150))}...</div>
@@ -147,7 +148,7 @@ export class HistoryLazyLoader {
       if (this.onFavoriteToggle) {
         const isFavorite = await this.onFavoriteToggle(entry.id);
         favoriteBtn.classList.toggle('active', isFavorite);
-        favoriteBtn.textContent = isFavorite ? '⭐' : '☆';
+        favoriteBtn.textContent = isFavorite ? '★' : '☆';
         favoriteBtn.title = isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti';
         entry.favorite = isFavorite;
       }
