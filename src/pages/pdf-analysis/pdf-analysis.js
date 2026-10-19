@@ -54,6 +54,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       .getElementById('themeToggleBtn')
       .addEventListener('click', () => ThemeManager.toggle());
 
+    // The privacy notice names the service: let the user change it right there
+    document.getElementById('changeProviderBtn').addEventListener('click', () => {
+      document.getElementById('analysisOptions').classList.remove('hidden');
+      document.getElementById('providerSelect').focus();
+    });
+
     // Provider change
     document.getElementById('providerSelect').addEventListener('change', async (e) => {
       const settings = await StorageManager.getSettings();
@@ -151,8 +157,8 @@ function handleFile(file) {
 
   // Mostra info file
   document.getElementById('pdfDropZone').style.display = 'none';
-  document.getElementById('selectedFileInfo').style.display = 'flex';
-  document.getElementById('analysisOptions').style.display = 'flex';
+  document.getElementById('selectedFileInfo').classList.remove('hidden');
+  document.getElementById('analysisOptions').classList.remove('hidden');
   document.getElementById('fileName').textContent = file.name;
   document.getElementById('fileSize').textContent = formatFileSize(file.size);
   document.getElementById('analyzePdfBtn').disabled = false;
@@ -164,8 +170,8 @@ function removeFile() {
   selectedFile = null;
   document.getElementById('pdfFileInput').value = '';
   document.getElementById('pdfDropZone').style.display = 'block';
-  document.getElementById('selectedFileInfo').style.display = 'none';
-  document.getElementById('analysisOptions').style.display = 'none';
+  document.getElementById('selectedFileInfo').classList.add('hidden');
+  document.getElementById('analysisOptions').classList.add('hidden');
   document.getElementById('analyzePdfBtn').disabled = true;
 }
 
@@ -183,7 +189,7 @@ async function startAnalysis() {
 
   // Mostra progress
   document.getElementById('analyzePdfBtn').disabled = true;
-  document.getElementById('analysisProgress').style.display = 'block';
+  document.getElementById('analysisProgress').classList.remove('hidden');
 
   try {
     const provider = document.getElementById('providerSelect').value;
@@ -231,7 +237,7 @@ async function startAnalysis() {
     await Modal.error(error.message);
     document.getElementById('analyzePdfBtn').disabled = false;
   } finally {
-    document.getElementById('analysisProgress').style.display = 'none';
+    document.getElementById('analysisProgress').classList.add('hidden');
   }
 }
 

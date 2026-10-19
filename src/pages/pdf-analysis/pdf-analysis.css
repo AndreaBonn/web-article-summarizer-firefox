@@ -150,16 +150,6 @@ body[data-font-size='XL'] h3 {
   font-size: 24px;
 }
 
-.ui-language-select {
-  padding: 8px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--card-bg);
-  color: var(--text-primary);
-  font-size: 14px;
-  cursor: pointer;
-}
-
 /* Upload Section */
 .upload-section {
   background: var(--card-bg);
@@ -360,9 +350,9 @@ body[data-font-size='XL'] h3 {
 /* Info Box */
 .info-box {
   margin-top: 24px;
-  padding: 16px;
-  background: rgba(253, 203, 110, 0.1);
-  border-left: 4px solid var(--color-warning);
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-left: 4px solid var(--color-border);
   border-radius: 8px;
   font-size: 14px;
   color: var(--text-primary);
@@ -370,8 +360,7 @@ body[data-font-size='XL'] h3 {
 }
 
 .info-box span {
-  font-weight: 600;
-  color: var(--accent-color);
+  color: var(--text-secondary);
 }
 
 /* Results Section */

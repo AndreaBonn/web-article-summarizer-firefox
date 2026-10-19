@@ -2,13 +2,17 @@
 // Handles: article loading, display, selection, filtering
 
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
+import { getProviderLabel } from '../../utils/core/display-labels.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { HistoryManager } from '../../utils/storage/history-manager.js';
 import { state } from './state.js';
 
+const MIN_ARTICLES = 2;
+
 export async function loadArticles() {
   state.allArticles = await HistoryManager.getHistory();
   displayArticles(state.allArticles);
+  updateSelectionCount();
 }
 
 export function displayArticles(articles) {
@@ -23,11 +27,11 @@ export function displayArticles(articles) {
     .map(
       (article) => `
     <div class="article-item" data-id="${HtmlSanitizer.escape(article.id)}">
-      <input type="checkbox" class="article-checkbox" data-id="${HtmlSanitizer.escape(article.id)}" />
+      <input type="checkbox" class="article-checkbox" data-id="${HtmlSanitizer.escape(article.id)}" aria-label="${HtmlSanitizer.escape(article.article.title)}" />
       <div class="article-info">
         <div class="article-title">${HtmlSanitizer.escape(article.article.title)}</div>
         <div class="article-meta">
-          <span class="meta-badge provider">${HtmlSanitizer.escape(article.metadata.provider)}</span>
+          <span class="meta-badge provider">${HtmlSanitizer.escape(getProviderLabel(article.metadata.provider))}</span>
           <span class="meta-badge date">${HistoryManager.formatDate(article.timestamp)}</span>
           <span class="meta-badge words">${Number(article.article.wordCount) || 0} ${HtmlSanitizer.escape(I18n.t('article.words'))}</span>
         </div>
@@ -74,7 +78,14 @@ export function updateSelectionCount() {
     document.getElementById('selectionCount').textContent =
       `${state.selectedArticles.length} ${I18n.t('multi.selected')}`;
   }
-  document.getElementById('startAnalysisBtn').disabled = state.selectedArticles.length < 2;
+  const count = state.selectedArticles.length;
+  document.getElementById('startAnalysisBtn').disabled = count < MIN_ARTICLES;
+  // Say why the button is disabled instead of leaving it grey and silent
+  const hint = document.getElementById('startHint');
+  if (hint) {
+    hint.textContent = I18n.tf('multi.startHint', { count, min: MIN_ARTICLES });
+    hint.classList.toggle('hidden', count >= MIN_ARTICLES);
+  }
 }
 
 export function selectAll() {

@@ -10,25 +10,24 @@
   <body>
     <div class="container">
       <header>
-        <h1 data-i18n="multi.title">Analisi Multi Articolo</h1>
+        <h1 data-i18n="multi.title">Confronta articoli</h1>
         <div class="header-toolbar">
-          <select id="uiLanguageSelect" class="ui-language-select" title="Lingua Interfaccia">
-            <option value="it">🇮🇹 Italiano</option>
-            <option value="en">🇺🇸 English</option>
-          </select>
           <button
             id="themeToggleBtn"
             class="btn-back"
             data-i18n-title="theme.toggle"
             title="Cambia Tema"
-          >
-            ◑
-          </button>
+            aria-label="Cambia Tema"
+          ></button>
           <button id="backBtn" class="btn-back" data-i18n="history.back">← Indietro</button>
         </div>
       </header>
 
       <div class="selection-panel">
+        <p class="multi-intro" data-i18n="multi.intro">
+          Scegli 2 o più articoli già riassunti: ottieni una sintesi unica, le idee in comune e in
+          contrasto, e puoi fare domande su tutti insieme.
+        </p>
         <div class="panel-header">
           <h2 data-i18n="multi.selectArticles">Seleziona Articoli</h2>
           <div class="selection-actions">
@@ -52,7 +51,11 @@
             data-i18n="multi.searchArticles"
             placeholder="Cerca articoli..."
           />
-          <select id="filterProvider">
+          <select
+            id="filterProvider"
+            data-i18n-title="multi.filterByProvider"
+            title="Filtra per servizio AI"
+          >
             <option value="" data-i18n="multi.filterProvider">Tutti i provider</option>
             <option value="groq">Groq</option>
             <option value="openai">OpenAI</option>
@@ -120,6 +123,9 @@
         >
           Avvia Analisi
         </button>
+        <p id="startHint" class="start-hint" role="status">
+          Seleziona almeno 2 articoli per iniziare (0 su 2)
+        </p>
       </div>
     </div>
 

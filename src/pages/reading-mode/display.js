@@ -4,7 +4,8 @@
 import { state, elements } from './state.js';
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { Logger } from '../../utils/core/logger.js';
-import { getLanguageName } from '../../utils/i18n/language-names.js';
+import { getProviderLabel, getLanguageLabel } from '../../utils/core/display-labels.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 import { CitationFormatter } from '../../utils/ai/citation-formatter.js';
 import { displayPDFContent } from './display-pdf.js';
 import { Modal } from '../../utils/core/modal.js';
@@ -29,12 +30,17 @@ export function displayContent() {
   }
 
   // Article metadata
-  elements.articleWordCount.textContent = `${article.wordCount || 0} parole`;
-  elements.articleReadTime.textContent = `${article.readingTimeMinutes || 0} min`;
+  elements.articleWordCount.textContent = `${article.wordCount || 0} ${I18n.t('article.words')}`;
+  elements.articleReadTime.textContent = `${article.readingTimeMinutes || 0} ${I18n.t('article.readingTime')}`;
 
   // Summary metadata
-  elements.summaryProvider.textContent = metadata?.provider || 'AI';
-  elements.summaryLanguage.textContent = getLanguageName(metadata?.language || 'it');
+  elements.summaryProvider.textContent = metadata?.provider
+    ? getProviderLabel(metadata.provider)
+    : 'AI';
+  elements.summaryLanguage.textContent = getLanguageLabel(
+    metadata?.language || 'it',
+    I18n.currentLanguage,
+  );
 
   // Article content
   displayArticle(article);

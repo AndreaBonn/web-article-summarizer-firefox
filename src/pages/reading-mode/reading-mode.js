@@ -62,11 +62,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Display content
     displayContent();
   } catch (error) {
-    Logger.error('Initialization error:', error);
-
+    // NODATA is the expected empty state (page opened without a summary), not a failure
     if (error.message === 'NODATA') {
       showNoDataMessage();
     } else {
+      Logger.error('Initialization error:', error);
       showError(error.message || 'Errore durante il caricamento dei dati');
     }
   }
@@ -270,6 +270,10 @@ function startResize(_e) {
 // Theme managed by ThemeManager (auto-init on import)
 
 function showNoDataMessage() {
+  // No article: placeholders like "0 parole" and "- • -" would only look broken
+  document
+    .querySelectorAll('.article-meta, .summary-meta, .voice-controls')
+    .forEach((el) => el.classList.add('hidden'));
   elements.articleContent.innerHTML = `
     <div class="loading-state">
       <div class="no-data-inner">
@@ -283,11 +287,7 @@ function showNoDataMessage() {
           <li>${I18n.t('reading.noData.step2')}</li>
           <li>${I18n.t('reading.noData.step3')}</li>
           <li>${I18n.t('reading.noData.step4')}</li>
-          <li>${I18n.t('reading.noData.step5')}</li>
         </ol>
-        <p class="no-data-hint">
-          ${I18n.t('reading.noData.hint')}
-        </p>
       </div>
     </div>
   `;

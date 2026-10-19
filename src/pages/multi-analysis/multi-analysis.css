@@ -43,29 +43,6 @@ header h1 {
   background: #e9ecef;
 }
 
-.ui-language-select {
-  padding: 8px 12px;
-  border: 2px solid #dfe6e9;
-  border-radius: 8px;
-  font-size: 16px;
-  background: #f8f9fa;
-  color: #2d3436;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-}
-
-.ui-language-select:hover {
-  border-color: var(--accent-color);
-  background: #fff;
-}
-
-.ui-language-select:focus {
-  outline: none;
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
 .selection-panel,
 .analysis-panel {
   background: var(--card-bg);
@@ -215,17 +192,17 @@ header h1 {
 
 .meta-badge.provider {
   background: #e3f2fd;
-  color: #1976d2;
+  color: #0d47a1;
 }
 
 .meta-badge.date {
   background: #f3e5f5;
-  color: #7b1fa2;
+  color: #6a1b9a;
 }
 
 .meta-badge.words {
   background: #e8f5e9;
-  color: #388e3c;
+  color: #1b5e20;
 }
 
 .analysis-options {
@@ -562,7 +539,7 @@ header h1 {
 }
 
 .modal-btn-secondary {
-  background: #00b894;
+  background: #047857;
   color: white;
   box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
 }
@@ -860,4 +837,37 @@ header h1 {
 /* Modal message with top spacing (replaces inline style) */
 .modal-message-spaced {
   margin-top: 16px;
+}
+
+.multi-intro {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--color-accent-subtle);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.start-hint {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Narrow screens: header, selection actions and filters wrap instead of overflowing */
+@media (max-width: 640px) {
+  header,
+  .panel-header,
+  .selection-actions,
+  .search-filter,
+  .header-toolbar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  header {
+    padding: 16px;
+  }
 }

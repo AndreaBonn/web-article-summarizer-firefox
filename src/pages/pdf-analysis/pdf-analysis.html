@@ -32,23 +32,13 @@
               A+
             </button>
           </div>
-          <select
-            id="uiLanguageSelect"
-            class="ui-language-select"
-            data-i18n-title="common.uiLanguageTitle"
-            title="Lingua Interfaccia"
-          >
-            <option value="it">🇮🇹 Italiano</option>
-            <option value="en">🇺🇸 English</option>
-          </select>
           <button
             id="themeToggleBtn"
             class="btn-back"
             data-i18n-title="theme.toggle"
             title="Cambia Tema"
-          >
-            ◑
-          </button>
+            aria-label="Cambia Tema"
+          ></button>
           <button id="backBtn" class="btn-back" data-i18n="pdf.back">← Indietro</button>
         </div>
       </header>
@@ -131,7 +121,12 @@
         </div>
 
         <!-- Avvisi -->
-        <div class="info-box">ℹ️ <span id="privacyNoticeText"></span></div>
+        <div class="info-box">
+          <span id="privacyNoticeText"></span>
+          <button id="changeProviderBtn" class="link-btn" data-i18n="pdf.changeProvider">
+            Cambia servizio
+          </button>
+        </div>
       </div>
 
       <!-- Results Section (hidden initially) -->
