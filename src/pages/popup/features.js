@@ -135,6 +135,18 @@ export async function askQuestion() {
   }
 }
 
+// Pannello traduzione allo stato iniziale (nessuna traduzione), con il pulsante riagganciato
+export function renderTranslationEmpty() {
+  elements.translationContent.innerHTML = `
+    <div class="translation-empty">
+      <p>${HtmlSanitizer.escape(I18n.t('translation.empty'))}</p>
+      <button id="translateBtn" class="btn btn-primary">${HtmlSanitizer.escape(I18n.t('translation.button'))}</button>
+    </div>
+  `;
+  elements.translateBtn = document.getElementById('translateBtn');
+  elements.translateBtn.addEventListener('click', translateArticle, { once: true });
+}
+
 export async function translateArticle() {
   if (!state.currentArticle) {
     showError('Nessun articolo da tradurre');
@@ -180,15 +192,7 @@ export async function translateArticle() {
 
         if (!confirmed) {
           resetTranslationButton();
-          elements.translationContent.innerHTML = `
-            <div class="translation-empty">
-              <p>Clicca sul pulsante per tradurre l'articolo completo</p>
-              <button id="translateBtn" class="btn btn-primary">🌍 Traduci Articolo</button>
-            </div>
-          `;
-          document
-            .getElementById('translateBtn')
-            .addEventListener('click', translateArticle, { once: true });
+          renderTranslationEmpty();
           return;
         }
       }

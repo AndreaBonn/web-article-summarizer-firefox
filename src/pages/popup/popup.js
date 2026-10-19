@@ -8,6 +8,7 @@ import { buildReadingModeData, describeReadingModeStorageError } from './popup-d
 import { exportToPDF, exportToMarkdown, openEmailModal } from './export.js';
 import { askQuestion, translateArticle } from './features.js';
 import { extractCitations } from './citations.js';
+import { resetArticleSession } from './session-reset.js';
 import { initVoiceController, handleVoiceQuestion } from './voice.js';
 import { setupProviderSelect, saveSetupKey } from './setup.js';
 import { StorageManager } from '../../utils/storage/storage-manager.js';
@@ -93,7 +94,7 @@ function bindEvents() {
   });
   on(elements.readingModeBtn, 'click', openReadingMode);
   on(elements.copyBtn, 'click', copyToClipboard);
-  on(elements.newBtn, 'click', reset);
+  on(elements.newBtn, 'click', resetArticleSession);
   bindMenuButton(elements.exportMenuBtn, elements.exportMenu);
   on(elements.exportPdfBtn, 'click', exportToPDF);
   on(elements.exportMdBtn, 'click', exportToMarkdown);
@@ -178,15 +179,6 @@ async function showShortcutHint() {
   } catch (error) {
     Logger.debug('Scorciatoia non disponibile:', error.message);
   }
-}
-
-function reset() {
-  state.currentArticle = null;
-  state.currentResults = null;
-  state.currentQA = [];
-  state.selectedContentType = 'auto';
-  elements.contentTypeSelect.value = 'auto';
-  showState('initial');
 }
 
 // Open Reading Mode

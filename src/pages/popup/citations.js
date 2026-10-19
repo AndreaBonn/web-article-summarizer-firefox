@@ -50,7 +50,7 @@ export async function extractCitations() {
 
     // Mostra badge "Da Cache" se applicabile
     if (result.fromCache) {
-      const citationsHeader = document.querySelector('#citations-tab');
+      const citationsHeader = document.getElementById('citationsTab');
       if (citationsHeader && !citationsHeader.querySelector('.cache-badge')) {
         const badge = document.createElement('span');
         badge.className = 'cache-badge';
@@ -82,6 +82,20 @@ export async function extractCitations() {
     btn.disabled = false;
     btn.textContent = '📖 Estrai Citazioni';
   }
+}
+
+// Pannello citazioni allo stato iniziale (nessuna estrazione), con il pulsante riagganciato
+export function renderCitationsEmpty() {
+  elements.citationsContent.innerHTML = `
+    <div class="citations-empty">
+      <p>${HtmlSanitizer.escape(I18n.t('citations.empty'))}</p>
+      <button id="extractCitationsBtn" class="btn btn-primary">
+        ${HtmlSanitizer.escape(I18n.t('citations.button'))}
+      </button>
+    </div>
+  `;
+  elements.extractCitationsBtn = document.getElementById('extractCitationsBtn');
+  elements.extractCitationsBtn.addEventListener('click', extractCitations, { once: true });
 }
 
 export function displayCitations() {
