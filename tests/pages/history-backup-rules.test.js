@@ -133,6 +133,12 @@ describe('backup import contract', () => {
   ])('rejects invalid backup structure %j', (backup) => {
     expect(() => parseBackup(JSON.stringify(backup))).toThrow('File di backup non valido');
   });
+  it.each(['null', '5', '"text"', 'true'])(
+    'rejects non-object JSON %s as invalid format',
+    (text) => {
+      expect(() => parseBackup(text)).toThrow('File di backup non valido');
+    },
+  );
   it('rejects malformed JSON', () => {
     expect(() => parseBackup('{')).toThrow(SyntaxError);
     expect(parseBackup('{"version":"1","data":{"singleArticles":[]}}')).toEqual({
@@ -212,5 +218,17 @@ describe('backup import contract', () => {
   it('shows zero counts when metadata has no totals', () => {
     const message = buildImportConfirmMessage({ exportDate: '2026-01-01', metadata: {} });
     expect(message).toContain('📄 Articoli singoli: 0\n🔬 Analisi multiple: 0');
+  });
+  it('falls back to data collection sizes when the backup has no metadata', () => {
+    const message = buildImportConfirmMessage({
+      exportDate: '2026-01-01',
+      data: { singleArticles: [{}, {}, {}], multiAnalysis: [{}] },
+    });
+    expect(message).toContain('📄 Articoli singoli: 3\n🔬 Analisi multiple: 1');
+  });
+  it('does not throw when metadata and data are both missing', () => {
+    expect(buildImportConfirmMessage({ exportDate: '2026-01-01' })).toContain(
+      '📄 Articoli singoli: 0\n🔬 Analisi multiple: 0',
+    );
   });
 });

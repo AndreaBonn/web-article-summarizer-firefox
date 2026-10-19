@@ -66,6 +66,7 @@ export function parseBackup(text) {
 
   // Valida struttura del backup
   if (
+    !backup ||
     !backup.version ||
     typeof backup.version !== 'string' ||
     !backup.data ||
@@ -109,8 +110,8 @@ export function buildImportConfirmMessage(backup) {
   return (
     `Vuoi importare questo backup?\n\n` +
     `📅 Data backup:\n${new Date(backup.exportDate).toLocaleString('it-IT')}\n\n` +
-    `📄 Articoli singoli: ${backup.metadata.totalSingleArticles || 0}\n` +
-    `🔬 Analisi multiple: ${backup.metadata.totalMultiAnalysis || 0}\n\n` +
+    `📄 Articoli singoli: ${backup.metadata?.totalSingleArticles ?? backup.data?.singleArticles?.length ?? 0}\n` +
+    `🔬 Analisi multiple: ${backup.metadata?.totalMultiAnalysis ?? backup.data?.multiAnalysis?.length ?? 0}\n\n` +
     `⚠️ ATTENZIONE:\n` +
     `Questo AGGIUNGERÀ i dati al tuo storico\n` +
     `esistente (non li sostituirà).`
