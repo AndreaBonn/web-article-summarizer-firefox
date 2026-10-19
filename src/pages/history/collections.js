@@ -168,6 +168,7 @@ async function openMultiAnalysis(id) {
       id: entry.id,
       analysis: entry.analysis,
       articles: entry.articles,
+      timestamp: entry.timestamp,
     },
   });
   Logger.debug('Reindirizzamento a multi-analysis.html');

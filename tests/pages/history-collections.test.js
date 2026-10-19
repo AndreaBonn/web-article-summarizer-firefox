@@ -63,6 +63,7 @@ describe('opening a saved multi-analysis from history', () => {
         id: 'multi-1',
         analysis: makeEntry().analysis,
         articles: makeEntry().articles,
+        timestamp: 1,
       },
     });
     expect(set.mock.invocationCallOrder[0]).toBeLessThan(navigate.mock.invocationCallOrder[0]);

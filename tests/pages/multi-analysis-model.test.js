@@ -85,7 +85,6 @@ describe('multi-analysis model', () => {
     };
     const before = structuredClone(data);
     const reopened = buildReopenedAnalysis(data, 123);
-    // The reopening date is deliberately outside this contract (B21).
     expect(reopened.currentAnalysis.id).toBe('saved');
     expect(reopened.currentAnalysis.globalSummary).toBe('Overview');
     expect(reopened.currentAnalysis.comparison).toBe('Differences');
@@ -100,5 +99,12 @@ describe('multi-analysis model', () => {
     expect(empty.currentAnalysis.metadata).toEqual({ provider: 'unknown' });
     expect(empty.selectedArticles).toEqual([]);
     expect(empty.allArticles).toEqual([]);
+  });
+
+  it('test_buildReopenedAnalysis_keeps_saved_timestamp_and_falls_back_to_now_when_absent', () => {
+    const saved = buildReopenedAnalysis({ timestamp: 1000, analysis: {}, articles: [] }, 123);
+    expect(saved.currentAnalysis.timestamp).toBe(1000);
+    const legacy = buildReopenedAnalysis({ analysis: {}, articles: [] }, 123);
+    expect(legacy.currentAnalysis.timestamp).toBe(123);
   });
 });

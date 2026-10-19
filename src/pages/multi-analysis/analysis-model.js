@@ -65,7 +65,7 @@ export function toggleSelection(selected, id, checked) {
 export function buildReopenedAnalysis(data, now) {
   const currentAnalysis = {
     id: data.id,
-    timestamp: now,
+    timestamp: data.timestamp ?? now,
     globalSummary: data.analysis.globalSummary,
     comparison: data.analysis.comparison,
     qa: data.analysis.qa,
