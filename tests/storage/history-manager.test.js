@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock browser.storage.local — simula serializzazione reale (JSON round-trip)
 const store = {};
-global.browser = {
+globalThis.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -378,6 +378,27 @@ describe('HistoryManager', () => {
       const history = await HistoryManager.getMultiAnalysisHistory();
       expect(history).toHaveLength(1);
       expect(history[0].analysis.globalSummary).toBe('Global summary');
+    });
+  });
+
+  describe('importSummary()', () => {
+    it('test_importSummary_viaFacade_preservesBackupIdAndSkipsDuplicate', async () => {
+      const entry = {
+        id: 'backup-1',
+        timestamp: 1700000000000,
+        article: mockArticle,
+        summary: 'S',
+        keyPoints: [],
+        qa: [{ question: 'Q', answer: 'A' }],
+        metadata: mockMetadata,
+      };
+
+      expect(await HistoryManager.importSummary(entry)).toBe('backup-1');
+      expect(await HistoryManager.importSummary(entry)).toBeNull();
+
+      const history = await HistoryManager.getHistory();
+      expect(history).toHaveLength(1);
+      expect(history[0].qa).toEqual([{ question: 'Q', answer: 'A' }]);
     });
   });
 });

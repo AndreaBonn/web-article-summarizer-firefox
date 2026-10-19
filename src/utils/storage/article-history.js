@@ -4,8 +4,8 @@ import { BaseHistoryRepository } from './base-history-repository.js';
 const repo = new BaseHistoryRepository('summaryHistory', 50);
 
 export class ArticleHistory {
-  static async saveSummary(article, summary, keyPoints, metadata) {
-    const entry = {
+  static buildEntry(article, summary, keyPoints, metadata) {
+    return {
       article: {
         title: article.title,
         url: article.url,
@@ -26,7 +26,41 @@ export class ArticleHistory {
         fromCache: metadata.fromCache || false,
       },
     };
-    return repo.save(entry);
+  }
+
+  static async saveSummary(article, summary, keyPoints, metadata) {
+    return repo.save(ArticleHistory.buildEntry(article, summary, keyPoints, metadata));
+  }
+
+  /**
+   * Restores an entry from a backup keeping its original id and timestamp, so that
+   * importing the same backup again is recognised as a duplicate.
+   * @returns {Promise<string|null>} the stored id, or null when the id was already present
+   */
+  static async importSummary(backupEntry) {
+    const history = await repo._getAll();
+    const hasId = typeof backupEntry.id === 'string' && backupEntry.id !== '';
+    if (hasId && history.some((e) => e.id === backupEntry.id)) return null;
+
+    const entry = {
+      ...ArticleHistory.buildEntry(
+        backupEntry.article,
+        backupEntry.summary,
+        backupEntry.keyPoints,
+        backupEntry.metadata,
+      ),
+      id: hasId ? backupEntry.id : crypto.randomUUID(),
+      timestamp: Number.isFinite(backupEntry.timestamp) ? backupEntry.timestamp : Date.now(),
+      translation: backupEntry.translation ?? null,
+      notes: backupEntry.notes ?? null,
+      favorite: backupEntry.favorite === true,
+    };
+    if (backupEntry.qa) entry.qa = backupEntry.qa;
+    if (backupEntry.citations) entry.citations = backupEntry.citations;
+
+    const merged = [...history, entry].sort((a, b) => b.timestamp - a.timestamp);
+    await repo._saveAll(merged.slice(0, repo.maxEntries));
+    return entry.id;
   }
 
   static async getHistory() {

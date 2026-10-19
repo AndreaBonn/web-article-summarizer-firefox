@@ -4,7 +4,7 @@ vi.spyOn(console, 'debug').mockImplementation(() => {});
 vi.spyOn(console, 'info').mockImplementation(() => {});
 
 const store = {};
-global.browser = {
+globalThis.browser = {
   storage: {
     local: {
       get: vi.fn((keys) => {
@@ -228,6 +228,78 @@ describe('ArticleHistory', () => {
     it('test_filterHistory_noFilters_returnsAll', async () => {
       const results = await ArticleHistory.filterHistory({});
       expect(results).toHaveLength(2);
+    });
+  });
+
+  describe('importSummary()', () => {
+    const backupEntry = () => ({
+      id: 'original-id',
+      timestamp: 1700000000000,
+      article: mockArticle,
+      summary: 'Imported summary',
+      keyPoints: [{ title: 'K', description: 'D' }],
+      translation: { text: 'Testo tradotto', targetLanguage: 'it', originalLanguage: 'en' },
+      qa: [{ question: 'Q?', answer: 'A.' }],
+      citations: { citations: [{ id: 'c1', text: 'quote' }], total_citations: 1 },
+      notes: 'my notes',
+      favorite: true,
+      metadata: mockMetadata,
+    });
+
+    it('test_importSummary_backupEntry_keepsIdTimestampAndEveryUserField', async () => {
+      const returned = await ArticleHistory.importSummary(backupEntry());
+
+      const [saved] = await ArticleHistory.getHistory();
+      expect(returned).toBe('original-id');
+      const { metadata, ...rest } = backupEntry();
+      expect(saved).toEqual(expect.objectContaining(rest));
+      expect(saved.metadata).toEqual(expect.objectContaining(metadata));
+    });
+
+    it('test_importSummary_sameEntryTwice_isSkippedTheSecondTime', async () => {
+      await ArticleHistory.importSummary(backupEntry());
+      const second = await ArticleHistory.importSummary(backupEntry());
+
+      expect(second).toBeNull();
+      expect(await ArticleHistory.getHistory()).toHaveLength(1);
+    });
+
+    it('test_importSummary_missingOrInvalidId_assignsFreshId', async () => {
+      const noId = { ...backupEntry(), id: undefined };
+      const numericId = { ...backupEntry(), id: 42 };
+
+      const first = await ArticleHistory.importSummary(noId);
+      const second = await ArticleHistory.importSummary(numericId);
+
+      expect(first).toEqual(expect.any(String));
+      expect(second).toEqual(expect.any(String));
+      expect(first).not.toBe(second);
+      expect(await ArticleHistory.getHistory()).toHaveLength(2);
+    });
+
+    it('test_importSummary_olderEntry_isInsertedKeepingNewestFirst', async () => {
+      const liveId = await ArticleHistory.saveSummary(mockArticle, 'live', [], mockMetadata);
+
+      await ArticleHistory.importSummary(backupEntry());
+
+      const history = await ArticleHistory.getHistory();
+      expect(history.map((e) => e.id)).toEqual([liveId, 'original-id']);
+    });
+
+    it('test_importSummary_optionalFieldsAbsent_defaultsToEmpty', async () => {
+      await ArticleHistory.importSummary({
+        id: 'min',
+        article: mockArticle,
+        summary: 's',
+        keyPoints: [],
+        metadata: mockMetadata,
+      });
+
+      const [saved] = await ArticleHistory.getHistory();
+      expect(saved).toEqual(
+        expect.objectContaining({ id: 'min', translation: null, notes: null, favorite: false }),
+      );
+      expect(saved.timestamp).toEqual(expect.any(Number));
     });
   });
 });

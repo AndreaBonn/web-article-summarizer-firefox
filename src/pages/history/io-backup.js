@@ -17,6 +17,15 @@ import { HistoryManager } from '@utils/storage/history-manager.js';
 import { Modal } from '@utils/core/modal.js';
 import { I18n } from '@utils/i18n/i18n.js';
 
+// Exported multi-analysis entries hold flattened article summaries; saveMultiAnalysis expects
+// the live shape ({ id, article: { title, url, wordCount } }).
+function toSavableArticles(articles) {
+  return (Array.isArray(articles) ? articles : []).map((a) => ({
+    id: a.id,
+    article: { title: a.title, url: a.url, wordCount: a.wordCount },
+  }));
+}
+
 /**
  * Scarica l'intera cronologia in formato JSON
  */
@@ -138,19 +147,10 @@ export async function importHistory(event) {
       const currentIds = new Set(currentHistory.map((h) => h.id));
 
       for (const article of selectNewEntries(backup.data.singleArticles, currentIds)) {
-        article.id = crypto.randomUUID();
         article.metadata = sanitizeMetadata(article.metadata);
         sanitizeArticleEntry(article);
-        await HistoryManager.saveSummary(
-          article.article,
-          article.summary,
-          article.keyPoints,
-          article.metadata,
-          article.translation,
-          article.qa,
-          article.citations,
-          article.notes,
-        );
+        const storedId = await HistoryManager.importSummary(article);
+        if (storedId === null) continue;
         importedSingle++;
       }
     }
@@ -164,7 +164,10 @@ export async function importHistory(event) {
       for (const analysis of selectNewEntries(backup.data.multiAnalysis, currentIds)) {
         analysis.id = crypto.randomUUID();
         sanitizeMultiAnalysisEntry(analysis);
-        await HistoryManager.saveMultiAnalysis(analysis.analysis, analysis.articles);
+        await HistoryManager.saveMultiAnalysis(
+          analysis.analysis,
+          toSavableArticles(analysis.articles),
+        );
         importedMulti++;
       }
     }

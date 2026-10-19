@@ -21,6 +21,10 @@ export class HistoryManager {
     return ArticleHistory.saveSummary(article, summary, keyPoints, metadata);
   }
 
+  static async importSummary(backupEntry) {
+    return ArticleHistory.importSummary(backupEntry);
+  }
+
   static async getHistory() {
     return ArticleHistory.getHistory();
   }
