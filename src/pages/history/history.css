@@ -319,6 +319,7 @@ header h1 {
 }
 
 .empty-state small {
+  display: block;
   font-size: 14px;
   color: #636e72;
 }
