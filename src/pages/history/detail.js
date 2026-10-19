@@ -5,12 +5,18 @@ import { getProviderLabel, getLanguageLabel } from '../../utils/core/display-lab
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { HistoryManager } from '../../utils/storage/history-manager.js';
-import { CitationExtractor } from '../../utils/ai/citation-extractor.js';
 import { PDFExporter } from '../../utils/export/pdf-exporter.js';
 import { MarkdownExporter } from '../../utils/export/markdown-exporter.js';
 import { Modal } from '../../utils/core/modal.js';
 import { showExportModal, computeExportAvailability } from '../../shared/export-modal.js';
-import { formatSummaryWithKeyPointsText } from '../../shared/export-formatters.js';
+import {
+  renderDetailKeypointsHtml,
+  renderTranslationHtml,
+  renderQAHtml,
+  renderCitationsHtml,
+  buildDetailCopyText,
+  prepareNotes,
+} from './detail-render.js';
 
 export async function openDetail(id) {
   state.currentEntry = await HistoryManager.getSummaryById(id);
@@ -38,111 +44,20 @@ export async function openDetail(id) {
     `<p>${HtmlSanitizer.escape(state.currentEntry.summary)}</p>`;
 
   // Key points
-  const keypointsHtml = state.currentEntry.keyPoints
-    .map(
-      (point, index) => `
-    <div class="keypoint-modal">
-      <div class="keypoint-modal-title">${index + 1}. ${HtmlSanitizer.escape(point.title)}</div>
-      <div class="keypoint-modal-ref">§${HtmlSanitizer.escape(String(point.paragraphs))}</div>
-      <div class="keypoint-modal-desc">${HtmlSanitizer.escape(point.description)}</div>
-    </div>
-  `,
-    )
-    .join('');
-  document.getElementById('modalKeypoints').innerHTML = keypointsHtml;
+  document.getElementById('modalKeypoints').innerHTML = renderDetailKeypointsHtml(
+    state.currentEntry.keyPoints,
+  );
 
   // Translation (if available)
-  if (state.currentEntry.translation) {
-    document.getElementById('modalTranslation').innerHTML = `
-      <div class="translation-info-modal">
-        Tradotto da ${HtmlSanitizer.escape(state.currentEntry.translation.originalLanguage)} a ${HtmlSanitizer.escape(state.currentEntry.translation.targetLanguage)}
-      </div>
-      <div class="translation-text">${HtmlSanitizer.escape(state.currentEntry.translation.text)}</div>
-    `;
-  } else {
-    document.getElementById('modalTranslation').innerHTML = `
-      <p class="modal-empty-state">
-        Nessuna traduzione disponibile per questo riassunto
-      </p>
-    `;
-  }
+  document.getElementById('modalTranslation').innerHTML = renderTranslationHtml(
+    state.currentEntry.translation,
+  );
 
   // Q&A (if available)
-  if (state.currentEntry.qa && state.currentEntry.qa.length > 0) {
-    let qaHtml = '';
-    state.currentEntry.qa.forEach((qa, index) => {
-      qaHtml += `
-        <div class="qa-item">
-          <div class="qa-question">
-            <strong>Q${index + 1}:</strong> ${HtmlSanitizer.escape(qa.question)}
-          </div>
-          <div class="qa-answer">
-            <strong>R${index + 1}:</strong> ${HtmlSanitizer.escape(qa.answer)}
-          </div>
-        </div>
-      `;
-    });
-    document.getElementById('modalQA').innerHTML = qaHtml;
-  } else {
-    document.getElementById('modalQA').innerHTML = `
-      <p class="modal-empty-state">
-        Nessuna domanda e risposta disponibile per questo riassunto
-      </p>
-    `;
-  }
+  document.getElementById('modalQA').innerHTML = renderQAHtml(state.currentEntry.qa);
 
   // Citations (if available)
-  if (
-    state.currentEntry.citations &&
-    state.currentEntry.citations.citations &&
-    state.currentEntry.citations.citations.length > 0
-  ) {
-    let citationsHtml = `
-      <div class="citations-info">
-        <strong>${state.currentEntry.citations.total_citations || state.currentEntry.citations.citations.length} citazioni trovate</strong>
-      </div>
-
-      <div class="article-citation-box-detail">
-        <h4>Citazione Articolo Principale (APA)</h4>
-        <div class="article-citation-monospace">
-          ${CitationExtractor.formatCitation(state.currentEntry.article, 'apa')}
-        </div>
-      </div>
-
-      <div class="citations-list-detail">
-    `;
-
-    state.currentEntry.citations.citations.forEach((citation) => {
-      const typeIcon =
-        {
-          direct_quote: '›',
-          reference: '§',
-          statistic: '#',
-          source: '→',
-        }[citation.type] || '•';
-
-      citationsHtml += `
-        <div class="citation-item-detail">
-          <div class="citation-item-header">
-            <span class="citation-type-icon">${typeIcon}</span>
-            <span class="citation-id-badge">#${HtmlSanitizer.escape(String(citation.id))}</span>
-            ${citation.author ? `<span class="citation-author">${HtmlSanitizer.escape(citation.author)}</span>` : ''}
-          </div>
-          ${citation.text ? `<div class="citation-quote-text">"${HtmlSanitizer.escape(citation.text)}"</div>` : ''}
-          <div class="citation-context-text">${HtmlSanitizer.escape(citation.context)}</div>
-        </div>
-      `;
-    });
-
-    citationsHtml += `</div>`;
-    document.getElementById('modalCitations').innerHTML = citationsHtml;
-  } else {
-    document.getElementById('modalCitations').innerHTML = `
-      <p class="modal-empty-state">
-        Nessuna citazione disponibile per questo riassunto
-      </p>
-    `;
-  }
+  document.getElementById('modalCitations').innerHTML = renderCitationsHtml(state.currentEntry);
 
   // Notes (always editable)
   const notesHtml = `
@@ -156,12 +71,12 @@ export async function openDetail(id) {
   // Add event listener for save notes
   document.getElementById('saveNotesBtn').addEventListener('click', async () => {
     const notesTextarea = document.getElementById('notesTextarea');
+    const { textareaValue, notes } = prepareNotes(notesTextarea.value);
     if (notesTextarea.value.length > 10000) {
-      notesTextarea.value = notesTextarea.value.substring(0, 10000);
+      notesTextarea.value = textareaValue;
     }
-    const notes = notesTextarea.value.trim();
-    await HistoryManager.updateSummaryNotes(state.currentEntry.id, notes || null);
-    state.currentEntry.notes = notes || null;
+    await HistoryManager.updateSummaryNotes(state.currentEntry.id, notes);
+    state.currentEntry.notes = notes;
 
     const btn = document.getElementById('saveNotesBtn');
     const originalText = btn.textContent;
@@ -284,42 +199,7 @@ function _getEntryAvailability() {
 export async function copyCurrentSummary() {
   if (!state.currentEntry) return;
 
-  let text = formatSummaryWithKeyPointsText(
-    state.currentEntry.summary,
-    state.currentEntry.keyPoints,
-  );
-
-  // Aggiungi traduzione se presente
-  if (state.currentEntry.translation) {
-    text += `\n${'='.repeat(50)}\n\n`;
-    text += `TRADUZIONE:\n${state.currentEntry.translation.text}\n`;
-  }
-
-  // Aggiungi Q&A se presenti
-  if (state.currentEntry.qa && state.currentEntry.qa.length > 0) {
-    text += `\n${'='.repeat(50)}\n\n`;
-    text += `DOMANDE E RISPOSTE:\n\n`;
-    state.currentEntry.qa.forEach((qa, index) => {
-      text += `Q${index + 1}: ${qa.question}\n`;
-      text += `R${index + 1}: ${qa.answer}\n\n`;
-    });
-  }
-
-  // Aggiungi citazioni se presenti
-  if (
-    state.currentEntry.citations &&
-    state.currentEntry.citations.citations &&
-    state.currentEntry.citations.citations.length > 0
-  ) {
-    text += `\n${'='.repeat(50)}\n\n`;
-    text += `CITAZIONI E BIBLIOGRAFIA:\n\n`;
-    // Usa stile APA di default per la copia
-    text += CitationExtractor.generateBibliography(
-      state.currentEntry.article,
-      state.currentEntry.citations.citations,
-      'apa',
-    );
-  }
+  const text = buildDetailCopyText(state.currentEntry);
 
   try {
     await navigator.clipboard.writeText(text);
