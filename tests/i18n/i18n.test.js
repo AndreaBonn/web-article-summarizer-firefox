@@ -21,6 +21,7 @@ vi.mock('../../src/utils/i18n/locales/it.json', () => ({
     'initial.welcome': 'Benvenuto',
     'initial.language': 'Lingua Output:',
     greeting: 'Ciao {name}, hai {count} messaggi',
+    repeated: '{n} di {n}: {n}',
   },
 }));
 
@@ -81,6 +82,14 @@ describe('I18n.tf()', () => {
   it('sostituisce placeholder singolo', () => {
     const result = I18n.tf('greeting', { name: 'Mario', count: '5' });
     expect(result).toBe('Ciao Mario, hai 5 messaggi');
+  });
+
+  it('sostituisce tutte le occorrenze dello stesso placeholder', () => {
+    expect(I18n.tf('repeated', { n: '3' })).toBe('3 di 3: 3');
+  });
+
+  it('inserisce il valore letteralmente, senza interpretare i pattern di replace ($&, $1)', () => {
+    expect(I18n.tf('greeting', { name: '$&', count: '$1' })).toBe('Ciao $&, hai $1 messaggi');
   });
 
   it('ritorna stringa con placeholder non sostituiti se mancano', () => {

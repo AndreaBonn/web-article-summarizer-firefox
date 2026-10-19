@@ -61,7 +61,9 @@ export const I18n = {
   tf(key, replacements = {}) {
     let translation = this.t(key);
     Object.keys(replacements).forEach((placeholder) => {
-      translation = translation.replace(`{${placeholder}}`, replacements[placeholder]);
+      translation = translation.replaceAll(`{${placeholder}}`, () =>
+        String(replacements[placeholder]),
+      );
     });
     return translation;
   },
