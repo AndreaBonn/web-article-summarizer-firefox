@@ -31,7 +31,7 @@ export class PDFAnalyzer {
    * @param {Function} progressCallback - Callback per progress
    * @returns {Promise<object>} Risultati analisi
    */
-  async analyzePDF(file, apiProvider = 'claude', settings = {}, progressCallback = null) {
+  async analyzePDF(file, apiProvider = 'groq', settings = {}, progressCallback = null) {
     try {
       // Validazione file
       this.validateFile(file);
@@ -58,10 +58,10 @@ export class PDFAnalyzer {
 
       // Estrazione testo
       if (progressCallback) progressCallback('📄 Estrazione testo PDF...', 20);
-      const { text: extractedText, pageCount } = await this.extractTextFromPDF(file);
+      const { text: extractedText, pageCount, textLength } = await this.extractTextFromPDF(file);
 
       // Verifica testo sufficiente
-      if (extractedText.length < 100) {
+      if (textLength < 100) {
         throw new Error(this.ERROR_MESSAGES.INSUFFICIENT_TEXT);
       }
 
@@ -135,6 +135,7 @@ export class PDFAnalyzer {
 
       const pageCount = pdf.numPages;
       let fullText = '';
+      let textLength = 0; // page text only, without the page markers
 
       // Estrai testo da ogni pagina
       for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
@@ -143,12 +144,14 @@ export class PDFAnalyzer {
 
         const pageText = textContent.items.map((item) => item.str).join(' ');
 
+        textLength += pageText.trim().length;
         fullText += `\n\n--- Pagina ${pageNum} ---\n\n${pageText}`;
       }
 
       return {
         text: fullText.trim(),
         pageCount,
+        textLength,
       };
     } catch (error) {
       Logger.error('Errore estrazione PDF:', error);

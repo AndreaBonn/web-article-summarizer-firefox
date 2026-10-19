@@ -358,6 +358,36 @@ describe('PDFAnalyzer', () => {
 
       await expect(analyzer.analyzePDF(createMockFile())).rejects.toThrow('insufficiente');
     });
+
+    it('riconosce come senza testo un PDF scansionato di 10 pagine vuote', async () => {
+      mockCacheManager.checkCache.mockResolvedValue({ found: false, fileHash: 'h' });
+
+      const emptyPage = { getTextContent: vi.fn().mockResolvedValue({ items: [] }) };
+      pdfjsLib.getDocument.mockReturnValue({
+        promise: Promise.resolve({ numPages: 10, getPage: vi.fn().mockResolvedValue(emptyPage) }),
+      });
+      const apiSpy = vi.spyOn(analyzer, 'callAnalysisAPI');
+
+      await expect(analyzer.analyzePDF(createMockFile())).rejects.toThrow('insufficiente');
+      expect(apiSpy).not.toHaveBeenCalled();
+    });
+
+    it('senza provider esplicito usa groq, il default di storage-manager', async () => {
+      mockCacheManager.checkCache.mockResolvedValue({ found: false, fileHash: 'h' });
+      const page = {
+        getTextContent: vi.fn().mockResolvedValue({ items: [{ str: 'parola '.repeat(30) }] }),
+      };
+      pdfjsLib.getDocument.mockReturnValue({
+        promise: Promise.resolve({ numPages: 1, getPage: vi.fn().mockResolvedValue(page) }),
+      });
+      const apiSpy = vi
+        .spyOn(analyzer, 'callAnalysisAPI')
+        .mockResolvedValue({ summary: 's', keyPoints: [], quotes: [] });
+
+      await analyzer.analyzePDF(createMockFile());
+
+      expect(apiSpy.mock.calls[0][1]).toBe('groq');
+    });
   });
 
   // ─── loadFromHistory ──────────────────────────────
