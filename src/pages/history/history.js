@@ -1,6 +1,11 @@
 // History Page Script
 
 import { state } from './state.js';
+import {
+  buildFilterCriteria,
+  applyFlagFilter,
+  buildClearConfirmMessage,
+} from './history-filters.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { ThemeManager } from '../../utils/core/theme-manager.js';
 import { eventCleanup } from '../../utils/core/event-cleanup.js';
@@ -277,21 +282,14 @@ async function handleFilter() {
   let filtered = state.currentHistory;
 
   // Applica filtri standard
-  const filters = {};
-  if (provider) filters.provider = provider;
-  if (language) filters.language = language;
-  if (contentType) filters.contentType = contentType;
+  const filters = buildFilterCriteria({ provider, language, contentType });
 
   if (Object.keys(filters).length > 0) {
     filtered = await HistoryManager.filterHistory(filters);
   }
 
   // Applica filtro preferiti/note
-  if (favoriteFilter === 'favorites') {
-    filtered = filtered.filter((entry) => entry.favorite === true);
-  } else if (favoriteFilter === 'withNotes') {
-    filtered = filtered.filter((entry) => entry.notes && entry.notes.trim().length > 0);
-  }
+  filtered = applyFlagFilter(filtered, favoriteFilter);
 
   displayHistory(filtered);
 }
@@ -300,13 +298,9 @@ async function clearSingleHistory() {
   const history = await HistoryManager.getHistory();
   const favoritesCount = history.filter((e) => e.favorite).length;
 
-  let message = 'Sei sicuro di voler cancellare tutta la cronologia degli articoli singoli?';
-  if (favoritesCount > 0) {
-    message += `\n\n⭐ ${favoritesCount} articoli preferiti NON verranno eliminati.`;
-  }
-  message += '\n\nQuesta azione non può essere annullata.';
+  const { message, title } = buildClearConfirmMessage('single', favoritesCount);
 
-  const confirmed = await Modal.confirm(message, 'Cancella Articoli Singoli', '🗑️');
+  const confirmed = await Modal.confirm(message, title, '🗑️');
 
   if (!confirmed) return;
 
@@ -318,13 +312,9 @@ async function clearPDFHistory() {
   const history = await HistoryManager.getPDFHistory();
   const favoritesCount = history.filter((e) => e.favorite).length;
 
-  let message = 'Sei sicuro di voler cancellare tutta la cronologia dei PDF analizzati?';
-  if (favoritesCount > 0) {
-    message += `\n\n⭐ ${favoritesCount} PDF preferiti NON verranno eliminati.`;
-  }
-  message += '\n\nQuesta azione non può essere annullata.';
+  const { message, title } = buildClearConfirmMessage('pdf', favoritesCount);
 
-  const confirmed = await Modal.confirm(message, 'Elimina Cronologia PDF', '🗑️');
+  const confirmed = await Modal.confirm(message, title, '🗑️');
 
   if (!confirmed) return;
 
@@ -336,13 +326,9 @@ async function clearMultiHistory() {
   const history = await HistoryManager.getMultiAnalysisHistory();
   const favoritesCount = history.filter((e) => e.favorite).length;
 
-  let message = 'Sei sicuro di voler cancellare tutta la cronologia delle analisi Multi Articolo?';
-  if (favoritesCount > 0) {
-    message += `\n\n⭐ ${favoritesCount} analisi preferite NON verranno eliminate.`;
-  }
-  message += '\n\nQuesta azione non può essere annullata.';
+  const { message, title } = buildClearConfirmMessage('multi', favoritesCount);
 
-  const confirmed = await Modal.confirm(message, 'Cancella Analisi Multiple', '🗑️');
+  const confirmed = await Modal.confirm(message, title, '🗑️');
 
   if (!confirmed) return;
 
