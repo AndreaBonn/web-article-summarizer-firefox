@@ -11,6 +11,7 @@ import { HistoryLazyLoader } from '../../utils/core/history-lazy-loader.js';
 import { VoiceController } from '../../utils/voice/voice-controller.js';
 import { Modal } from '../../utils/core/modal.js';
 import { Logger } from '../../utils/core/logger.js';
+import { bindMenuButton } from '../../utils/core/menu-button.js';
 import {
   openDetail,
   closeModal,
@@ -82,18 +83,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       'input',
       state.debouncedSearch,
     );
-    eventCleanup.addEventListener(document.getElementById('searchInTitle'), 'change', () => {
-      // Ri-esegui ricerca se c'è un query
-      const query = document.getElementById('searchInput').value.trim();
-      if (query) handleSearch({ target: document.getElementById('searchInput') });
-    });
-    eventCleanup.addEventListener(document.getElementById('searchInUrl'), 'change', () => {
-      const query = document.getElementById('searchInput').value.trim();
-      if (query) handleSearch({ target: document.getElementById('searchInput') });
-    });
-    eventCleanup.addEventListener(document.getElementById('searchInContent'), 'change', () => {
-      const query = document.getElementById('searchInput').value.trim();
-      if (query) handleSearch({ target: document.getElementById('searchInput') });
+    bindMenuButton(document.getElementById('manageBtn'), document.getElementById('manageMenu'));
+    eventCleanup.addEventListener(document.getElementById('filtersToggleBtn'), 'click', (e) => {
+      const panel = document.getElementById('filtersPanel');
+      const isOpen = panel.classList.toggle('hidden') === false;
+      e.currentTarget.setAttribute('aria-expanded', String(isOpen));
     });
     eventCleanup.addEventListener(
       document.getElementById('providerFilter'),
@@ -264,16 +258,11 @@ async function handleSearch(e) {
     return;
   }
 
-  // Ottieni opzioni di ricerca
-  const searchInTitle = document.getElementById('searchInTitle').checked;
-  const searchInUrl = document.getElementById('searchInUrl').checked;
-  const searchInContent = document.getElementById('searchInContent').checked;
-
-  // Usa search optimizer per ricerca incrementale
+  // One search box looks everywhere: title, address and summary
   const filtered = state.searchOptimizer.search(state.currentHistory, query, {
-    searchInTitle,
-    searchInUrl,
-    searchInContent,
+    searchInTitle: true,
+    searchInUrl: true,
+    searchInContent: true,
   });
 
   displayHistory(filtered);

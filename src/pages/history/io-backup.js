@@ -5,6 +5,7 @@ import { state } from './state.js';
 import { StorageManager } from '@utils/storage/storage-manager.js';
 import { HistoryManager } from '@utils/storage/history-manager.js';
 import { Modal } from '@utils/core/modal.js';
+import { I18n } from '@utils/i18n/i18n.js';
 
 // Whitelist di valori validi per i metadati
 const VALID_PROVIDERS = ['groq', 'openai', 'anthropic', 'gemini'];
@@ -136,7 +137,7 @@ export async function downloadHistory() {
     btn.disabled = false;
 
     setTimeout(() => {
-      btn.textContent = '💾 Download Cronologia';
+      btn.textContent = I18n.t('history.download');
     }, 2000);
 
     await Modal.error(
@@ -284,7 +285,7 @@ export async function importHistory(event) {
     btn.disabled = false;
 
     setTimeout(() => {
-      btn.textContent = '📥 Importa Cronologia';
+      btn.textContent = I18n.t('history.import');
     }, 2000);
 
     await Modal.error(

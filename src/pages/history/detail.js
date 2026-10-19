@@ -1,6 +1,7 @@
 // history-detail.js — Modal dettaglio e funzioni di export
 
 import { state } from './state.js';
+import { getProviderLabel, getLanguageLabel } from '../../utils/core/display-labels.js';
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { HistoryManager } from '../../utils/storage/history-manager.js';
@@ -20,13 +21,14 @@ export async function openDetail(id) {
 
   // Populate modal
   document.getElementById('detailModalTitle').textContent = state.currentEntry.article.title;
+  const uiLang = I18n.currentLanguage;
   document.getElementById('modalDate').textContent = new Date(
     state.currentEntry.timestamp,
-  ).toLocaleString('it-IT');
+  ).toLocaleString(uiLang === 'en' ? 'en-US' : 'it-IT');
   document.getElementById('modalProvider').textContent =
-    `Provider: ${state.currentEntry.metadata.provider}`;
+    `${I18n.t('controls.provider')}: ${getProviderLabel(state.currentEntry.metadata.provider)}`;
   document.getElementById('modalLanguage').textContent =
-    `${I18n.t('controls.language')} ${state.currentEntry.metadata.language}`;
+    `${I18n.t('controls.language')} ${getLanguageLabel(state.currentEntry.metadata.language, uiLang)}`;
   document.getElementById('modalStats').textContent =
     `${state.currentEntry.article.wordCount} ${I18n.t('article.words')} • ${state.currentEntry.article.readingTimeMinutes} ${I18n.t('article.readingTime')}`;
 

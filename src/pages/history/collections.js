@@ -1,6 +1,7 @@
 // history-collections.js — PDF e Multi-analysis history
 
 import { Logger } from '../../utils/core/logger.js';
+import { getProviderLabel, getLanguageLabel } from '../../utils/core/display-labels.js';
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { HistoryManager } from '../../utils/storage/history-manager.js';
@@ -48,7 +49,7 @@ export async function loadPDFHistory() {
         e.stopPropagation();
         const isFavorite = await HistoryManager.togglePDFFavorite(id);
         favoriteBtn.classList.toggle('active', isFavorite);
-        favoriteBtn.textContent = isFavorite ? '⭐' : '☆';
+        favoriteBtn.textContent = isFavorite ? '★' : '☆';
         favoriteBtn.title = isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti';
       });
     }
@@ -82,15 +83,15 @@ function createPDFCard(entry) {
           <h3 class="card-title">${HtmlSanitizer.escape(entry.pdf.name)}</h3>
           <button class="btn-favorite ${isFavorite ? 'active' : ''}"
                   title="${isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}">
-            ${isFavorite ? '⭐' : '☆'}
+            ${isFavorite ? '★' : '☆'}
           </button>
         </div>
         <div class="card-meta">
           <span class="meta-item">${HtmlSanitizer.escape(date)}</span>
           <span class="meta-item">${HtmlSanitizer.escape(fileSize)}</span>
           <span class="meta-item">${HtmlSanitizer.escape(String(entry.pdf.pages))} pagine</span>
-          <span class="meta-item">${HtmlSanitizer.escape(entry.metadata.provider)}</span>
-          <span class="meta-item">${HtmlSanitizer.escape(entry.metadata.language)}</span>
+          <span class="meta-item">${HtmlSanitizer.escape(getProviderLabel(entry.metadata.provider))}</span>
+          <span class="meta-item">${HtmlSanitizer.escape(getLanguageLabel(entry.metadata.language, I18n.currentLanguage))}</span>
         </div>
       </div>
 
@@ -216,7 +217,7 @@ export async function loadMultiAnalysisHistory() {
 
         // Aggiorna UI
         favoriteBtn.classList.toggle('active', isFavorite);
-        favoriteBtn.textContent = isFavorite ? '⭐' : '☆';
+        favoriteBtn.textContent = isFavorite ? '★' : '☆';
         favoriteBtn.title = isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti';
       });
     }
@@ -227,7 +228,7 @@ function createMultiAnalysisCard(entry) {
   const date = HistoryManager.formatDate(entry.timestamp);
   const qaCount = entry.analysis?.qa?.questions?.length || 0;
   const articlesCount = entry.articles?.length || 0;
-  const provider = entry.metadata?.provider || 'unknown';
+  const provider = getProviderLabel(entry.metadata?.provider || 'unknown');
 
   return `
     <div class="multi-analysis-card" data-id="${HtmlSanitizer.escape(entry.id)}">
@@ -244,7 +245,7 @@ function createMultiAnalysisCard(entry) {
           </div>
         </div>
         <button class="btn-favorite-multi ${entry.favorite ? 'active' : ''}" data-id="${HtmlSanitizer.escape(entry.id)}" title="${entry.favorite ? HtmlSanitizer.escape(I18n.t('history.removeFavorite')) : HtmlSanitizer.escape(I18n.t('history.addFavorite'))}">
-          ${entry.favorite ? '⭐' : '☆'}
+          ${entry.favorite ? '★' : '☆'}
         </button>
       </div>
 

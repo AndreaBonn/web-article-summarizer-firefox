@@ -10,86 +10,80 @@
   <body>
     <div class="container">
       <header>
-        <h1 data-i18n="history.title">Cronologia Analisi</h1>
+        <h1 data-i18n="history.title">Cronologia</h1>
         <div class="header-toolbar">
-          <select id="uiLanguageSelect" class="ui-language-select" title="Lingua Interfaccia">
-            <option value="it">🇮🇹 Italiano</option>
-            <option value="en">🇺🇸 English</option>
-          </select>
           <button
             id="themeToggleBtn"
             class="btn-back"
             data-i18n-title="theme.toggle"
             title="Cambia Tema"
-          >
-            ◑
-          </button>
+            aria-label="Cambia Tema"
+          ></button>
+          <div class="manage-menu">
+            <button
+              id="manageBtn"
+              class="btn-back"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="manageMenu"
+            >
+              <span data-i18n="history.manage">Gestisci</span> ▾
+            </button>
+            <div id="manageMenu" class="manage-menu-list hidden" role="menu">
+              <button id="downloadHistoryBtn" role="menuitem" data-i18n="history.download">
+                Esporta backup (.json)
+              </button>
+              <button id="importHistoryBtn" role="menuitem" data-i18n="history.import">
+                Ripristina da backup
+              </button>
+              <button
+                id="clearSingleHistoryBtn"
+                class="menu-danger"
+                role="menuitem"
+                data-i18n="history.clearSingle"
+              >
+                Elimina tutti gli articoli…
+              </button>
+              <button
+                id="clearPDFHistoryBtn"
+                class="menu-danger hidden"
+                role="menuitem"
+                data-i18n="history.clearPdf"
+              >
+                Elimina tutti i PDF…
+              </button>
+              <button
+                id="clearMultiHistoryBtn"
+                class="menu-danger hidden"
+                role="menuitem"
+                data-i18n="history.clearMulti"
+              >
+                Elimina tutti i confronti…
+              </button>
+            </div>
+          </div>
           <button id="backBtn" class="btn-back" data-i18n="history.back">← Indietro</button>
         </div>
+        <input type="file" id="importFileInput" accept=".json" class="hidden" />
       </header>
 
-      <!-- Riga 1: Bottoni azioni (occupano tutta la larghezza) -->
-      <div class="action-buttons-row">
-        <button
-          id="downloadHistoryBtn"
-          class="btn-primary btn-full-width"
-          data-i18n="history.download"
-          title="Scarica tutta la cronologia in formato JSON"
-        >
-          Download Cronologia
-        </button>
-        <button
-          id="importHistoryBtn"
-          class="btn-primary btn-full-width"
-          data-i18n="history.import"
-          title="Importa cronologia da file JSON"
-        >
-          Importa Cronologia
-        </button>
-        <input type="file" id="importFileInput" accept=".json" class="hidden" />
-        <button
-          id="clearSingleHistoryBtn"
-          class="btn-danger btn-full-width"
-          data-i18n="history.clearSingle"
-        >
-          Cancella Articoli Singoli
-        </button>
-        <button id="clearPDFHistoryBtn" class="btn-danger btn-full-width hidden">
-          Elimina Cronologia PDF
-        </button>
-        <button
-          id="clearMultiHistoryBtn"
-          class="btn-danger btn-full-width"
-          data-i18n="history.clearMulti"
-        >
-          Cancella Analisi Multiple
-        </button>
-      </div>
-
-      <!-- Riga 2: Barra di ricerca + Opzioni "Cerca in:" -->
+      <!-- Search everywhere; filters on request -->
       <div class="search-row">
         <input
-          type="text"
+          type="search"
           id="searchInput"
           data-i18n="history.search"
-          placeholder="Cerca..."
+          placeholder="Cerca in titoli, indirizzi e riassunti..."
           class="search-input-main"
         />
-        <div class="search-options-inline">
-          <label class="search-option-label" data-i18n="history.searchIn">Cerca in:</label>
-          <label class="search-option">
-            <input type="checkbox" id="searchInTitle" checked />
-            <span data-i18n="history.searchIn.title">Titolo</span>
-          </label>
-          <label class="search-option">
-            <input type="checkbox" id="searchInUrl" checked />
-            <span data-i18n="history.searchIn.url">URL</span>
-          </label>
-          <label class="search-option">
-            <input type="checkbox" id="searchInContent" checked />
-            <span data-i18n="history.searchIn.content">Contenuto</span>
-          </label>
-        </div>
+        <button
+          id="filtersToggleBtn"
+          class="btn-back"
+          aria-expanded="false"
+          aria-controls="filtersPanel"
+        >
+          <span data-i18n="history.filters">Filtri</span> ▾
+        </button>
       </div>
 
       <div class="history-tabs">
@@ -102,8 +96,12 @@
         </button>
       </div>
 
-      <div class="filters">
-        <select id="providerFilter">
+      <div id="filtersPanel" class="filters hidden">
+        <select
+          id="providerFilter"
+          data-i18n-title="history.filter.byProvider"
+          title="Filtra per servizio AI"
+        >
           <option value="" data-i18n="history.filter.allProviders">Tutti i provider</option>
           <option value="groq">Groq</option>
           <option value="openai">OpenAI</option>
@@ -111,7 +109,11 @@
           <option value="gemini">Gemini</option>
         </select>
 
-        <select id="languageFilter">
+        <select
+          id="languageFilter"
+          data-i18n-title="history.filter.byLanguage"
+          title="Filtra per lingua"
+        >
           <option value="" data-i18n="history.filter.allLanguages">Tutte le lingue</option>
           <option value="it" data-i18n="language.it">Italiano</option>
           <option value="en" data-i18n="language.en">Inglese</option>
@@ -120,7 +122,11 @@
           <option value="de" data-i18n="language.de">Tedesco</option>
         </select>
 
-        <select id="contentTypeFilter">
+        <select
+          id="contentTypeFilter"
+          data-i18n-title="history.filter.byType"
+          title="Filtra per tipo"
+        >
           <option value="" data-i18n="history.filter.allTypes">Tutti i tipi</option>
           <option value="general" data-i18n="contentType.general">Generico</option>
           <option value="scientific" data-i18n="contentType.scientific">Scientifico</option>
@@ -130,7 +136,11 @@
           <option value="opinion" data-i18n="contentType.opinion">Opinione</option>
         </select>
 
-        <select id="favoriteFilter">
+        <select
+          id="favoriteFilter"
+          data-i18n-title="history.filter.byStatus"
+          title="Filtra preferiti e note"
+        >
           <option value="" data-i18n="history.filter.all">Tutti gli articoli</option>
           <option value="favorites" data-i18n="history.filter.favorites">Solo Preferiti</option>
           <option value="withNotes" data-i18n="history.filter.withNotes">Con Note</option>
@@ -168,7 +178,12 @@
           </svg>
         </div>
         <p data-i18n="history.empty">Nessun riassunto nella cronologia</p>
-        <small data-i18n="history.emptyDesc">I tuoi riassunti appariranno qui</small>
+        <small data-i18n="history.emptyDesc">I riassunti che crei finiscono qui, cercabili.</small>
+        <ol class="empty-steps">
+          <li data-i18n="history.emptyStep1">Apri un articolo in un'altra scheda</li>
+          <li data-i18n="history.emptyStep2">Clicca l'icona dell'estensione nella barra</li>
+          <li data-i18n="history.emptyStep3">Premi «Riassumi questa pagina»</li>
+        </ol>
       </div>
     </div>
 
