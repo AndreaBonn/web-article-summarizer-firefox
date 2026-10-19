@@ -7,7 +7,9 @@ export class HtmlSanitizer {
     if (typeof str !== 'string') return '';
     const div = document.createElement('div');
     div.textContent = str;
-    return div.innerHTML;
+    // innerHTML escapa solo & < > (nbsp compreso): le virgolette vanno escapate a mano,
+    // altrimenti un valore interpolato in un attributo ne chiude il delimitatore
+    return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   /**

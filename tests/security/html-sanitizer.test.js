@@ -38,14 +38,16 @@ describe('HtmlSanitizer.escape()', () => {
   });
 
   it('escapa tutti i caratteri speciali HTML: &<>"\'', () => {
-    const result = HtmlSanitizer.escape('&<>"\'');
-    expect(result).toContain('&amp;');
-    expect(result).toContain('&lt;');
-    expect(result).toContain('&gt;');
-    // Le virgolette doppie e singole vengono escapate dal browser quando
-    // sono dentro textContent → innerHTML
-    expect(result).not.toContain('<');
-    expect(result).not.toContain('>');
+    expect(HtmlSanitizer.escape('&<>"\'')).toBe('&amp;&lt;&gt;&quot;&#39;');
+  });
+
+  it('escapa le virgolette cosi un valore non chiude un attributo HTML', () => {
+    expect(HtmlSanitizer.escape('" onfocus="x')).toBe('&quot; onfocus=&quot;x');
+    expect(HtmlSanitizer.escape("' onfocus='x")).toBe('&#39; onfocus=&#39;x');
+  });
+
+  it('non fa doppio escape di una stringa gia senza caratteri speciali (accenti, emoji)', () => {
+    expect(HtmlSanitizer.escape('perché è così 📚')).toBe('perché è così 📚');
   });
 
   it('escapa script tag completo', () => {
@@ -135,5 +137,33 @@ describe('HtmlSanitizer.renderList()', () => {
     const items = [{ name: 'Nome', body: 'Corpo' }];
     HtmlSanitizer.renderList(items, element, { titleKey: 'name', descKey: 'body' });
     expect(element.querySelector('strong').textContent).toBe('Nome');
+  });
+});
+
+describe('HtmlSanitizer.escape() dentro attributi HTML reali', () => {
+  const PAYLOAD = '1" onfocus="alert(1)" x="';
+
+  it('renderKeypointsHtml: point.paragraphs con virgolette non crea attributi extra', async () => {
+    const { renderKeypointsHtml } = await import('../../src/pages/popup/analysis-format.js');
+    const host = document.createElement('div');
+    host.innerHTML = renderKeypointsHtml([
+      { paragraphs: PAYLOAD, title: 't', description: 'd' },
+    ]);
+    const el = host.querySelector('.keypoint');
+    expect(el.hasAttribute('onfocus')).toBe(false);
+    expect(el.getAttribute('data-paragraph')).toBe(PAYLOAD);
+    expect(host.querySelector('.keypoint-ref').getAttribute('title')).toBe(`§${PAYLOAD}`);
+  });
+
+  it('renderCitationsHtml: data-citation-text con virgolette non crea attributi extra', async () => {
+    const { renderCitationsHtml } = await import('../../src/pages/popup/citations-render.js');
+    const host = document.createElement('div');
+    host.innerHTML = renderCitationsHtml({
+      citations: [{ id: 1, type: 'direct', quote_text: PAYLOAD, paragraph: PAYLOAD }],
+    });
+    const el = host.querySelector('.citation-item');
+    expect(el.hasAttribute('onfocus')).toBe(false);
+    expect(el.getAttribute('data-citation-text')).toBe(PAYLOAD);
+    expect(el.getAttribute('data-paragraph')).toBe(PAYLOAD);
   });
 });

@@ -128,7 +128,7 @@ describe('renderKeypointsHtml', () => {
   it('starts with the click hint even without key points', () => {
     const html = renderKeypointsHtml([]);
     expect(html).toBe(
-      '<p class="keypoints-hint">Clicca un punto per evidenziarlo nell\'articolo.</p>',
+      '<p class="keypoints-hint">Clicca un punto per evidenziarlo nell&#39;articolo.</p>',
     );
   });
 
