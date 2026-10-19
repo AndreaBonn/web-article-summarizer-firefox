@@ -6,9 +6,15 @@ import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { Logger } from '../../utils/core/logger.js';
 import { getProviderLabel, getLanguageLabel } from '../../utils/core/display-labels.js';
 import { I18n } from '../../utils/i18n/i18n.js';
-import { CitationFormatter } from '../../utils/ai/citation-formatter.js';
 import { displayPDFContent } from './display-pdf.js';
 import { Modal } from '../../utils/core/modal.js';
+import {
+  computeSyncedScrollTop,
+  isSafeIframeUrl,
+  renderArticleTextHtml,
+  renderKeypointsTabHtml,
+  renderReadingCitationsHtml,
+} from './render.js';
 
 // Display content
 export function displayContent() {
@@ -63,73 +69,9 @@ export function displayContent() {
   if (state.currentData.citations) {
     Logger.debug('📚 Struttura citazioni:', state.currentData.citations);
 
-    // Handle both structures: direct array or nested object
-    const citationsList = state.currentData.citations.citations || state.currentData.citations;
-
-    if (citationsList && citationsList.length > 0) {
-      Logger.debug('📚 Lista citazioni:', citationsList);
-      Logger.debug('📚 Prima citazione:', citationsList[0]);
-
-      const totalCitations =
-        state.currentData.citations.total_citations ||
-        state.currentData.citations.totalCount ||
-        citationsList.length;
-      let html = `<div class="citations-content"><h3>📚 ${totalCitations} Citazioni Trovate</h3>`;
-
-      citationsList.forEach((citation, index) => {
-        // Use correct field names from citation structure - handle null/undefined
-        const text = citation.quote_text || citation.text || citation.quote || null;
-        const author = citation.author || null;
-        const source = citation.source || null;
-        const paragraph = citation.paragraph || null;
-        const context = citation.context || null;
-        const year = citation.year || null;
-
-        // Skip if no meaningful content
-        if (!text && !author && !source) {
-          Logger.warn('Citazione vuota saltata:', citation);
-          return;
-        }
-
-        // Type icon
-        const typeIcon =
-          {
-            direct_quote: '💬',
-            indirect_quote: '💭',
-            study_reference: '🔬',
-            statistic: '📊',
-            expert_opinion: '👤',
-            book_reference: '📖',
-            article_reference: '📄',
-            report_reference: '📋',
-            organization_data: '🏢',
-            web_source: '🌐',
-          }[citation.type] || '📌';
-
-        // Type label (delegated to CitationFormatter)
-        const typeLabel = CitationFormatter.getCitationTypeLabel(citation.type);
-
-        html += `
-          <div class="citation-item">
-            <div class="citation-header">
-              <span class="citation-icon">${typeIcon}</span>
-              <div class="citation-number">#${citation.id || index + 1}</div>
-              ${author ? `<span class="citation-author-badge">${HtmlSanitizer.escape(author)}</span>` : ''}
-              ${paragraph ? `<div class="citation-ref">§${HtmlSanitizer.escape(String(paragraph))}</div>` : ''}
-            </div>
-            ${text ? `<div class="citation-text">"${HtmlSanitizer.escape(text.substring(0, 300))}${text.length > 300 ? '...' : ''}"</div>` : '<div class="citation-text citation-no-text">Riferimento senza testo citato</div>'}
-            ${context ? `<div class="citation-context">📝 ${HtmlSanitizer.escape(context)}</div>` : ''}
-            <div class="citation-meta">
-              <span class="citation-type">${typeLabel}</span>
-              ${source ? `<span class="citation-source">📚 ${HtmlSanitizer.escape(source)}</span>` : ''}
-              ${year ? `<span class="citation-year">📅 ${HtmlSanitizer.escape(String(year))}</span>` : ''}
-            </div>
-          </div>
-        `;
-      });
-
-      html += '</div>';
-      elements.citationsTabContent.innerHTML = html;
+    const citationsHtml = renderReadingCitationsHtml(state.currentData.citations);
+    if (citationsHtml !== null) {
+      elements.citationsTabContent.innerHTML = citationsHtml;
     }
   }
 
@@ -149,40 +91,10 @@ export function displayContent() {
 
 // Display article
 function displayArticle(article) {
-  // Prepare text view (always available as fallback)
-  let html = `
-    <div class="article-content">
-      <h1>${HtmlSanitizer.escape(article.title || 'Articolo')}</h1>
-      ${article.excerpt ? `<p class="article-excerpt"><em>${HtmlSanitizer.escape(article.excerpt)}</em></p>` : ''}
-      <hr class="article-divider">
-  `;
-
-  // Split content into paragraphs (with safety check)
-  if (article.content) {
-    const paragraphs = article.content.split('\n\n');
-    paragraphs.forEach((para, index) => {
-      if (para.trim()) {
-        html += `<p data-paragraph="${index + 1}">${HtmlSanitizer.escape(para.trim())}</p>`;
-      }
-    });
-  } else {
-    html += `<p class="content-unavailable">Contenuto non disponibile.</p>`;
-  }
-
-  html += `</div>`;
-  elements.articleText.innerHTML = html;
+  elements.articleText.innerHTML = renderArticleTextHtml(article);
 
   // Try iframe FIRST (default) — validate protocol to prevent javascript:/data: injection
-  const SAFE_PROTOCOLS = ['https:', 'http:'];
-  let iframeSafe = false;
-  if (article.url && elements.articleIframe) {
-    try {
-      const parsedUrl = new URL(article.url);
-      iframeSafe = SAFE_PROTOCOLS.includes(parsedUrl.protocol);
-    } catch {
-      iframeSafe = false;
-    }
-  }
+  const iframeSafe = Boolean(article.url && elements.articleIframe) && isSafeIframeUrl(article.url);
 
   if (iframeSafe) {
     elements.articleIframe.src = article.url;
@@ -247,10 +159,7 @@ export function syncScrollPosition(source) {
   const sourceEl = source === 'article' ? elements.articleContent : elements.summaryContent;
   const targetEl = source === 'article' ? elements.summaryContent : elements.articleContent;
 
-  const scrollPercentage = sourceEl.scrollTop / (sourceEl.scrollHeight - sourceEl.clientHeight);
-  const targetScroll = scrollPercentage * (targetEl.scrollHeight - targetEl.clientHeight);
-
-  targetEl.scrollTop = targetScroll;
+  targetEl.scrollTop = computeSyncedScrollTop(sourceEl, targetEl);
 }
 
 // Switch summary tab
@@ -291,29 +200,8 @@ export function displaySummaryInTab(summary) {
 
 // Display key points in tab
 export function displayKeypointsInTab(keyPoints) {
-  if (!keyPoints || keyPoints.length === 0) {
-    elements.keypointsTabContent.innerHTML = `
-      <div class="empty-state">
-        <p>Nessun punto chiave disponibile</p>
-      </div>
-    `;
-    return;
-  }
-
-  let html = '';
-  keyPoints.forEach((point, index) => {
-    html += `
-      <div class="keypoint" data-paragraph="${HtmlSanitizer.escape(String(point.paragraphs))}">
-        <div class="keypoint-header">
-          <div class="keypoint-title">${index + 1}. ${HtmlSanitizer.escape(point.title)}</div>
-          <div class="keypoint-ref">§${HtmlSanitizer.escape(String(point.paragraphs))}</div>
-        </div>
-        <div class="keypoint-desc">${HtmlSanitizer.escape(point.description)}</div>
-      </div>
-    `;
-  });
-
-  elements.keypointsTabContent.innerHTML = html;
+  elements.keypointsTabContent.innerHTML = renderKeypointsTabHtml(keyPoints);
+  if (!keyPoints || keyPoints.length === 0) return;
 
   // Add click handlers
   elements.keypointsTabContent.querySelectorAll('.keypoint').forEach((el) => {

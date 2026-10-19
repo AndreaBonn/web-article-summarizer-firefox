@@ -462,3 +462,49 @@ describe('CitationFormatter.generateBibliography()', () => {
     expect(result).not.toContain('Paragrafo:');
   });
 });
+
+// ---------------------------------------------------------------------------
+// getCitationTypeIcon
+// ---------------------------------------------------------------------------
+
+describe('CitationFormatter.getCitationTypeIcon()', () => {
+  it.each([
+    ['direct_quote', '💬'],
+    ['indirect_quote', '💭'],
+    ['study_reference', '🔬'],
+    ['statistic', '📊'],
+    ['expert_opinion', '👤'],
+    ['book_reference', '📖'],
+    ['article_reference', '📄'],
+    ['report_reference', '📋'],
+    ['organization_data', '🏢'],
+    ['web_source', '🌐'],
+  ])('test_getCitationTypeIcon_%s_returnsMappedIcon', (type, icon) => {
+    expect(CitationFormatter.getCitationTypeIcon(type)).toBe(icon);
+  });
+
+  it.each([['unknown_type'], [undefined], [null], ['']])(
+    'test_getCitationTypeIcon_unmappedType_returnsPin (%s)',
+    (type) => {
+      expect(CitationFormatter.getCitationTypeIcon(type)).toBe('📌');
+    },
+  );
+
+  it('test_getCitationTypeIcon_everyLabelledType_hasDistinctNonFallbackIcon', () => {
+    const types = [
+      'direct_quote',
+      'indirect_quote',
+      'study_reference',
+      'statistic',
+      'expert_opinion',
+      'book_reference',
+      'article_reference',
+      'report_reference',
+      'organization_data',
+      'web_source',
+    ];
+    const icons = types.map((t) => CitationFormatter.getCitationTypeIcon(t));
+    expect(new Set(icons).size).toBe(types.length);
+    expect(icons).not.toContain('📌');
+  });
+});

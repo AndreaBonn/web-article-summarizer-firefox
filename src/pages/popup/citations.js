@@ -7,11 +7,11 @@ import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { StorageManager } from '../../utils/storage/storage-manager.js';
 import { HistoryManager } from '../../utils/storage/history-manager.js';
 import { CitationExtractor } from '../../utils/ai/citation-extractor.js';
-import { CitationFormatter } from '../../utils/ai/citation-formatter.js';
 import { Toast } from '../../utils/core/toast.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { Logger } from '../../utils/core/logger.js';
 import { unwrapServiceResponse } from '../../utils/core/service-response.js';
+import { highlightCitation, renderCitationsHtml } from './citations-render.js';
 
 // Citations System
 export async function extractCitations() {
@@ -98,86 +98,7 @@ function displayCitationsData(citationsData) {
     return;
   }
 
-  // Calcola il numero totale di citazioni con fallback
-  const totalCitations =
-    citationsData.total_citations || citationsData.totalCount || citationsData.citations.length;
-
-  let html = `
-    <div class="citations-header">
-      <div class="citations-info">
-        <strong>📚 ${totalCitations} citazioni trovate</strong>
-      </div>
-      <div class="citations-actions">
-        <select id="citationStyleSelect" class="citation-style-select" title="Stile bibliografico per la citazione dell'articolo principale">
-          <option value="apa">APA (Autore. (Anno). Titolo.)</option>
-          <option value="mla">MLA (Autore. "Titolo.")</option>
-          <option value="chicago">Chicago (Autore. "Titolo.")</option>
-          <option value="ieee">IEEE (Autore, "Titolo,")</option>
-          <option value="harvard">Harvard (Autore (Anno) Titolo.)</option>
-        </select>
-        <button id="copyCitationsBtn" class="btn-icon" title="Copia Bibliografia">📋</button>
-      </div>
-    </div>
-
-    <div class="article-citation-box">
-      <h4>📄 Citazione Articolo Principale</h4>
-      <p class="citation-style-hint">Lo stile selezionato sopra si applica a questa citazione</p>
-      <div id="mainCitationText" class="citation-text"></div>
-    </div>
-
-    <div class="citations-list">
-  `;
-
-  citationsData.citations.forEach((citation) => {
-    const typeIcon =
-      {
-        direct_quote: '💬',
-        indirect_quote: '💭',
-        study_reference: '🔬',
-        statistic: '📊',
-        expert_opinion: '👤',
-        book_reference: '📖',
-        article_reference: '📄',
-        report_reference: '📋',
-        organization_data: '🏢',
-        web_source: '🌐',
-      }[citation.type] || '📌';
-
-    // Usa quote_text dalla nuova struttura (contenuto sanitizzato)
-    const quoteText = citation.quote_text || citation.text || '';
-    const escapedText = HtmlSanitizer.escape(quoteText);
-    const safeAuthor = HtmlSanitizer.escape(citation.author || '');
-    const safeContext = HtmlSanitizer.escape(citation.context || '');
-    const safeSource = HtmlSanitizer.escape(citation.source || '');
-    const safeParagraph = HtmlSanitizer.escape(String(citation.paragraph || ''));
-
-    html += `
-      <div class="citation-item"
-           data-citation-id="${HtmlSanitizer.escape(String(citation.id))}"
-           data-citation-text="${escapedText}"
-           data-paragraph="${safeParagraph}"
-           class="citation-item-clickable"
-           title="Clicca per evidenziare nell'articolo">
-        <div class="citation-header">
-          <span class="citation-icon">${typeIcon}</span>
-          <span class="citation-number">#${HtmlSanitizer.escape(String(citation.id))}</span>
-          ${citation.author ? `<span class="citation-author">${safeAuthor}</span>` : ''}
-          ${citation.paragraph ? `<span class="citation-paragraph">§${safeParagraph}</span>` : ''}
-        </div>
-        ${quoteText ? `<div class="citation-text">"${HtmlSanitizer.escape(quoteText.substring(0, 200))}${quoteText.length > 200 ? '...' : ''}"</div>` : ''}
-        ${citation.context ? `<div class="citation-context">${safeContext}</div>` : ''}
-        <div class="citation-meta">
-          <span class="citation-type">${getCitationTypeLabel(citation.type)}</span>
-          ${citation.source ? `<span class="citation-source">📚 ${safeSource}</span>` : ''}
-          ${citation.year ? `<span class="citation-year">📅 ${HtmlSanitizer.escape(String(citation.year || ''))}</span>` : ''}
-        </div>
-      </div>
-    `;
-  });
-
-  html += `</div>`;
-
-  elements.citationsContent.innerHTML = html;
+  elements.citationsContent.innerHTML = renderCitationsHtml(citationsData);
 
   // Mostra citazione principale
   updateMainCitation('apa');
@@ -194,22 +115,10 @@ function displayCitationsData(citationsData) {
   // Click handler per evidenziare citazioni nell'articolo
   document.querySelectorAll('.citation-item').forEach((item) => {
     item.addEventListener('click', async () => {
-      const citationText = item.dataset.citationText;
-      const paragraph = item.dataset.paragraph;
-
-      // ✨ PRIORITÀ: Cerca sempre il testo della citazione nella pagina
-      if (citationText) {
-        const success = await highlightCitationInArticle(citationText);
-
-        // Se non trova il testo, prova con il paragrafo come fallback
-        if (!success && paragraph) {
-          await highlightParagraph(paragraph);
-        }
-      }
-      // Fallback: usa solo il paragrafo se non c'è testo
-      else if (paragraph) {
-        await highlightParagraph(paragraph);
-      }
+      await highlightCitation(
+        { citationText: item.dataset.citationText, paragraph: item.dataset.paragraph },
+        { highlightText: highlightCitationInArticle, highlightParagraph },
+      );
     });
   });
 }
@@ -218,10 +127,6 @@ function updateMainCitation(style) {
   // Usa state.currentArticle invece di currentCitations.article
   const citationText = CitationExtractor.formatCitation(state.currentArticle, style);
   document.getElementById('mainCitationText').textContent = citationText;
-}
-
-function getCitationTypeLabel(type) {
-  return CitationFormatter.getCitationTypeLabel(type);
 }
 
 async function copyCitationsData(citationsData) {

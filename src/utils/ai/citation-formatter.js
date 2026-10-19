@@ -147,6 +147,22 @@ export const CitationFormatter = {
     return bibliography;
   },
 
+  getCitationTypeIcon(type) {
+    const icons = {
+      direct_quote: '💬',
+      indirect_quote: '💭',
+      study_reference: '🔬',
+      statistic: '📊',
+      expert_opinion: '👤',
+      book_reference: '📖',
+      article_reference: '📄',
+      report_reference: '📋',
+      organization_data: '🏢',
+      web_source: '🌐',
+    };
+    return icons[type] || '📌';
+  },
+
   getCitationTypeLabel(type) {
     const labels = {
       direct_quote: 'Citazione Diretta',
