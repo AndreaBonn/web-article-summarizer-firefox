@@ -8,7 +8,12 @@ import { PDFAnalyzer } from '../../utils/pdf/pdf-analyzer.js';
 import { Modal } from '../../utils/core/modal.js';
 import { ThemeManager } from '../../utils/core/theme-manager.js';
 import { createFontSizeControl } from '../../shared/font-size-control.js';
-import { validatePdfFile, buildPdfHistoryRecord, buildPdfReadingModeData } from './pdf-intake.js';
+import {
+  validatePdfFile,
+  buildPdfHistoryRecord,
+  buildPdfReadingModeData,
+  selectProvider,
+} from './pdf-intake.js';
 
 let selectedFile = null;
 let pdfAnalyzer = null;
@@ -36,11 +41,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Carica impostazioni
     const settings = await StorageManager.getSettings();
     const providerSelect = document.getElementById('providerSelect');
-    providerSelect.value = settings.selectedProvider || 'claude';
-
     // Aggiorna il testo del privacy notice con il provider
-    const providerName = providerSelect.options[providerSelect.selectedIndex].text;
-    updatePrivacyNotice(providerName);
+    updatePrivacyNotice(selectProvider(providerSelect, settings.selectedProvider));
 
     const savedLanguage = await StorageManager.getSelectedLanguage();
     if (savedLanguage) {

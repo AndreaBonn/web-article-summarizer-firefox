@@ -64,3 +64,19 @@ export function buildPdfReadingModeData(analysisData, now) {
   delete dataToSave.pdfFile;
   return dataToSave;
 }
+
+const DEFAULT_PROVIDER = 'groq';
+
+/**
+ * Seleziona nel select il provider salvato (o il default se non e' tra le opzioni)
+ * e ritorna l'etichetta dell'opzione selezionata.
+ *
+ * @param {HTMLSelectElement} select
+ * @param {string|undefined} savedProvider
+ * @returns {string}
+ */
+export function selectProvider(select, savedProvider) {
+  const isKnown = Array.from(select.options).some((option) => option.value === savedProvider);
+  select.value = isKnown ? savedProvider : DEFAULT_PROVIDER;
+  return select.options[select.selectedIndex]?.text ?? '';
+}

@@ -3,6 +3,7 @@ import {
   validatePdfFile,
   buildPdfHistoryRecord,
   buildPdfReadingModeData,
+  selectProvider,
 } from '../../src/pages/pdf-analysis/pdf-intake.js';
 
 const MB = 1024 * 1024;
@@ -105,5 +106,35 @@ describe('buildPdfReadingModeData', () => {
     buildPdfReadingModeData(input, 1);
     expect(input.pdfFile).toBe(file);
     expect('timestamp' in input).toBe(false);
+  });
+});
+
+describe('selectProvider', () => {
+  const makeSelect = () => {
+    const select = document.createElement('select');
+    for (const [value, label] of [
+      ['groq', 'Groq'],
+      ['openai', 'OpenAI'],
+      ['anthropic', 'Claude'],
+      ['gemini', 'Gemini'],
+    ]) {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      select.appendChild(option);
+    }
+    return select;
+  };
+
+  it('selects the saved provider and returns its label', () => {
+    const select = makeSelect();
+    expect(selectProvider(select, 'anthropic')).toBe('Claude');
+    expect(select.value).toBe('anthropic');
+  });
+
+  it.each([undefined, '', 'claude'])('falls back to groq for saved provider %j', (saved) => {
+    const select = makeSelect();
+    expect(selectProvider(select, saved)).toBe('Groq');
+    expect(select.value).toBe('groq');
   });
 });
