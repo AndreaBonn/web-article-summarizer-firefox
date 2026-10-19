@@ -53,11 +53,26 @@ export class BaseHistoryRepository {
     history.unshift(entry);
 
     if (history.length > this.maxEntries) {
-      history = history.slice(0, this.maxEntries);
+      history = this._truncateKeepingFavorites(history);
     }
 
     await this._saveAll(history);
     return entry.id;
+  }
+
+  // Favorites are never dropped (clear() protects them too). The freed slots go to the newest
+  // non-favorites; the entry just saved (index 0) always stays, so with maxEntries or more
+  // favorites the list exceeds maxEntries instead of losing user data.
+  _truncateKeepingFavorites(history) {
+    let slots = this.maxEntries - history.filter((e) => e.favorite).length;
+    return history.filter((entry, index) => {
+      if (entry.favorite) return true;
+      if (index === 0) {
+        slots--;
+        return true;
+      }
+      return slots-- > 0;
+    });
   }
 
   async delete(id) {

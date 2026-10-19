@@ -72,6 +72,37 @@ describe('BaseHistoryRepository', () => {
       expect(items[4].title).toBe('Article 2');
     });
 
+    it('keeps an old favorite when truncating to maxEntries', async () => {
+      const oldId = await repo.save({ title: 'Old favorite' });
+      await repo.toggleFavorite(oldId);
+      for (let i = 0; i < 6; i++) {
+        await repo.save({ title: `Article ${i}` });
+      }
+
+      const items = await repo.getAll();
+      expect(items).toHaveLength(5);
+      expect(items.map((e) => e.title)).toEqual([
+        'Article 5',
+        'Article 4',
+        'Article 3',
+        'Article 2',
+        'Old favorite',
+      ]);
+    });
+
+    it('keeps every favorite and the new entry when favorites fill maxEntries', async () => {
+      for (let i = 0; i < 5; i++) {
+        const id = await repo.save({ title: `Fav ${i}` });
+        await repo.toggleFavorite(id);
+      }
+      const newId = await repo.save({ title: 'Newest' });
+
+      const items = await repo.getAll();
+      expect(items).toHaveLength(6);
+      expect(items.filter((e) => e.favorite)).toHaveLength(5);
+      expect(items[0].id).toBe(newId);
+    });
+
     it('throws on QUOTA_BYTES error', async () => {
       browser.storage.local.set.mockRejectedValueOnce(new Error('QUOTA_BYTES quota exceeded'));
 
