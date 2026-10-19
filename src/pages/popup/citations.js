@@ -8,7 +8,7 @@ import { StorageManager } from '../../utils/storage/storage-manager.js';
 import { HistoryManager } from '../../utils/storage/history-manager.js';
 import { CitationExtractor } from '../../utils/ai/citation-extractor.js';
 import { CitationFormatter } from '../../utils/ai/citation-formatter.js';
-import { Modal } from '../../utils/core/modal.js';
+import { Toast } from '../../utils/core/toast.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { Logger } from '../../utils/core/logger.js';
 
@@ -245,7 +245,7 @@ async function copyCitationsData(citationsData) {
     }, 2000);
   } catch (error) {
     Logger.error('Errore copia citazioni:', error);
-    await Modal.error(I18n.t('common.copyError'), I18n.t('modal.errorTitle'));
+    Toast.show(I18n.t('common.copyError'), 'error');
   }
 }
 

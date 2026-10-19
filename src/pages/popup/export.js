@@ -8,6 +8,7 @@ import { PDFExporter } from '../../utils/export/pdf-exporter.js';
 import { MarkdownExporter } from '../../utils/export/markdown-exporter.js';
 import { EmailManager } from '../../utils/export/email-manager.js';
 import { Modal } from '../../utils/core/modal.js';
+import { Toast } from '../../utils/core/toast.js';
 import { Logger } from '../../utils/core/logger.js';
 import { showExportModal } from '../../shared/export-modal.js';
 
@@ -57,11 +58,7 @@ export function showExportOptionsModal() {
           options.includeCitations ? citationsState.value : null,
         );
 
-        const originalText = elements.exportPdfBtn.textContent;
-        elements.exportPdfBtn.textContent = I18n.t('feedback.exported');
-        setTimeout(() => {
-          elements.exportPdfBtn.textContent = originalText;
-        }, 2000);
+        Toast.show(I18n.t('feedback.exported'), 'success');
       } catch (error) {
         Logger.error('Errore esportazione PDF:', error);
         showError("Errore durante l'esportazione PDF: " + error.message);
@@ -99,11 +96,7 @@ export function showMarkdownExportModal() {
           options.includeCitations ? citationsState.value : null,
         );
 
-        const originalText = elements.exportMdBtn.textContent;
-        elements.exportMdBtn.textContent = I18n.t('feedback.exported');
-        setTimeout(() => {
-          elements.exportMdBtn.textContent = originalText;
-        }, 2000);
+        Toast.show(I18n.t('feedback.exported'), 'success');
       } catch (error) {
         Logger.error('Errore esportazione Markdown:', error);
         showError("Errore durante l'esportazione Markdown: " + error.message);
@@ -264,19 +257,19 @@ export async function openEmailModal() {
     const email = emailInput.value.trim();
 
     if (!email) {
-      await Modal.warning('Inserisci un indirizzo email', 'Email Mancante');
+      Toast.show(I18n.t('email.missing'), 'error');
       return;
     }
 
     if (!EmailManager.isValidEmail(email)) {
-      await Modal.warning('Inserisci un indirizzo email valido', 'Email Non Valida');
+      Toast.show(I18n.t('email.invalid'), 'error');
       return;
     }
 
     // Raccogli opzioni selezionate
     const options = _collectEmailOptions();
     if (!_hasAnySelected(options)) {
-      await Modal.warning('Seleziona almeno una sezione da includere', 'Nessuna Selezione');
+      Toast.show(I18n.t('email.noSection'), 'error');
       return;
     }
 
@@ -300,10 +293,7 @@ export async function openEmailModal() {
     modal.classList.add('hidden');
 
     // Feedback
-    await Modal.success(
-      'Il client email è stato aperto. Verifica e invia il messaggio.',
-      'Email Preparata',
-    );
+    Toast.show(I18n.t('email.clientOpened'), 'success');
 
     // Cleanup
     cleanup();

@@ -9,6 +9,7 @@ import { HistoryManager } from '../../utils/storage/history-manager.js';
 import { InputSanitizer } from '../../utils/security/input-sanitizer.js';
 import { ContentDetector } from '../../utils/ai/content-detector.js';
 import { Modal } from '../../utils/core/modal.js';
+import { Toast } from '../../utils/core/toast.js';
 import { VoiceController } from '../../utils/voice/voice-controller.js';
 import { createTTSButton } from './voice.js';
 import { Logger } from '../../utils/core/logger.js';
@@ -56,7 +57,7 @@ export async function askQuestion() {
       minLength: 3,
     });
   } catch (error) {
-    await Modal.error(I18n.t('qa.invalidQuestion') + error.message, I18n.t('common.invalidInput'));
+    Toast.show(I18n.t('qa.invalidQuestion') + error.message, 'error');
     return;
   }
 

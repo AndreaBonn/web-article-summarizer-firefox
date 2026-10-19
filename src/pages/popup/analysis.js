@@ -1,7 +1,7 @@
 // Popup Analysis Module - Extracted from popup.js
 // Handles: analyzeArticle, generateSummary, displayResults, switchTab, copyToClipboard
 
-import { state, elements, showState } from './state.js';
+import { state, elements, showState, presentError, getSummaryLength } from './state.js';
 import { translationState, citationsState } from './features.js';
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { StorageManager } from '../../utils/storage/storage-manager.js';
@@ -9,7 +9,13 @@ import { I18n } from '../../utils/i18n/i18n.js';
 import { HistoryManager } from '../../utils/storage/history-manager.js';
 import { ContentClassifier } from '../../utils/ai/content-classifier.js';
 import { CitationExtractor } from '../../utils/ai/citation-extractor.js';
-import { ErrorHandler } from '../../utils/core/error-handler.js';
+import { ErrorHandler, UNSUPPORTED_PAGE_MARKER } from '../../utils/core/error-handler.js';
+import { Toast } from '../../utils/core/toast.js';
+import {
+  isSupportedArticleUrl,
+  getContentTypeLabel,
+  getProviderLabel,
+} from '../../utils/core/display-labels.js';
 import { Logger } from '../../utils/core/logger.js';
 import { addTTSButtons } from './voice.js';
 import { formatQAText, formatTranslationText } from '../../shared/export-formatters.js';
@@ -25,9 +31,9 @@ export async function analyzeArticle() {
       currentWindow: true,
     });
 
-    // Verify it is not a chrome:// page
-    if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
-      throw new Error('Impossibile analizzare pagine interne di Chrome');
+    // The content script only runs on https pages (manifest content_scripts)
+    if (!isSupportedArticleUrl(tab.url)) {
+      throw new Error(UNSUPPORTED_PAGE_MARKER);
     }
 
     // Extract article
@@ -64,7 +70,7 @@ export async function analyzeArticle() {
 
     // Display article info
     elements.articleTitle.textContent = state.currentArticle.title;
-    elements.articleStats.textContent = `${state.currentArticle.wordCount} ${I18n.t('article.words')} • ${state.currentArticle.readingTimeMinutes} ${I18n.t('article.readingTime')}`;
+    elements.articleStats.textContent = formatArticleMeta();
 
     // Check if the article has already been analyzed before
     const history = await HistoryManager.getHistory();
@@ -79,27 +85,22 @@ export async function analyzeArticle() {
       // Set the saved article type in selects
       state.selectedContentType = savedContentType;
       elements.contentTypeSelect.value = savedContentType;
-      elements.contentTypeSelectReady.value = savedContentType;
 
       Logger.info('📋 Tipo di articolo recuperato dalla cronologia:', savedContentType);
-
-      // Show temporary visual feedback
-      elements.loadingText.textContent = `${I18n.t('loading.articleType')} ${ContentClassifier.getCategoryLabel(savedContentType)} (${I18n.t('loading.fromHistory')})`;
-      await new Promise((resolve) => setTimeout(resolve, 800));
     }
-
-    showState('ready');
   } catch (error) {
     Logger.error('Errore analisi:', error);
-
-    await ErrorHandler.showError(error, 'Analisi articolo');
-    showState('error');
+    await presentError(error, 'Analisi articolo');
+    return;
   }
+
+  // One click: reading the page flows straight into the summary
+  await generateSummary();
 }
 
 export async function generateSummary() {
   if (!state.currentArticle) {
-    await ErrorHandler.showError(new Error('Nessun articolo estratto'), 'Generazione riassunto');
+    await presentError(new Error('No article found'), 'Generazione riassunto');
     return;
   }
 
@@ -114,10 +115,7 @@ export async function generateSummary() {
     settings.outputLanguage = state.selectedLanguage;
 
     // Add selected summary length
-    const summaryLengthSelect = document.getElementById('summaryLengthSelect');
-    if (summaryLengthSelect) {
-      settings.summaryLength = summaryLengthSelect.value;
-    }
+    settings.summaryLength = getSummaryLength();
 
     // STEP 1: Content type classification
     state.progressTracker.setStep('classify');
@@ -127,7 +125,7 @@ export async function generateSummary() {
 
     if (state.selectedContentType === 'auto') {
       Logger.debug('🔄 Avvio classificazione automatica...');
-      state.progressTracker.setStep('classify', '🔍 Analisi contenuto con AI...');
+      state.progressTracker.setStep('classify', I18n.t('progress.analyzingType'));
 
       Logger.debug('📋 currentArticle:', state.currentArticle);
 
@@ -141,8 +139,11 @@ export async function generateSummary() {
         Logger.info('✅ Classificazione completata:', classification);
 
         // Mostra la categoria rilevata
-        const categoryLabel = ContentClassifier.getCategoryLabel(finalContentType);
-        state.progressTracker.setStep('classify', `✓ Rilevato: ${categoryLabel}`);
+        const categoryLabel = getContentTypeLabel(finalContentType, I18n.currentLanguage);
+        state.progressTracker.setStep(
+          'classify',
+          I18n.tf('progress.detected', { type: categoryLabel }),
+        );
         await new Promise((resolve) => setTimeout(resolve, 800));
       } catch (error) {
         Logger.error('❌ Errore classificazione:', error);
@@ -156,7 +157,7 @@ export async function generateSummary() {
       }
     } else {
       Logger.debug('👤 Tipo già impostato (manuale o da cronologia):', state.selectedContentType);
-      state.progressTracker.setStep('classify', '✓ Tipo già impostato');
+      state.progressTracker.setStep('classify', I18n.t('progress.typeAlreadySet'));
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
 
@@ -200,31 +201,44 @@ export async function generateSummary() {
     state.progressTracker.complete();
     displayResults();
   } catch (error) {
-    state.progressTracker.error(error.message);
-
-    await ErrorHandler.showError(error, 'Generazione riassunto');
-    setTimeout(() => {
-      showState('error');
-    }, 2000);
+    state.progressTracker.hide();
+    await presentError(error, 'Generazione riassunto');
   }
+}
+
+function formatArticleMeta() {
+  const article = state.currentArticle;
+  const parts = [
+    `${article.wordCount} ${I18n.t('article.words')}`,
+    `${article.readingTimeMinutes} ${I18n.t('article.readingTime')}`,
+  ];
+  const type = state.currentResults?.detectedContentType;
+  if (type && type !== 'auto') parts.push(getContentTypeLabel(type, I18n.currentLanguage));
+  if (state.currentResults) parts.push(getProviderLabel(elements.providerSelect.value));
+  return parts.join(' · ');
 }
 
 export async function displayResults() {
   // Display summary (sanitized AI content)
   let summaryHtml = `<p>${HtmlSanitizer.escape(state.currentResults.summary)}</p>`;
   if (state.currentResults.fromCache) {
-    summaryHtml = `<span class="cache-badge">Da cache</span>` + summaryHtml;
+    summaryHtml =
+      `<p class="cache-badge">${HtmlSanitizer.escape(I18n.t('results.fromCache'))}</p>` +
+      summaryHtml;
   }
+  elements.articleStats.textContent = formatArticleMeta();
   elements.summaryContent.innerHTML = summaryHtml;
 
   // Display key points
-  let keypointsHtml = '';
+  let keypointsHtml = `<p class="keypoints-hint">${HtmlSanitizer.escape(I18n.t('keypoints.clickHint'))}</p>`;
+  const showLabel = HtmlSanitizer.escape(I18n.t('keypoints.showInArticle'));
   state.currentResults.keyPoints.forEach((point, index) => {
+    const paragraphs = HtmlSanitizer.escape(String(point.paragraphs));
     keypointsHtml += `
-      <div class="keypoint" data-paragraph="${HtmlSanitizer.escape(String(point.paragraphs))}">
+      <div class="keypoint" role="button" tabindex="0" data-paragraph="${paragraphs}">
         <div class="keypoint-header">
           <div class="keypoint-title">${index + 1}. ${HtmlSanitizer.escape(point.title)}</div>
-          <div class="keypoint-ref">§${HtmlSanitizer.escape(String(point.paragraphs))}</div>
+          <div class="keypoint-ref" title="§${paragraphs}">${showLabel}</div>
         </div>
         <div class="keypoint-desc">${HtmlSanitizer.escape(point.description)}</div>
       </div>
@@ -234,6 +248,12 @@ export async function displayResults() {
 
   // Add click handler for highlight
   document.querySelectorAll('.keypoint').forEach((el) => {
+    el.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        el.click();
+      }
+    });
     el.addEventListener('click', async () => {
       try {
         const paragraph = el.dataset.paragraph;
@@ -283,10 +303,9 @@ export async function displayResults() {
 export function switchTab(tabName) {
   // Update active tabs
   document.querySelectorAll('.tab').forEach((tab) => {
-    tab.classList.remove('active');
-    if (tab.dataset.tab === tabName) {
-      tab.classList.add('active');
-    }
+    const isActive = tab.dataset.tab === tabName;
+    tab.classList.toggle('active', isActive);
+    tab.setAttribute('aria-selected', String(isActive));
   });
 
   // Aggiorna contenuto
@@ -350,9 +369,6 @@ export async function copyToClipboard() {
     }, 2000);
   } catch (error) {
     Logger.error('Errore copia:', error);
-    elements.copyBtn.textContent = '❌ Errore copia';
-    setTimeout(() => {
-      elements.copyBtn.textContent = I18n.t('action.copy');
-    }, 2000);
+    Toast.show(I18n.t('common.copyError'), 'error');
   }
 }

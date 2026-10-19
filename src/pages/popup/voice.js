@@ -4,7 +4,7 @@
 
 import { state, elements } from './state.js';
 import { translationState } from './features.js';
-import { Modal } from '../../utils/core/modal.js';
+import { Toast } from '../../utils/core/toast.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { VoiceController } from '../../utils/voice/voice-controller.js';
 import { STTManager } from '../../utils/voice/stt-manager.js';
@@ -40,22 +40,19 @@ export async function handleVoiceQuestion() {
   const interimTranscript = document.getElementById('interimTranscript');
 
   if (!voiceHolder.value) {
-    await Modal.error(I18n.t('voice.notInitialized'), I18n.t('modal.errorTitle'));
+    Toast.show(I18n.t('voice.notInitialized'), 'error');
     return;
   }
 
   if (!STTManager.isSupported()) {
-    await Modal.error(
-      'Il riconoscimento vocale non è supportato in questo browser. Usa Chrome o Edge.',
-      'Funzionalità Non Supportata',
-    );
+    Toast.show(I18n.t('voice.sttUnsupported'), 'error');
     return;
   }
 
   try {
     voiceBtn.classList.add('listening');
     listeningIndicator.classList.add('active');
-    interimTranscript.style.display = 'block';
+    interimTranscript.classList.remove('hidden');
 
     const handleInterim = (event) => {
       interimTranscript.textContent = event.detail.transcript;
@@ -68,7 +65,7 @@ export async function handleVoiceQuestion() {
     window.removeEventListener('stt:interim', handleInterim);
     voiceBtn.classList.remove('listening');
     listeningIndicator.classList.remove('active');
-    interimTranscript.style.display = 'none';
+    interimTranscript.classList.add('hidden');
 
     elements.questionInput.value = transcript;
     await askQuestion();
@@ -76,8 +73,8 @@ export async function handleVoiceQuestion() {
     Logger.error('Errore domanda vocale:', error);
     voiceBtn.classList.remove('listening');
     listeningIndicator.classList.remove('active');
-    interimTranscript.style.display = 'none';
-    await Modal.error(error.message, I18n.t('voice.recognitionError'));
+    interimTranscript.classList.add('hidden');
+    Toast.show(`${I18n.t('voice.recognitionError')}: ${error.message}`, 'error');
   }
 }
 
@@ -127,7 +124,7 @@ export async function showVoiceSelector(lang) {
   const currentVoice = voiceHolder.value.ttsManager.getPreferredVoice(lang);
 
   if (voices.length === 0) {
-    await Modal.alert(I18n.t('voice.noVoicesAvailable'), I18n.t('voice.selectTitle'), '🔊');
+    Toast.show(I18n.t('voice.noVoicesAvailable'), 'info');
     return;
   }
 

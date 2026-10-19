@@ -11,8 +11,8 @@
   <body>
     <div class="container">
       <!-- Header -->
-      <div class="header">
-        <h1 data-i18n="app.title">Web Site Summarizer</h1>
+      <header class="header">
+        <h1 data-i18n="app.title">AI Article Summarizer</h1>
         <div class="header-buttons">
           <div class="header-row-1">
             <button
@@ -20,28 +20,14 @@
               class="icon-btn"
               data-i18n-title="theme.toggle"
               title="Cambia Tema"
-            >
-              ◑
-            </button>
-            <select id="uiLanguageSelect" class="ui-language-select" title="Lingua Interfaccia">
-              <option value="it">🇮🇹</option>
-              <option value="en">🇺🇸</option>
-            </select>
+              aria-label="Cambia Tema"
+            ></button>
             <button
               id="settingsBtn"
               class="icon-btn"
               data-i18n-title="settings.title"
               title="Impostazioni"
-            >
-              ⚙
-            </button>
-          </div>
-          <div class="header-row-2">
-            <button
-              id="historyBtn"
-              class="icon-btn-large"
-              data-i18n-title="history.title"
-              title="Cronologia"
+              aria-label="Impostazioni"
             >
               <svg
                 width="18"
@@ -52,135 +38,149 @@
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path
+                  d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"
+                />
+              </svg>
+            </button>
+          </div>
+          <nav class="header-row-2" aria-label="Strumenti">
+            <button id="historyBtn" class="icon-btn-large">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
               >
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
+              <span data-i18n="nav.history">Cronologia</span>
             </button>
-            <button
-              id="multiAnalysisBtn"
-              class="icon-btn-large"
-              data-i18n-title="multi.analysis"
-              title="Analisi Multi Articolo"
-            >
+            <button id="multiAnalysisBtn" class="icon-btn-large">
               <svg
-                width="18"
-                height="18"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
+                aria-hidden="true"
               >
                 <rect x="2" y="2" width="8" height="8" rx="1" />
                 <rect x="14" y="2" width="8" height="8" rx="1" />
                 <rect x="2" y="14" width="8" height="8" rx="1" />
                 <rect x="14" y="14" width="8" height="8" rx="1" />
               </svg>
+              <span data-i18n="nav.compare">Confronta</span>
             </button>
-            <button
-              id="pdfAnalysisBtn"
-              class="icon-btn-large"
-              data-i18n-title="pdf.analysis"
-              title="Analisi PDF"
-            >
+            <button id="pdfAnalysisBtn" class="icon-btn-large">
               <svg
-                width="18"
-                height="18"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
+                aria-hidden="true"
               >
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
               </svg>
+              <span data-i18n="nav.pdf">PDF</span>
             </button>
-          </div>
+          </nav>
         </div>
-      </div>
+      </header>
 
-      <!-- Article Info -->
+      <!-- Article Info (one line, shown with results) -->
       <div id="articleInfo" class="article-info hidden">
-        <div class="info-row">
-          <span class="label" data-i18n="article.title">Titolo:</span>
-          <span id="articleTitle" class="value"></span>
-        </div>
-        <div class="info-row">
-          <span class="label" data-i18n="article.length">Lunghezza:</span>
-          <span id="articleStats" class="value"></span>
-        </div>
-      </div>
-
-      <!-- Controls -->
-      <div id="controls" class="controls hidden">
-        <div class="control-row">
-          <label for="providerSelect" data-i18n="controls.provider">Provider:</label>
-          <select id="providerSelect">
-            <option value="groq">Groq</option>
-            <option value="openai">OpenAI</option>
-            <option value="anthropic">Claude</option>
-            <option value="gemini">Gemini</option>
-          </select>
-        </div>
-
-        <div class="control-row">
-          <label for="languageSelectReady" data-i18n="controls.language">Lingua:</label>
-          <select id="languageSelectReady" class="compact-select">
-            <option value="it" data-i18n="language.it">Italiano</option>
-            <option value="en" data-i18n="language.en">Inglese</option>
-            <option value="es" data-i18n="language.es">Spagnolo</option>
-            <option value="fr" data-i18n="language.fr">Francese</option>
-            <option value="de" data-i18n="language.de">Tedesco</option>
-          </select>
-        </div>
-
-        <div class="control-row">
-          <label for="contentTypeSelectReady" data-i18n="controls.contentType">Tipo:</label>
-          <select id="contentTypeSelectReady" class="compact-select">
-            <option value="auto" data-i18n="contentType.auto">Automatico</option>
-            <option value="general" data-i18n="contentType.general">Generico</option>
-            <option value="scientific" data-i18n="contentType.scientific">Scientifico</option>
-            <option value="news" data-i18n="contentType.news">News</option>
-            <option value="tutorial" data-i18n="contentType.tutorial">Tutorial</option>
-            <option value="business" data-i18n="contentType.business">Business</option>
-            <option value="opinion" data-i18n="contentType.opinion">Opinione</option>
-          </select>
-        </div>
-
-        <div class="control-row">
-          <label for="summaryLengthSelect" data-i18n="controls.summaryLength"
-            >Lunghezza Riassunto:</label
-          >
-          <select id="summaryLengthSelect" class="compact-select">
-            <option value="short" data-i18n="summaryLength.short">Breve (40%)</option>
-            <option value="medium" data-i18n="summaryLength.medium">Medio (60%)</option>
-            <option value="detailed" data-i18n="summaryLength.detailed" selected>
-              Dettagliato (75%)
-            </option>
-          </select>
-        </div>
-
-        <button id="generateBtn" class="btn btn-primary" data-i18n="controls.generate">
-          Genera Riassunto
-        </button>
+        <div id="articleTitle" class="article-info-title"></div>
+        <div id="articleStats" class="article-info-meta"></div>
       </div>
 
       <!-- Main Content Area -->
       <div id="mainContent" class="main-content">
-        <!-- Initial State -->
-        <div id="initialState" class="state-view">
-          <div class="empty-state">
-            <div class="icon"></div>
+        <!-- Setup State: no API key configured yet -->
+        <div id="setupState" class="state-view hidden">
+          <div class="start-card setup-card">
+            <h2 data-i18n="setup.title">Benvenuto! Serve un ultimo passo</h2>
+            <p class="setup-intro" data-i18n="setup.intro">
+              Per scrivere i riassunti l'estensione usa un servizio di intelligenza artificiale con
+              una tua chiave di accesso. Si fa una volta sola.
+            </p>
+            <ol class="setup-steps">
+              <li>
+                <span class="setup-step-title" data-i18n="setup.step1">Crea una chiave</span>
+                <div class="setup-recommend">
+                  <span data-i18n="setup.recommend"
+                    >Consigliato per iniziare: Groq, registrazione gratuita.</span
+                  >
+                  <a
+                    href="https://console.groq.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-i18n="setup.openGroq"
+                    >Apri console.groq.com ↗</a
+                  >
+                </div>
+              </li>
+              <li>
+                <label for="setupKeyInput" class="setup-step-title" data-i18n="setup.step2"
+                  >Incollala qui</label
+                >
+                <div class="setup-key-row">
+                  <input
+                    type="password"
+                    id="setupKeyInput"
+                    placeholder="gsk_..."
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                  <button
+                    id="setupSaveBtn"
+                    class="btn btn-primary btn-small"
+                    data-i18n="setup.save"
+                  >
+                    Prova e salva
+                  </button>
+                </div>
+                <p id="setupStatus" class="setup-status" role="status"></p>
+                <p class="setup-note">
+                  <span data-i18n="setup.privacy"
+                    >La chiave resta salvata solo in questo browser.</span
+                  >
+                  <button id="setupOtherBtn" class="link-btn" data-i18n="setup.otherProvider">
+                    Usa un altro servizio
+                  </button>
+                </p>
+              </li>
+              <li data-i18n="setup.step3">Apri un articolo e premi «Riassumi questa pagina».</li>
+            </ol>
+          </div>
+        </div>
 
-            <div class="language-selector">
-              <label for="languageSelect" data-i18n="initial.language">Lingua Output:</label>
-              <select id="languageSelect" class="language-select">
+        <!-- Initial State: one click summarizes the current page -->
+        <div id="initialState" class="state-view hidden">
+          <div class="start-card">
+            <p class="page-label" data-i18n="start.currentPage">Pagina corrente</p>
+            <p id="currentPageTitle" class="page-title"></p>
+
+            <div class="field">
+              <label for="languageSelect" data-i18n="initial.language">Lingua del riassunto</label>
+              <select id="languageSelect">
                 <option value="it" data-i18n="language.it">Italiano</option>
                 <option value="en" data-i18n="language.en">Inglese</option>
                 <option value="es" data-i18n="language.es">Spagnolo</option>
@@ -189,41 +189,93 @@
               </select>
             </div>
 
-            <div class="content-type-selector">
-              <label for="contentTypeSelect" data-i18n="initial.contentType"
-                >Tipologia Articolo:</label
-              >
-              <select id="contentTypeSelect" class="content-type-select">
-                <option value="auto" data-i18n="contentType.auto">Rilevamento Automatico</option>
-                <option value="general" data-i18n="contentType.general">Articolo Generico</option>
-                <option value="scientific" data-i18n="contentType.scientific">
-                  Articolo Scientifico
-                </option>
-                <option value="news" data-i18n="contentType.news">Notizia</option>
-                <option value="tutorial" data-i18n="contentType.tutorial">Tutorial/Guida</option>
-                <option value="business" data-i18n="contentType.business">
-                  Business/Case Study
-                </option>
-                <option value="opinion" data-i18n="contentType.opinion">Opinione/Editoriale</option>
-              </select>
-              <p class="hint" data-i18n="initial.contentType.hint">
-                Seleziona il tipo la tipologia di articolo per risparmiare token, altrimenti lascia
-                "Rilevamento Automatico" e LLM classificherà il contenuto autonomamente e utilizzerà
-                il prompt più indicato per le analisi.
-              </p>
-            </div>
+            <details id="customizeDetails" class="customize">
+              <summary data-i18n="start.customize">
+                Personalizza: tipo, lunghezza, servizio AI
+              </summary>
+
+              <div class="field">
+                <label for="contentTypeSelect" data-i18n="initial.contentType"
+                  >Tipo di articolo</label
+                >
+                <select id="contentTypeSelect">
+                  <option value="auto" data-i18n="contentType.auto">
+                    Automatico (consigliato)
+                  </option>
+                  <option value="general" data-i18n="contentType.general">Articolo Generico</option>
+                  <option value="scientific" data-i18n="contentType.scientific">
+                    Articolo Scientifico
+                  </option>
+                  <option value="news" data-i18n="contentType.news">Notizia</option>
+                  <option value="tutorial" data-i18n="contentType.tutorial">Tutorial/Guida</option>
+                  <option value="business" data-i18n="contentType.business">
+                    Business/Case Study
+                  </option>
+                  <option value="opinion" data-i18n="contentType.opinion">
+                    Opinione/Editoriale
+                  </option>
+                </select>
+                <p class="hint" data-i18n="initial.contentType.hint">
+                  Lascia «Automatico»: l'AI riconosce da sola se è una notizia, una guida o uno
+                  studio.
+                </p>
+              </div>
+
+              <fieldset class="field length-group">
+                <legend data-i18n="controls.summaryLength">Lunghezza del riassunto</legend>
+                <div class="segmented">
+                  <label
+                    ><input type="radio" name="summaryLength" value="short" /><span
+                      data-i18n="summaryLength.short"
+                      >Breve</span
+                    ></label
+                  >
+                  <label
+                    ><input type="radio" name="summaryLength" value="medium" /><span
+                      data-i18n="summaryLength.medium"
+                      >Medio</span
+                    ></label
+                  >
+                  <label
+                    ><input type="radio" name="summaryLength" value="detailed" checked /><span
+                      data-i18n="summaryLength.detailed"
+                      >Dettagliato</span
+                    ></label
+                  >
+                </div>
+              </fieldset>
+
+              <div class="field">
+                <label for="providerSelect" data-i18n="controls.provider">Servizio AI</label>
+                <select id="providerSelect">
+                  <option value="groq">Groq</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="anthropic">Claude</option>
+                  <option value="gemini">Gemini</option>
+                </select>
+                <p class="hint">
+                  <button id="addProviderBtn" class="link-btn" data-i18n="start.addProvider">
+                    Aggiungi un servizio AI
+                  </button>
+                </p>
+              </div>
+            </details>
 
             <button id="analyzeBtn" class="btn btn-primary" data-i18n="initial.analyze">
-              Analizza Pagina
+              Riassumi questa pagina
             </button>
+            <p id="shortcutHint" class="shortcut-hint hidden">
+              <span data-i18n="start.shortcut">Apri questo riquadro con</span>
+              <span id="shortcutKeys"></span>
+            </p>
           </div>
         </div>
 
         <!-- Loading State -->
         <div id="loadingState" class="state-view hidden">
-          <div class="loading">
-            <div class="spinner"></div>
-            <p id="loadingText">Estrazione contenuto in corso...</p>
+          <div class="loading" aria-live="polite">
+            <div class="spinner" aria-hidden="true"></div>
+            <div id="loadingText">Estrazione contenuto in corso...</div>
 
             <!-- Progress Bar -->
             <div class="progress-container">
@@ -235,25 +287,76 @@
           </div>
         </div>
 
-        <!-- Error State -->
+        <!-- Error State: message plus the action that fixes it -->
         <div id="errorState" class="state-view hidden">
-          <div class="error-box">
-            <div class="icon">×</div>
+          <div id="errorBox" class="error-box" role="alert">
+            <p id="errorTitle" class="error-title"></p>
             <p id="errorMessage"></p>
-            <button id="retryBtn" class="btn btn-secondary">Riprova</button>
+            <div class="error-actions">
+              <button
+                id="errorConfigureBtn"
+                class="btn btn-primary hidden"
+                data-i18n="error.configureNow"
+              >
+                Configura ora
+              </button>
+              <button
+                id="errorOtherProviderBtn"
+                class="btn btn-secondary hidden"
+                data-i18n="error.useOtherProvider"
+              >
+                Usa un altro servizio
+              </button>
+              <button id="errorPdfBtn" class="btn btn-secondary hidden" data-i18n="error.openPdf">
+                Apri Analisi PDF
+              </button>
+              <button id="retryBtn" class="btn btn-secondary" data-i18n="action.retry">
+                Riprova
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Results State -->
         <div id="resultsState" class="state-view hidden">
           <!-- Tabs -->
-          <div class="tabs">
-            <button class="tab active" data-tab="summary" data-i18n="tab.summary">Riassunto</button>
-            <button class="tab" data-tab="keypoints" data-i18n="tab.keypoints">Punti Chiave</button>
-            <button class="tab" data-tab="translation" data-i18n="tab.translation">
+          <div class="tabs" role="tablist">
+            <button
+              class="tab active"
+              role="tab"
+              aria-selected="true"
+              data-tab="summary"
+              data-i18n="tab.summary"
+            >
+              Riassunto
+            </button>
+            <button
+              class="tab"
+              role="tab"
+              aria-selected="false"
+              data-tab="keypoints"
+              data-i18n="tab.keypoints"
+            >
+              Punti Chiave
+            </button>
+            <button
+              class="tab"
+              role="tab"
+              aria-selected="false"
+              data-tab="translation"
+              data-i18n="tab.translation"
+            >
               Traduzione
             </button>
-            <button class="tab" data-tab="citations" data-i18n="tab.citations">Citazioni</button>
+            <button
+              class="tab"
+              role="tab"
+              aria-selected="false"
+              data-tab="citations"
+              data-i18n="tab.citations"
+            >
+              Citazioni
+            </button>
           </div>
 
           <!-- Tab Content -->
@@ -296,22 +399,43 @@
 
           <!-- Actions -->
           <div class="actions">
-            <button id="readingModeBtn" class="btn btn-primary" data-i18n="action.readingMode">
-              Modalità Lettura
+            <button id="copyBtn" class="btn btn-primary" data-i18n="action.copy">Copia</button>
+            <div class="export-menu">
+              <button
+                id="exportMenuBtn"
+                class="btn btn-secondary"
+                aria-haspopup="menu"
+                aria-expanded="false"
+                aria-controls="exportMenu"
+              >
+                <span data-i18n="action.export">Esporta</span> ▾
+              </button>
+              <div id="exportMenu" class="export-menu-list hidden" role="menu">
+                <button id="exportPdfBtn" role="menuitem" data-i18n="action.pdf">PDF</button>
+                <button id="exportMdBtn" role="menuitem" data-i18n="action.md">
+                  Markdown (.md)
+                </button>
+                <button id="sendEmailBtn" role="menuitem" data-i18n="action.email">
+                  Invia per email
+                </button>
+              </div>
+            </div>
+            <button id="readingModeBtn" class="btn btn-secondary" data-i18n="action.readingMode">
+              Schermo intero
             </button>
-            <button id="exportPdfBtn" class="btn btn-secondary" data-i18n="action.pdf">PDF</button>
-            <button id="exportMdBtn" class="btn btn-secondary" data-i18n="action.md">MD</button>
-            <button id="sendEmailBtn" class="btn btn-secondary" data-i18n="action.email">
-              Email
+            <button id="newBtn" class="link-btn actions-new" data-i18n="action.new">
+              Nuova analisi
             </button>
-            <button id="copyBtn" class="btn btn-secondary" data-i18n="action.copy">Copia</button>
-            <button id="newBtn" class="btn btn-secondary" data-i18n="action.new">Nuovo</button>
           </div>
 
-          <!-- Q&A Section -->
+          <!-- Q&A Section: docked at the bottom of the scrolling area -->
           <div id="qaSection" class="qa-section">
             <div class="qa-header">
-              <h3 data-i18n="qa.title">Fai una domanda sull'articolo</h3>
+              <h3>
+                <label for="questionInput" data-i18n="qa.title"
+                  >Fai una domanda sull'articolo</label
+                >
+              </h3>
             </div>
             <div class="qa-input-group">
               <input
@@ -319,11 +443,18 @@
                 id="questionInput"
                 data-i18n="qa.placeholder"
                 placeholder="Es: Quali sono le implicazioni pratiche?"
+                aria-describedby="qaEnterHint"
               />
               <button id="askBtn" class="btn btn-primary btn-small" data-i18n="qa.ask">
                 Chiedi
               </button>
-              <button id="voiceQuestionBtn" class="stt-button" title="Fai una domanda vocale">
+              <button
+                id="voiceQuestionBtn"
+                class="stt-button"
+                data-i18n-title="qa.voiceTitle"
+                title="Fai una domanda vocale"
+                aria-label="Fai una domanda vocale"
+              >
                 <svg
                   width="16"
                   height="16"
@@ -333,6 +464,7 @@
                   stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
+                  aria-hidden="true"
                 >
                   <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
                   <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
@@ -341,9 +473,12 @@
                 </svg>
               </button>
             </div>
+            <p id="qaEnterHint" class="qa-hint" data-i18n="qa.enterHint">
+              Premi Invio per chiedere
+            </p>
             <div class="listening-indicator" id="listeningIndicator">
               <div class="pulse-dot"></div>
-              <span>In ascolto...</span>
+              <span data-i18n="qa.listening">In ascolto...</span>
             </div>
             <div id="interimTranscript" class="interim-transcript hidden"></div>
             <div id="qaAnswer" class="qa-answer hidden"></div>
@@ -360,8 +495,20 @@
         <h3 id="modalTitle" class="custom-modal-title">Titolo</h3>
         <p id="modalMessage" class="custom-modal-message">Messaggio</p>
         <div class="custom-modal-buttons">
-          <button id="modalCancelBtn" class="modal-btn modal-btn-cancel hidden">Annulla</button>
-          <button id="modalConfirmBtn" class="modal-btn modal-btn-confirm">OK</button>
+          <button
+            id="modalCancelBtn"
+            class="modal-btn modal-btn-cancel hidden"
+            data-i18n="modal.cancel"
+          >
+            Annulla
+          </button>
+          <button
+            id="modalConfirmBtn"
+            class="modal-btn modal-btn-confirm"
+            data-i18n="modal.confirm"
+          >
+            OK
+          </button>
         </div>
       </div>
     </div>
@@ -371,43 +518,52 @@
       <div class="custom-modal-overlay"></div>
       <div class="custom-modal-content email-modal-content">
         <div class="custom-modal-icon"></div>
-        <h3 class="custom-modal-title">Invia Tramite Email</h3>
+        <h3 class="custom-modal-title" data-i18n="email.title">Invia Tramite Email</h3>
 
         <div class="email-input-section">
-          <label for="emailInput">Email destinatario:</label>
-          <input type="email" id="emailInput" placeholder="esempio@email.com" />
+          <label for="emailInput" data-i18n="email.recipient">Email destinatario:</label>
+          <input
+            type="email"
+            id="emailInput"
+            data-i18n="email.placeholder"
+            placeholder="esempio@email.com"
+          />
         </div>
 
         <div id="savedEmailsSection" class="saved-emails-section hidden">
-          <label>Email salvate:</label>
+          <label data-i18n="email.saved">Email salvate:</label>
           <div id="savedEmailsList" class="saved-emails-list"></div>
         </div>
 
         <div class="export-options-section">
-          <label>Contenuto da includere:</label>
+          <label data-i18n="email.includeContent">Contenuto da includere:</label>
           <div class="export-options-list">
             <label class="export-option">
               <input type="checkbox" id="emailIncludeSummary" checked />
-              <span>Riassunto</span>
+              <span data-i18n="email.includeSummary">Riassunto</span>
             </label>
             <label class="export-option">
               <input type="checkbox" id="emailIncludeKeypoints" checked />
-              <span>Punti Chiave</span>
+              <span data-i18n="email.includeKeypoints">Punti Chiave</span>
             </label>
             <label class="export-option" id="emailTranslationOption">
               <input type="checkbox" id="emailIncludeTranslation" checked />
-              <span>Traduzione</span>
+              <span data-i18n="email.includeTranslation">Traduzione</span>
             </label>
             <label class="export-option" id="emailQAOption">
               <input type="checkbox" id="emailIncludeQA" checked />
-              <span>Domande e Risposte</span>
+              <span data-i18n="email.includeQA">Domande e Risposte</span>
             </label>
           </div>
         </div>
 
         <div class="custom-modal-buttons">
-          <button id="emailCancelBtn" class="modal-btn modal-btn-cancel">Annulla</button>
-          <button id="emailSendBtn" class="modal-btn modal-btn-confirm">Invia</button>
+          <button id="emailCancelBtn" class="modal-btn modal-btn-cancel" data-i18n="action.cancel">
+            Annulla
+          </button>
+          <button id="emailSendBtn" class="modal-btn modal-btn-confirm" data-i18n="email.send">
+            Invia
+          </button>
         </div>
       </div>
     </div>
@@ -417,37 +573,45 @@
       <div class="custom-modal-overlay"></div>
       <div class="custom-modal-content export-modal-content">
         <div class="custom-modal-icon"></div>
-        <h3 class="custom-modal-title">Esporta PDF</h3>
+        <h3 class="custom-modal-title" data-i18n="export.pdf">Esporta PDF</h3>
 
         <div class="export-options-section">
-          <label>Seleziona contenuto da esportare:</label>
+          <label data-i18n="export.selectContent">Seleziona contenuto da esportare:</label>
           <div class="export-options-list">
             <label class="export-option">
               <input type="checkbox" id="pdfIncludeSummary" checked />
-              <span>Riassunto</span>
+              <span data-i18n="export.includeSummary">Riassunto</span>
             </label>
             <label class="export-option">
               <input type="checkbox" id="pdfIncludeKeypoints" checked />
-              <span>Punti Chiave</span>
+              <span data-i18n="export.includeKeypoints">Punti Chiave</span>
             </label>
             <label class="export-option" id="pdfTranslationOption">
               <input type="checkbox" id="pdfIncludeTranslation" checked />
-              <span>Traduzione</span>
+              <span data-i18n="export.includeTranslation">Traduzione</span>
             </label>
             <label class="export-option" id="pdfQAOption">
               <input type="checkbox" id="pdfIncludeQA" checked />
-              <span>Domande e Risposte</span>
+              <span data-i18n="export.includeQA">Domande e Risposte</span>
             </label>
             <label class="export-option" id="pdfCitationsOption">
               <input type="checkbox" id="pdfIncludeCitations" checked />
-              <span>Citazioni</span>
+              <span data-i18n="export.includeCitations">Citazioni</span>
             </label>
           </div>
         </div>
 
         <div class="custom-modal-buttons">
-          <button id="exportCancelBtn" class="modal-btn modal-btn-cancel">Annulla</button>
-          <button id="exportConfirmBtn" class="modal-btn modal-btn-confirm">Esporta</button>
+          <button id="exportCancelBtn" class="modal-btn modal-btn-cancel" data-i18n="action.cancel">
+            Annulla
+          </button>
+          <button
+            id="exportConfirmBtn"
+            class="modal-btn modal-btn-confirm"
+            data-i18n="export.button"
+          >
+            Esporta
+          </button>
         </div>
       </div>
     </div>
