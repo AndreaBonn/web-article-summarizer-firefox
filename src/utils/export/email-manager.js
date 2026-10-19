@@ -39,7 +39,14 @@ export class EmailManager {
   }
 
   // Genera il contenuto dell'email formattato
-  static formatEmailContent(article, summary, keyPoints, translation = null, qaList = null) {
+  static formatEmailContent(
+    article,
+    summary,
+    keyPoints,
+    translation = null,
+    qaList = null,
+    citations = null,
+  ) {
     let content = '';
 
     // Oggetto
@@ -98,6 +105,9 @@ export class EmailManager {
       content += `${'='.repeat(60)}\n\n`;
     }
 
+    // Citazioni (se presenti)
+    content += EmailManager.formatCitationsSection(citations);
+
     // Rimuovi ultimo separatore se presente
     if (content.endsWith(`${'='.repeat(60)}\n\n`)) {
       content = content.slice(0, -`${'='.repeat(60)}\n\n`.length);
@@ -107,6 +117,31 @@ export class EmailManager {
     content += `Generato con AI Article Summarizer\n`;
 
     return { subject, body: content };
+  }
+
+  // Sezione citazioni in testo semplice; stringa vuota se non ce ne sono
+  static formatCitationsSection(citations) {
+    const list = citations?.citations;
+    if (!list || list.length === 0) return '';
+
+    let section = `📚 CITAZIONI\n`;
+    section += `${'-'.repeat(60)}\n\n`;
+
+    list.forEach((citation) => {
+      const author =
+        citation.author && citation.author !== 'N/A' ? citation.author : 'Fonte non specificata';
+      section += `#${citation.id} - ${author}\n`;
+
+      const source = citation.source && citation.source !== 'N/A' ? citation.source : '';
+      const sourceInfo = [source, citation.year ? `(${citation.year})` : ''].filter(Boolean);
+      if (sourceInfo.length > 0) section += `   ${sourceInfo.join(' ')}\n`;
+
+      const quoteText = citation.quote_text || citation.text || '';
+      if (quoteText) section += `   "${quoteText}"\n`;
+      section += `\n`;
+    });
+
+    return `${section}${'='.repeat(60)}\n\n`;
   }
 
   // Apri client email con mailto

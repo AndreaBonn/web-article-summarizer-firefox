@@ -232,6 +232,30 @@ describe('EmailManager.formatEmailContent()', () => {
     expect(body).toContain('Q2: Perche?');
   });
 
+  it('include le citazioni quando fornite come sesto argomento', () => {
+    const citations = {
+      citations: [
+        { id: 1, quote_text: 'Testo citato', author: 'Mario Rossi', source: 'Nature', year: 2021 },
+        { id: 2, text: 'Altra frase', author: 'N/A' },
+      ],
+    };
+    const { body } = EmailManager.formatEmailContent(article, 'sum', [], null, null, citations);
+    expect(body).toContain('CITAZIONI');
+    expect(body).toContain('#1 - Mario Rossi');
+    expect(body).toContain('"Testo citato"');
+    expect(body).toContain('Nature (2021)');
+    expect(body).toContain('#2 - Fonte non specificata');
+    expect(body).toContain('"Altra frase"');
+    expect(body.indexOf('CITAZIONI')).toBeLessThan(body.indexOf('Generato con AI'));
+  });
+
+  it('omette la sezione citazioni se assenti o vuote', () => {
+    for (const citations of [undefined, null, { citations: [] }]) {
+      const { body } = EmailManager.formatEmailContent(article, 'sum', [], null, null, citations);
+      expect(body).not.toContain('CITAZIONI');
+    }
+  });
+
   it('omette sezioni non fornite', () => {
     const { body } = EmailManager.formatEmailContent(article, null, [], null, null);
     // "RIASSUNTO ARTICOLO" è l'header fisso, "RIASSUNTO\n" è la sezione opzionale
