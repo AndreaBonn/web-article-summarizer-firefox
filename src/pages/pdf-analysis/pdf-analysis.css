@@ -21,6 +21,8 @@ body {
 /* Header */
 header {
   display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
@@ -503,6 +505,7 @@ body[data-font-size='XL'] h3 {
 
 /* Header toolbar layout (replaces inline style) */
 .header-toolbar {
+  flex-wrap: wrap;
   display: flex;
   gap: 12px;
   align-items: center;

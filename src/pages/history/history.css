@@ -329,6 +329,7 @@ header h1 {
 }
 
 .header-toolbar {
+  flex-wrap: wrap;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -1659,6 +1660,19 @@ header h1 {
   .filters select {
     flex: 1 1 140px;
     min-width: 0;
+  }
+
+  .search-row {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .search-input-main {
+    min-width: 0;
+  }
+
+  .history-tabs {
+    flex-wrap: wrap;
   }
 }
 

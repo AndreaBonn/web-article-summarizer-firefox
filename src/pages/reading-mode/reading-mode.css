@@ -26,6 +26,7 @@ body {
 
 .header-left,
 .header-right {
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   gap: 12px;
