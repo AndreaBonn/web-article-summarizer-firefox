@@ -2,8 +2,7 @@
 // Gestisce la visualizzazione dei contenuti PDF (testo estratto, citazioni)
 
 import { state, elements } from './state.js';
-import { splitPdfTextSegments, describePdfMeta, renderQuotesHtml } from './pdf-text.js';
-import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
+import { renderPdfPagesHtml, describePdfMeta, renderQuotesHtml } from './pdf-text.js';
 import { Logger } from '../../utils/core/logger.js';
 import { displaySummaryInTab, displayKeypointsInTab } from './display.js';
 
@@ -69,17 +68,7 @@ function displayExtractedText(text) {
   }
 
   // Format text with page markers
-  const formattedText = splitPdfTextSegments(text)
-    .map(({ kind, value: part }) => {
-      if (kind === 'page') {
-        // Page number
-        return `<div class="page-marker">📄 Pagina ${part}</div>`;
-      } else {
-        // Page content
-        return `<div class="page-content">${HtmlSanitizer.escape(part).replace(/\n/g, '<br>')}</div>`;
-      }
-    })
-    .join('');
+  const formattedText = renderPdfPagesHtml(text);
 
   articleText.innerHTML = `
     <div class="extracted-text-container">

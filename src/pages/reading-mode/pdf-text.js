@@ -1,10 +1,35 @@
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 
+/**
+ * Splits extracted PDF text on "--- Pagina N ---" markers.
+ * split() with a capture group yields [preamble, N, content, N, content, ...]:
+ * position decides the kind, so blank parts must be dropped without shifting it.
+ * @param {string} text
+ * @returns {Array<{kind: 'page'|'content', value: string}>}
+ */
 export function splitPdfTextSegments(text) {
-  return text
-    .split(/--- Pagina (\d+) ---/)
-    .filter((part) => part.trim())
-    .map((part, index) => ({ kind: index % 2 === 0 ? 'page' : 'content', value: part }));
+  const segments = [];
+  text.split(/--- Pagina (\d+) ---/).forEach((part, index) => {
+    const isPageNumber = index % 2 === 1;
+    if (isPageNumber) segments.push({ kind: 'page', value: part });
+    else if (part.trim()) segments.push({ kind: 'content', value: part });
+  });
+  return segments;
+}
+
+/**
+ * HTML of the extracted PDF text with one marker per page.
+ * @param {string} text
+ * @returns {string} Escaped HTML
+ */
+export function renderPdfPagesHtml(text) {
+  return splitPdfTextSegments(text)
+    .map(({ kind, value }) =>
+      kind === 'page'
+        ? `<div class="page-marker">📄 Pagina ${HtmlSanitizer.escape(value)}</div>`
+        : `<div class="page-content">${HtmlSanitizer.escape(value).replace(/\n/g, '<br>')}</div>`,
+    )
+    .join('');
 }
 
 export function describePdfMeta(data) {
