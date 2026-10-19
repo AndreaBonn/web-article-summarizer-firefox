@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { loadApiKeys, bindKeyInputs } from '@pages/options/options-keys.js';
 import { eventCleanup } from '@utils/core/event-cleanup.js';
 
@@ -22,10 +22,6 @@ function installStorage(apiKeys) {
     runtime: { sendMessage: async () => ({ success: true }) },
   };
   return store;
-}
-
-async function flush() {
-  for (let i = 0; i < 5; i++) await Promise.resolve();
 }
 
 describe('options API key fields', () => {
@@ -59,8 +55,9 @@ describe('options API key fields', () => {
     input.dispatchEvent(new Event('focus'));
     input.value = NEW_KEY;
     input.dispatchEvent(new Event('change'));
-    await flush();
-    expect(store.apiKeys.groq).toBe(NEW_KEY);
+    // saveKey is async: wait until the save has gone through, not a fixed number of ticks
+    await vi.waitFor(() => expect(store.apiKeys.groq).toBe(NEW_KEY));
+    await vi.waitFor(() => expect(input.dataset.maskedValue.endsWith('NEW2')).toBe(true));
 
     input.value = '';
     input.dispatchEvent(new Event('blur'));
