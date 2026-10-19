@@ -108,7 +108,8 @@ export class ErrorHandler {
     }
     if (
       message.includes('Could not establish connection') ||
-      message.includes('Receiving end does not exist')
+      message.includes('Receiving end does not exist') ||
+      message.includes('Impossibile comunicare con la pagina')
     ) {
       return 'Impossibile comunicare con la pagina. Ricarica la pagina (F5) e riprova.';
     }

@@ -109,6 +109,16 @@ describe('ErrorHandler', () => {
       );
     });
 
+    it('maps the already-translated unreachable-page error to the reload message', () => {
+      const error = new Error(
+        'Impossibile comunicare con la pagina. Ricarica la pagina (F5) e riprova.',
+      );
+      expect(ErrorHandler.classifyError(error)).toBe('page_unreachable');
+      expect(ErrorHandler.getErrorMessage(error)).toBe(
+        'Impossibile comunicare con la pagina. Ricarica la pagina (F5) e riprova.',
+      );
+    });
+
     it('maps QUOTA_BYTES to storage full message', () => {
       expect(ErrorHandler.getErrorMessage(new Error('QUOTA_BYTES exceeded'))).toContain(
         'archiviazione esaurito',
