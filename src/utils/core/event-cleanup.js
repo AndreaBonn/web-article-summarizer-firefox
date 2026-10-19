@@ -35,13 +35,20 @@ export class EventCleanupManager {
   removeEventListener(element, event, handler) {
     if (!element) return;
 
-    element.removeEventListener(event, handler);
+    const elementListeners = this.listeners.get(element);
+    const index = elementListeners
+      ? elementListeners.findIndex((l) => l.event === event && l.handler === handler)
+      : -1;
+
+    // Stesse options (capture) usate in add, altrimenti il listener resta attaccato
+    element.removeEventListener(
+      event,
+      handler,
+      index !== -1 ? elementListeners[index].options : undefined,
+    );
 
     // Rimuovi dalla registrazione
-    if (this.listeners.has(element)) {
-      const elementListeners = this.listeners.get(element);
-      const index = elementListeners.findIndex((l) => l.event === event && l.handler === handler);
-
+    if (elementListeners) {
       if (index !== -1) {
         elementListeners.splice(index, 1);
         Logger.debug(`Listener rimosso: ${event} da`, element);
@@ -62,8 +69,8 @@ export class EventCleanupManager {
 
     const elementListeners = this.listeners.get(element);
 
-    elementListeners.forEach(({ event, handler }) => {
-      element.removeEventListener(event, handler);
+    elementListeners.forEach(({ event, handler, options }) => {
+      element.removeEventListener(event, handler, options);
     });
 
     this.listeners.delete(element);
@@ -78,9 +85,9 @@ export class EventCleanupManager {
 
     let count = 0;
     this.listeners.forEach((elementListeners, element) => {
-      elementListeners.forEach(({ event, handler }) => {
+      elementListeners.forEach(({ event, handler, options }) => {
         try {
-          element.removeEventListener(event, handler);
+          element.removeEventListener(event, handler, options);
           count++;
         } catch (error) {
           Logger.warn('Errore rimozione listener:', error);

@@ -50,13 +50,52 @@ describe('EventCleanupManager', () => {
     });
   });
 
+  describe('capture listeners (real DOM)', () => {
+    const setup = () => {
+      const el = document.createElement('div');
+      const handler = vi.fn();
+      return { el, handler };
+    };
+
+    it('test_removeEventListener_captureListener_isActuallyRemoved', () => {
+      const { el, handler } = setup();
+      manager.addEventListener(el, 'click', handler, { capture: true });
+      manager.removeEventListener(el, 'click', handler);
+      el.dispatchEvent(new Event('click'));
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('test_removeAllListeners_captureListener_isActuallyRemoved', () => {
+      const { el, handler } = setup();
+      manager.addEventListener(el, 'click', handler, true);
+      manager.removeAllListeners(el);
+      el.dispatchEvent(new Event('click'));
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('test_cleanupAll_captureListener_isActuallyRemoved', () => {
+      const { el, handler } = setup();
+      manager.addEventListener(el, 'click', handler, { capture: true });
+      manager.cleanupAll();
+      el.dispatchEvent(new Event('click'));
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('test_removeEventListener_unremovedListener_stillFires', () => {
+      const { el, handler } = setup();
+      manager.addEventListener(el, 'click', handler, { capture: true });
+      el.dispatchEvent(new Event('click'));
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('removeEventListener()', () => {
     it('test_removeEventListener_registered_removesFromTracking', () => {
       const handler = vi.fn();
       manager.addEventListener(mockElement, 'click', handler);
       manager.removeEventListener(mockElement, 'click', handler);
 
-      expect(mockElement.removeEventListener).toHaveBeenCalledWith('click', handler);
+      expect(mockElement.removeEventListener).toHaveBeenCalledWith('click', handler, {});
       expect(manager.listeners.has(mockElement)).toBe(false);
     });
 
