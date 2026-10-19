@@ -10,6 +10,12 @@ import { StorageManager } from '../../utils/storage/storage-manager.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { Modal } from '../../utils/core/modal.js';
 import { HistoryManager } from '../../utils/storage/history-manager.js';
+import {
+  resolvePdfText,
+  applyArticleUpdate,
+  renderTranslationHtml,
+  renderExtractedCitationsHtml,
+} from './reading-mode-history.js';
 
 // Translate article
 export async function translateArticle() {
@@ -17,7 +23,7 @@ export async function translateArticle() {
   if (!state.currentData) return;
 
   // For PDFs, check if we have extracted text - gestisci diverse strutture
-  const extractedText = state.currentData.extractedText || state.currentData.pdf?.text;
+  const extractedText = resolvePdfText(state.currentData);
   if (state.currentData.isPDF && !extractedText) {
     Logger.error('No extracted text for PDF translation');
     await Modal.error('Testo non disponibile per la traduzione');
@@ -112,12 +118,7 @@ export async function translateArticle() {
       : state.currentData.article.title;
     const translation = translationResult.translation;
 
-    elements.translationTabContent.innerHTML = `
-      <div class="translation-content">
-        <h3>${HtmlSanitizer.escape(title)}</h3>
-        <div class="translation-text">${HtmlSanitizer.escape(translation).replace(/\n/g, '<br>')}</div>
-      </div>
-    `;
+    elements.translationTabContent.innerHTML = renderTranslationHtml(title, translation);
 
     // Save to current data
     state.currentData.translation = translation;
@@ -145,7 +146,7 @@ export async function extractCitations() {
   if (!state.currentData) return;
 
   // For PDFs, check if we have extracted text - gestisci diverse strutture
-  const extractedText = state.currentData.extractedText || state.currentData.pdf?.text;
+  const extractedText = resolvePdfText(state.currentData);
   if (state.currentData.isPDF && !extractedText) {
     Logger.error('No extracted text for PDF citations');
     await Modal.error("Testo non disponibile per l'estrazione citazioni");
@@ -204,33 +205,7 @@ export async function extractCitations() {
     }
 
     // Display citations
-    let html = '<div class="citations-content">';
-
-    if (citations && citations.citations && citations.citations.length > 0) {
-      const totalCitations =
-        citations.total_citations || citations.totalCount || citations.citations.length;
-      html += `<h3>${totalCitations} Citazioni Trovate</h3>`;
-
-      citations.citations.forEach((citation, index) => {
-        // Estrai i campi per questa citazione
-        const text = citation.quote_text || citation.text || citation.quote || null;
-        const author = citation.author || null;
-
-        html += `
-          <div class="citation-item">
-            <div class="citation-number">[${index + 1}]</div>
-            <div class="citation-text">${HtmlSanitizer.escape(text || 'Testo citazione non disponibile')}</div>
-            ${author ? `<div class="citation-author">— ${HtmlSanitizer.escape(author)}</div>` : ''}
-            ${citation.paragraph ? `<div class="citation-ref">§${HtmlSanitizer.escape(String(citation.paragraph))}</div>` : ''}
-          </div>
-        `;
-      });
-    } else {
-      html += '<p>Nessuna citazione trovata in questo articolo</p>';
-    }
-
-    html += '</div>';
-    elements.citationsTabContent.innerHTML = html;
+    elements.citationsTabContent.innerHTML = renderExtractedCitationsHtml(citations);
 
     // Save to current data
     state.currentData.citations = citations;
@@ -347,22 +322,14 @@ export async function updateDataInStorage() {
       const result = await browser.storage.local.get(['summaryHistory']);
       const history = result.summaryHistory || [];
 
-      // Find existing entry by URL
-      const existingIndex = history.findIndex(
-        (item) => item.article && item.article.url === state.currentData.article.url,
+      const { history: updatedHistory, found } = applyArticleUpdate(
+        history,
+        state.currentData,
+        Date.now(),
       );
 
-      if (existingIndex >= 0) {
-        // Update existing entry with new data
-        history[existingIndex] = {
-          ...history[existingIndex],
-          translation: state.currentData.translation || history[existingIndex].translation,
-          citations: state.currentData.citations || history[existingIndex].citations,
-          qa: state.currentData.qa || history[existingIndex].qa,
-          timestamp: Date.now(),
-        };
-
-        await browser.storage.local.set({ summaryHistory: history });
+      if (found) {
+        await browser.storage.local.set({ summaryHistory: updatedHistory });
         Logger.info('Dati aggiornati nella cronologia');
       } else {
         Logger.warn('⚠️ Articolo non trovato nella cronologia');
