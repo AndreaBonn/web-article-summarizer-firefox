@@ -2,6 +2,7 @@
 // Gestisce la visualizzazione dei contenuti PDF (testo estratto, citazioni)
 
 import { state, elements } from './state.js';
+import { splitPdfTextSegments, describePdfMeta, renderQuotesHtml } from './pdf-text.js';
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { Logger } from '../../utils/core/logger.js';
 import { displaySummaryInTab, displayKeypointsInTab } from './display.js';
@@ -14,15 +15,12 @@ export function displayPDFContent() {
   document.querySelector('.reading-header h1').textContent = '📄 Analisi PDF';
 
   // Update metadata - gestisci diverse strutture dati
-  const pageCount = state.currentData.pageCount || state.currentData.pdf?.pages || 0;
-  const filename = state.currentData.filename || state.currentData.pdf?.name || 'PDF';
-  const provider = state.currentData.apiProvider || state.currentData.metadata?.provider || 'AI';
-  const language = state.currentData.metadata?.language || 'it';
+  const { pageCount, filename, provider, languageLabel } = describePdfMeta(state.currentData);
 
   elements.articleWordCount.textContent = `${pageCount} pagine`;
   elements.articleReadTime.textContent = filename;
   elements.summaryProvider.textContent = provider;
-  elements.summaryLanguage.textContent = language === 'it' ? 'Italiano' : language.toUpperCase();
+  elements.summaryLanguage.textContent = languageLabel;
 
   // Left panel: Always show extracted text
   const articlePanel = document.querySelector('.article-panel .panel-header h2');
@@ -71,11 +69,9 @@ function displayExtractedText(text) {
   }
 
   // Format text with page markers
-  const formattedText = text
-    .split(/--- Pagina (\d+) ---/)
-    .filter((part) => part.trim())
-    .map((part, index) => {
-      if (index % 2 === 0) {
+  const formattedText = splitPdfTextSegments(text)
+    .map(({ kind, value: part }) => {
+      if (kind === 'page') {
         // Page number
         return `<div class="page-marker">📄 Pagina ${part}</div>`;
       } else {
@@ -103,19 +99,7 @@ function displayExtractedText(text) {
 function displayQuotesInTab(quotes) {
   if (!quotes || quotes.length === 0) return;
 
-  let html = '<div class="quotes-content"><h3>💬 Citazioni Importanti</h3>';
-
-  quotes.forEach((quote, index) => {
-    html += `
-      <div class="quote-item">
-        <div class="quote-number">${index + 1}</div>
-        <div class="quote-text">"${HtmlSanitizer.escape(quote)}"</div>
-      </div>
-    `;
-  });
-
-  html += '</div>';
-
+  const html = renderQuotesHtml(quotes);
   // Add to citations tab
   const citationsTab = document.getElementById('citationsTabContent');
   if (citationsTab) {
