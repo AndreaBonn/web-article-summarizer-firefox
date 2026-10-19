@@ -131,6 +131,18 @@ describe('AutoMaintenance', () => {
   });
 
   describe('runMaintenance()', () => {
+    it('test_runMaintenance_historyRetention_keepsHundredDayOldEntry', async () => {
+      store.settings = { autoCleanup: true, enableCompression: false };
+      const dayMs = 24 * 60 * 60 * 1000;
+      const retained = { id: 'retained', timestamp: Date.now() - 100 * dayMs };
+      store.summaryHistory = [retained, { id: 'expired', timestamp: Date.now() - 200 * dayMs }];
+
+      const results = await maintenance.runMaintenance();
+
+      expect(results.historyDeleted).toBe(1);
+      expect(store.summaryHistory).toEqual([retained]);
+    });
+
     it('test_runMaintenance_autoCleanupEnabled_runsAllSteps', async () => {
       store.settings = { autoCleanup: true, enableCompression: true };
       const results = await maintenance.runMaintenance();

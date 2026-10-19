@@ -143,22 +143,25 @@ describe('RetryStrategy', () => {
     });
 
     it('test_callWithRetry_maxDelay_cappedCorrectly', async () => {
-      // Arrange — multiplier would produce 16000 ms on third retry, cap at 8000
-      const sleepSpy = vi.spyOn(strategy, 'sleep').mockResolvedValue(undefined);
-      const error = new Error('500 Internal Server Error');
-      const apiCall = vi.fn().mockRejectedValue(error);
-      // Attach catch before advancing timers to avoid unhandled rejection
+      const attemptTimes = [];
+      const apiCall = vi.fn(async () => {
+        attemptTimes.push(Date.now());
+        if (attemptTimes.length < 4) throw new Error('503 Service Unavailable');
+        return 'recovered';
+      });
       const promise = strategy.callWithRetry(
         apiCall,
-        { maxRetries: 3, initialDelay: 2000, backoffMultiplier: 2, maxDelay: 8000 },
+        { maxRetries: 3, initialDelay: 3000, backoffMultiplier: 2, maxDelay: 8000 },
         logApiCall,
-      ).catch(() => {});
-      // Act
+      );
+
       await vi.runAllTimersAsync();
-      await promise;
-      // Assert — delays: 2000, 4000, 8000 (capped from 8000 on attempt 3)
-      const sleepCalls = sleepSpy.mock.calls.map(([ms]) => ms);
-      expect(Math.max(...sleepCalls)).toBe(8000);
+
+      expect(await promise).toBe('recovered');
+      expect(apiCall).toHaveBeenCalledTimes(4);
+      expect(attemptTimes.slice(1).map((time, index) => time - attemptTimes[index])).toEqual([
+        3000, 6000, 8000,
+      ]);
     });
 
     it('test_callWithRetry_onRetryCallback_calledWithCorrectArgs', async () => {

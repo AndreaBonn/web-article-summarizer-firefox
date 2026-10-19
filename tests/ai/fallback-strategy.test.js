@@ -51,9 +51,17 @@ describe('FallbackStrategy', () => {
       // Act
       const order = strategy.getFallbackOrder('groq', apiKeys);
 
-      // Assert — groq è il primo, poi gli altri
-      expect(order[0]).toBe('groq');
-      expect(order.length).toBeGreaterThan(1);
+      expect(order).toEqual(['groq', 'openai', 'anthropic', 'gemini']);
+    });
+
+    it.each([
+      ['openai', ['openai', 'anthropic', 'groq', 'gemini']],
+      ['anthropic', ['anthropic', 'openai', 'groq', 'gemini']],
+      ['gemini', ['gemini', 'openai', 'anthropic', 'groq']],
+    ])('test_getFallbackOrder_%sPrimary_returnsFullOrder', (provider, expected) => {
+      const apiKeys = { groq: 'gsk_1', openai: 'sk-2', anthropic: 'ant-3', gemini: 'gem-4' };
+
+      expect(strategy.getFallbackOrder(provider, apiKeys)).toEqual(expected);
     });
 
     it('test_getFallbackOrder_filtersProvidersWithoutKeys', () => {

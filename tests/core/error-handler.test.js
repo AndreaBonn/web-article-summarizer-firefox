@@ -127,6 +127,28 @@ describe('ErrorHandler', () => {
   });
 
   describe('logError', () => {
+    it('test_logError_sensitiveUrl_storesOnlyOriginAndPath', async () => {
+      const original = window.location;
+      Object.defineProperty(window, 'location', {
+        value: { href: 'https://example.com/articles/42?token=private#secret' },
+        configurable: true,
+        writable: true,
+      });
+      try {
+        await ErrorHandler.logError(new Error('Network failure'), 'privacy');
+
+        expect(store.errorLogs).toHaveLength(1);
+        expect(store.errorLogs[0].url).toBe('https://example.com/articles/42');
+        expect(store.errorLogs[0].context).toBe('privacy');
+      } finally {
+        Object.defineProperty(window, 'location', {
+          value: original,
+          configurable: true,
+          writable: true,
+        });
+      }
+    });
+
     it('persists error to chrome storage', async () => {
       await ErrorHandler.logError(new Error('Test error'), 'testContext');
 

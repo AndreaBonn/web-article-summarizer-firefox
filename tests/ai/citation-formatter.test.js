@@ -1,13 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-vi.mock('@utils/security/html-sanitizer.js', () => ({
-  HtmlSanitizer: {
-    escape: vi.fn((s) => s),
-  },
-}));
+import { describe, it, expect } from 'vitest';
 
 import { CitationFormatter } from '@utils/ai/citation-formatter.js';
-import { HtmlSanitizer } from '@utils/security/html-sanitizer.js';
 
 // ---------------------------------------------------------------------------
 // Fixture comuni
@@ -237,17 +230,18 @@ describe('CitationFormatter.formatCitation() — campi mancanti', () => {
 });
 
 describe('CitationFormatter.formatCitation() — HtmlSanitizer', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    HtmlSanitizer.escape.mockImplementation((s) => s);
-  });
+  it('test_formatCitation_htmlFields_returnsEscapedCitation', () => {
+    const article = {
+      title: '<script>alert(1)</script>',
+      author: '<img src=x onerror=alert(2)>',
+      url: 'https://example.com/?source=<img>&page=1',
+      publishedDate: '2024-03-15',
+    };
 
-  it('test_formatCitation_anyStyle_callsHtmlSanitizerEscape', () => {
-    // Act
-    CitationFormatter.formatCitation(ARTICLE_COMPLETO, 'apa');
-
-    // Assert — escape chiamato almeno una volta sui campi dell'articolo
-    expect(HtmlSanitizer.escape).toHaveBeenCalled();
+    expect(CitationFormatter.formatCitation(article, 'apa')).toBe(
+      '&lt;img src=x onerror=alert(2)&gt;. (2024). &lt;script&gt;alert(1)&lt;/script&gt;. ' +
+        'example.com. https://example.com/?source=&lt;img&gt;&amp;page=1',
+    );
   });
 });
 

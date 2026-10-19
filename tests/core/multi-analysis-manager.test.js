@@ -407,16 +407,20 @@ describe('MultiAnalysisManager', () => {
       expect(saved[1]).toBe(existing);
     });
 
-    it('limita history a 30 elementi', async () => {
-      const existingHistory = Array.from({ length: 35 }, (_, i) => ({ id: i, articles: [] }));
+    it('test_saveAnalysis_thirtyExisting_keepsNewestAndDropsOldest', async () => {
+      const existingHistory = Array.from({ length: 30 }, (_, i) => ({ id: 30 - i, articles: [] }));
       browser.storage.local.get.mockResolvedValue({
         multiAnalysisHistory: existingHistory,
       });
 
-      await MultiAnalysisManager.saveAnalysis({ articles: [] });
+      const newAnalysis = { articles: [], globalSummary: 'Newest analysis' };
+      await MultiAnalysisManager.saveAnalysis(newAnalysis);
 
       const saved = browser.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
-      expect(saved).toHaveLength(30);
+      expect(saved).toEqual([
+        newAnalysis,
+        ...Array.from({ length: 29 }, (_, i) => ({ id: 30 - i, articles: [] })),
+      ]);
     });
 
     it('gestisce history vuota (prima analisi)', async () => {

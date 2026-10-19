@@ -179,6 +179,33 @@ describe('ProviderCaller', () => {
   });
 
   describe('_fetchWithTimeout', () => {
+    it('test_fetchWithTimeout_deadline_abortsPendingFetch', async () => {
+      vi.useFakeTimers();
+      let signal;
+      const fetchMock = vi.fn((_url, options) => {
+        signal = options.signal;
+        return new Promise((_, reject) => {
+          signal.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+        });
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      try {
+        const request = ProviderCaller._fetchWithTimeout('https://api.test.com', {}, 100);
+        const rejection = expect(request).rejects.toThrow('Timeout');
+        await vi.advanceTimersByTimeAsync(99);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(signal.aborted).toBe(false);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(signal.aborted).toBe(true);
+        await rejection;
+      } finally {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+      }
+    });
+
     it('returns response on successful fetch', async () => {
       const mockResp = { ok: true };
       global.fetch = vi.fn().mockResolvedValue(mockResp);

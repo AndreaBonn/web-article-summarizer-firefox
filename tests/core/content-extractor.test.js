@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock di @mozilla/readability — non disponibile in jsdom senza browser reale
 vi.mock('@mozilla/readability', () => ({
@@ -526,16 +526,18 @@ describe('ContentExtractor._removeNoiseElements() — rimozione elementi DOM rum
 
   it('test_removeNoiseElements_divWithMixedContent_preservesCleanChildren', () => {
     const div = document.createElement('div');
-    // Un contenitore con figli puliti non deve essere rimosso
     const outer = document.createElement('div');
+    const cleanText = 'Il presidente ha firmato il decreto ieri sera a Roma in diretta televisiva';
     outer.innerHTML = `
-      <p>Il presidente ha firmato il decreto ieri sera a Roma in diretta televisiva</p>
-      <p>Le probabilità di una tregua erano stimate al 35% dai mediatori internazionali</p>
+      <p>${cleanText}</p>
+      <p>Abbonati per accedere a tutti gli articoli a € 10 al mese</p>
     `;
     div.appendChild(outer);
+
     ContentExtractor._removeNoiseElements(div);
-    // L'outer div deve ancora esistere perché ha figli <p> puliti
-    expect(div.querySelector('p')).not.toBeNull();
+    const paragraphs = ContentExtractor._extractCleanParagraphs(div);
+
+    expect(paragraphs).toEqual([{ id: 1, text: cleanText }]);
   });
 
   it('test_removeNoiseElements_cleanArticleContent_isPreserved', () => {
