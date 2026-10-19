@@ -37,6 +37,11 @@ describe('multi-analysis export text', () => {
     );
   });
 
+  it('test_email_includes_global_summary_when_selected', () => {
+    const text = email({ includeSummary: true }, { globalSummary: 'Overview text' });
+    expect(text).toContain('## Riassunto Globale\n\nOverview text\n\n---\n\n');
+  });
+
   it('test_email_omits_unselected_sections_and_handles_missing_or_empty_questions', () => {
     const base = email({});
     expect(base).toContain('1. Wind\n3. Solar');

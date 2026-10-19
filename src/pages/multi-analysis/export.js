@@ -23,7 +23,7 @@ export async function exportPdf() {
   } catch (error) {
     Logger.error('Errore PDF:', error);
     await Modal.alert(
-      I18n.t('multi.exportError', { type: 'PDF' }) + error.message,
+      I18n.tf('multi.exportError', { type: 'PDF' }) + error.message,
       I18n.t('multi.errorTitle'),
       '❌',
     );
@@ -45,7 +45,7 @@ export async function exportMarkdown() {
   } catch (error) {
     Logger.error('Errore Markdown:', error);
     await Modal.alert(
-      I18n.t('multi.exportError', { type: 'Markdown' }) + error.message,
+      I18n.tf('multi.exportError', { type: 'Markdown' }) + error.message,
       I18n.t('multi.errorTitle'),
       '❌',
     );
@@ -71,7 +71,7 @@ export async function sendEmail() {
   } catch (error) {
     Logger.error('Errore email:', error);
     await Modal.alert(
-      I18n.t('multi.exportError', { type: 'Email' }) + error.message,
+      I18n.tf('multi.exportError', { type: 'Email' }) + error.message,
       I18n.t('multi.errorTitle'),
       '❌',
     );
@@ -118,7 +118,7 @@ export function showExportOptionsModal(type) {
 
     title.textContent = `Esporta ${type}`;
 
-    summaryOption.style.display = state.currentAnalysis.summary ? 'flex' : 'none';
+    summaryOption.style.display = state.currentAnalysis.globalSummary ? 'flex' : 'none';
     comparisonOption.style.display = state.currentAnalysis.comparison ? 'flex' : 'none';
     qaOption.style.display = state.currentAnalysis.qa ? 'flex' : 'none';
 

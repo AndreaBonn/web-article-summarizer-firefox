@@ -34,9 +34,9 @@ export function buildMultiAnalysisEmailContent({
  * @returns {string}
  */
 function appendAnalysisSections(content, analysis, options) {
-  if (options.includeSummary && analysis.summary) {
+  if (options.includeSummary && analysis.globalSummary) {
     content += '## Riassunto Globale\n\n';
-    content += analysis.summary + '\n\n---\n\n';
+    content += analysis.globalSummary + '\n\n---\n\n';
   }
 
   if (options.includeComparison && analysis.comparison) {
