@@ -4,6 +4,8 @@ import { EmailManager } from '../../utils/export/email-manager.js';
 import { Modal } from '../../utils/core/modal.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { state } from './state.js';
+import { resolveSelectedArticles } from './analysis-model.js';
+import { buildMultiAnalysisEmailContent, buildMultiAnalysisCopyText } from './export-text.js';
 import { Logger } from '../../utils/core/logger.js';
 
 export async function exportPdf() {
@@ -15,7 +17,7 @@ export async function exportPdf() {
 
     await PDFExporter.exportMultiAnalysisToPDF(
       state.currentAnalysis,
-      state.selectedArticles.map((id) => state.allArticles.find((a) => a.id === id)),
+      resolveSelectedArticles(state.selectedArticles, state.allArticles),
       options,
     );
   } catch (error) {
@@ -37,7 +39,7 @@ export async function exportMarkdown() {
 
     MarkdownExporter.exportMultiAnalysisToMarkdown(
       state.currentAnalysis,
-      state.selectedArticles.map((id) => state.allArticles.find((a) => a.id === id)),
+      resolveSelectedArticles(state.selectedArticles, state.allArticles),
       options,
     );
   } catch (error) {
@@ -57,43 +59,13 @@ export async function sendEmail() {
     const options = await showExportOptionsModal('Email');
     if (!options) return;
 
-    let content = '# Analisi Multi Articolo\n\n';
-    content += `**Data:** ${new Date(state.currentAnalysis.timestamp).toLocaleDateString('it-IT')}\n\n`;
-    content += `**Articoli analizzati:** ${state.selectedArticles.length}\n\n`;
-    content += '---\n\n';
-
-    content += '## Articoli\n\n';
-    state.selectedArticles.forEach((id, index) => {
-      const article = state.allArticles.find((a) => a.id === id);
-      if (article) {
-        content += `${index + 1}. ${article.article.title}\n`;
-      }
+    const content = buildMultiAnalysisEmailContent({
+      analysis: state.currentAnalysis,
+      selectedIds: state.selectedArticles,
+      allArticles: state.allArticles,
+      options,
+      dateLocale: 'it-IT',
     });
-    content += '\n---\n\n';
-
-    if (options.includeSummary && state.currentAnalysis.summary) {
-      content += '## Riassunto Globale\n\n';
-      content += state.currentAnalysis.summary + '\n\n---\n\n';
-    }
-
-    if (options.includeComparison && state.currentAnalysis.comparison) {
-      content += '## Confronto Idee\n\n';
-      content += state.currentAnalysis.comparison + '\n\n---\n\n';
-    }
-
-    if (
-      options.includeQA &&
-      state.currentAnalysis.qa &&
-      state.currentAnalysis.qa.questions &&
-      state.currentAnalysis.qa.questions.length > 0
-    ) {
-      content += '## Domande e Risposte\n\n';
-      state.currentAnalysis.qa.questions.forEach((qa, index) => {
-        content += `**Q${index + 1}:** ${qa.question}\n\n`;
-        content += `**R${index + 1}:** ${qa.answer}\n\n`;
-      });
-      content += '---\n\n';
-    }
 
     await EmailManager.showEmailModal(content, 'Analisi Multi Articolo');
   } catch (error) {
@@ -109,30 +81,17 @@ export async function sendEmail() {
 export async function copyContent() {
   if (!state.currentAnalysis) return;
 
-  let text = '';
-
-  if (state.currentAnalysis.globalSummary) {
-    text += 'RIASSUNTO GLOBALE:\n\n' + state.currentAnalysis.globalSummary + '\n\n';
-  }
-
-  if (state.currentAnalysis.comparison) {
-    text += '='.repeat(50) + '\n\nCONFRONTO IDEE:\n\n' + state.currentAnalysis.comparison + '\n\n';
-  }
-
+  let qaMessageTexts = [];
   if (state.currentAnalysis.qa && state.currentAnalysis.qa.interactive) {
     const chatContainer = document.getElementById('qaChatContainer');
     if (chatContainer) {
       const messages = chatContainer.querySelectorAll(
         '.qa-message:not(.qa-loading):not(.qa-welcome)',
       );
-      if (messages.length > 0) {
-        text += '='.repeat(50) + '\n\nCONVERSAZIONE Q&A:\n\n';
-        messages.forEach((msg) => {
-          text += msg.textContent + '\n\n';
-        });
-      }
+      qaMessageTexts = Array.from(messages, (msg) => msg.textContent);
     }
   }
+  const text = buildMultiAnalysisCopyText(state.currentAnalysis, qaMessageTexts);
 
   try {
     await navigator.clipboard.writeText(text);

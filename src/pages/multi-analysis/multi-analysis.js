@@ -9,6 +9,11 @@ import { MultiAnalysisManager } from '../../utils/core/multi-analysis-manager.js
 import { Modal } from '../../utils/core/modal.js';
 import { ErrorHandler } from '../../utils/core/error-handler.js';
 import { state } from './state.js';
+import {
+  resolveSelectedArticles,
+  applyUnrelatedChoice,
+  hasAnyAnalysisOption,
+} from './analysis-model.js';
 import { exportPdf, exportMarkdown, sendEmail, copyContent } from './export.js';
 import { loadArticles, selectAll, clearSelection, filterArticles } from './selection.js';
 import {
@@ -68,18 +73,18 @@ async function startAnalysis() {
     return;
   }
 
-  const options = {
+  let options = {
     globalSummary: document.getElementById('optGlobalSummary').checked,
     comparison: document.getElementById('optComparison').checked,
     qa: document.getElementById('optQA').checked,
   };
 
-  if (!options.globalSummary && !options.comparison && !options.qa) {
+  if (!hasAnyAnalysisOption(options)) {
     await Modal.alert(I18n.t('multi.minOptions'), I18n.t('multi.minOptionsTitle'), '⚠️');
     return;
   }
 
-  const articles = state.selectedArticles.map((id) => state.allArticles.find((a) => a.id === id));
+  const articles = resolveSelectedArticles(state.selectedArticles, state.allArticles);
 
   showProgress(I18n.t('multi.checkingCorrelation'), 10);
 
@@ -89,12 +94,8 @@ async function startAnalysis() {
     hideProgress();
     const choice = await showUnrelatedModal(correlationResult.reason);
 
-    if (choice === 'cancel') return;
-    if (choice === 'qaOnly') {
-      options.globalSummary = false;
-      options.comparison = false;
-      options.qa = true;
-    }
+    options = applyUnrelatedChoice(options, choice);
+    if (!options) return;
   }
 
   try {

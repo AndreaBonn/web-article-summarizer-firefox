@@ -6,6 +6,7 @@ import { getProviderLabel } from '../../utils/core/display-labels.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { HistoryManager } from '../../utils/storage/history-manager.js';
 import { state } from './state.js';
+import { matchesArticleFilter, toggleSelection } from './analysis-model.js';
 
 const MIN_ARTICLES = 2;
 
@@ -59,11 +60,10 @@ function handleSelection(e) {
   const id = e.target.dataset.id;
   const item = document.querySelector(`.article-item[data-id="${id}"]`);
 
+  state.selectedArticles = toggleSelection(state.selectedArticles, id, e.target.checked);
   if (e.target.checked) {
-    state.selectedArticles.push(id);
     item.classList.add('selected');
   } else {
-    state.selectedArticles = state.selectedArticles.filter((artId) => artId !== id);
     item.classList.remove('selected');
   }
 
@@ -118,16 +118,9 @@ export function filterArticles() {
   const searchQuery = document.getElementById('searchArticles').value.toLowerCase();
   const providerFilter = document.getElementById('filterProvider').value;
 
-  const filtered = state.allArticles.filter((article) => {
-    const matchesSearch =
-      !searchQuery ||
-      article.article.title.toLowerCase().includes(searchQuery) ||
-      article.article.url.toLowerCase().includes(searchQuery);
-
-    const matchesProvider = !providerFilter || article.metadata.provider === providerFilter;
-
-    return matchesSearch && matchesProvider;
-  });
+  const filtered = state.allArticles.filter((article) =>
+    matchesArticleFilter(article, searchQuery, providerFilter),
+  );
 
   displayArticles(filtered);
 
