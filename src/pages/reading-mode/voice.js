@@ -12,6 +12,7 @@ import {
   handleTTSStop as helperTTSStop,
 } from '../../shared/voice-page-helper.js';
 import { eventCleanup } from '../../utils/core/event-cleanup.js';
+import { createFontSizeControl } from '../../shared/font-size-control.js';
 import { getSpeechTextForTab } from './speech.js';
 
 // ============================================
@@ -151,56 +152,30 @@ export async function handleVoiceInput() {
 // FONT SIZE MANAGEMENT
 // ============================================
 
-const FONT_SIZES = ['S', 'M', 'L', 'XL'];
-let currentFontSizeIndex = 1; // Default: M
+const fontSizeControl = createFontSizeControl({
+  storageKey: 'readingModeFontSize',
+  getLabel: () => elements.fontSizeLabel,
+  getDecreaseBtn: () => elements.fontDecreaseBtn,
+  getIncreaseBtn: () => elements.fontIncreaseBtn,
+});
 
 /**
  * Load saved font size
  */
 export function loadFontSize() {
-  const savedSize = localStorage.getItem('readingModeFontSize') || 'M';
-  const index = FONT_SIZES.indexOf(savedSize);
-  currentFontSizeIndex = index >= 0 ? index : 1;
-  applyFontSize();
-}
-
-/**
- * Apply font size to body
- */
-function applyFontSize() {
-  const size = FONT_SIZES[currentFontSizeIndex];
-  document.body.setAttribute('data-font-size', size);
-
-  if (elements.fontSizeLabel) {
-    elements.fontSizeLabel.textContent = size;
-  }
-
-  if (elements.fontDecreaseBtn) {
-    elements.fontDecreaseBtn.disabled = currentFontSizeIndex === 0;
-  }
-  if (elements.fontIncreaseBtn) {
-    elements.fontIncreaseBtn.disabled = currentFontSizeIndex === FONT_SIZES.length - 1;
-  }
-
-  localStorage.setItem('readingModeFontSize', size);
+  fontSizeControl.load();
 }
 
 /**
  * Increase font size
  */
 export function increaseFontSize() {
-  if (currentFontSizeIndex < FONT_SIZES.length - 1) {
-    currentFontSizeIndex++;
-    applyFontSize();
-  }
+  fontSizeControl.increase();
 }
 
 /**
  * Decrease font size
  */
 export function decreaseFontSize() {
-  if (currentFontSizeIndex > 0) {
-    currentFontSizeIndex--;
-    applyFontSize();
-  }
+  fontSizeControl.decrease();
 }

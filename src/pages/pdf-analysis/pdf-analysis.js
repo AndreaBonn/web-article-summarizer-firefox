@@ -7,6 +7,8 @@ import { I18n } from '../../utils/i18n/i18n.js';
 import { PDFAnalyzer } from '../../utils/pdf/pdf-analyzer.js';
 import { Modal } from '../../utils/core/modal.js';
 import { ThemeManager } from '../../utils/core/theme-manager.js';
+import { createFontSizeControl } from '../../shared/font-size-control.js';
+import { validatePdfFile, buildPdfHistoryRecord, buildPdfReadingModeData } from './pdf-intake.js';
 
 let selectedFile = null;
 let pdfAnalyzer = null;
@@ -142,14 +144,9 @@ function handleFileSelect(e) {
 
 function handleFile(file) {
   // Validazione
-  if (file.type !== 'application/pdf') {
-    Modal.error('File non valido. Carica un file PDF.');
-    return;
-  }
-
-  const maxSize = 20 * 1024 * 1024; // 20MB
-  if (file.size > maxSize) {
-    Modal.error('File troppo grande. Massimo 20MB.');
+  const validationError = validatePdfFile(file);
+  if (validationError) {
+    Modal.error(validationError);
     return;
   }
 
@@ -160,7 +157,7 @@ function handleFile(file) {
   document.getElementById('selectedFileInfo').classList.remove('hidden');
   document.getElementById('analysisOptions').classList.remove('hidden');
   document.getElementById('fileName').textContent = file.name;
-  document.getElementById('fileSize').textContent = formatFileSize(file.size);
+  document.getElementById('fileSize').textContent = HistoryManager.formatFileSize(file.size);
   document.getElementById('analyzePdfBtn').disabled = false;
 
   Logger.info('File selezionato:', file.name);
@@ -173,12 +170,6 @@ function removeFile() {
   document.getElementById('selectedFileInfo').classList.add('hidden');
   document.getElementById('analysisOptions').classList.add('hidden');
   document.getElementById('analyzePdfBtn').disabled = true;
-}
-
-function formatFileSize(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
 async function startAnalysis() {
@@ -205,20 +196,12 @@ async function startAnalysis() {
 
     // Salva nella cronologia PDF
     // La struttura cambia se viene dalla cache o meno
-    const pdfInfo = {
-      name: selectedFile.name,
-      size: selectedFile.size,
-      pages: result.pageCount || result.pdfInfo?.pages || 0,
-      text: result.extractedText || result.pdfInfo?.text || '',
-      metadata: result.pdfInfo?.metadata || {},
-    };
-
-    const metadata = {
-      provider: provider,
-      language: settings.outputLanguage,
-      summaryLength: settings.summaryLength,
-      fromCache: result.isFromCache || result.fromCache || false,
-    };
+    const { pdfInfo, metadata } = buildPdfHistoryRecord({
+      file: selectedFile,
+      result,
+      provider,
+      settings,
+    });
 
     const historyId = await HistoryManager.savePDFAnalysis(
       pdfInfo,
@@ -247,14 +230,7 @@ function updateProgress(message, percent) {
 }
 
 async function openReadingMode(analysisData) {
-  // Rimuovi pdfFile (non serializzabile) prima di salvare
-  const dataToSave = {
-    ...analysisData,
-    timestamp: Date.now(),
-  };
-
-  // Rimuovi il file PDF object (non può essere salvato in storage)
-  delete dataToSave.pdfFile;
+  const dataToSave = buildPdfReadingModeData(analysisData, Date.now());
 
   // Salva dati per reading mode
   await browser.storage.local.set({
@@ -268,62 +244,13 @@ async function openReadingMode(analysisData) {
 // Theme managed by ThemeManager (auto-init on import)
 
 // Font Size Management
-const FONT_SIZES = ['S', 'M', 'L', 'XL'];
-let currentFontSizeIndex = 1; // Default: M
+const fontSizeControl = createFontSizeControl({
+  storageKey: 'pdfAnalysisFontSize',
+  getLabel: () => document.getElementById('fontSizeLabel'),
+  getDecreaseBtn: () => document.getElementById('fontDecreaseBtn'),
+  getIncreaseBtn: () => document.getElementById('fontIncreaseBtn'),
+});
 
-/**
- * Load saved font size
- */
-function loadFontSize() {
-  const savedSize = localStorage.getItem('pdfAnalysisFontSize') || 'M';
-  const index = FONT_SIZES.indexOf(savedSize);
-  currentFontSizeIndex = index >= 0 ? index : 1;
-  applyFontSize();
-}
-
-/**
- * Apply font size to body
- */
-function applyFontSize() {
-  const size = FONT_SIZES[currentFontSizeIndex];
-  document.body.setAttribute('data-font-size', size);
-
-  const fontSizeLabel = document.getElementById('fontSizeLabel');
-  if (fontSizeLabel) {
-    fontSizeLabel.textContent = size;
-  }
-
-  // Update button states
-  const fontDecreaseBtn = document.getElementById('fontDecreaseBtn');
-  const fontIncreaseBtn = document.getElementById('fontIncreaseBtn');
-
-  if (fontDecreaseBtn) {
-    fontDecreaseBtn.disabled = currentFontSizeIndex === 0;
-  }
-  if (fontIncreaseBtn) {
-    fontIncreaseBtn.disabled = currentFontSizeIndex === FONT_SIZES.length - 1;
-  }
-
-  // Save to localStorage
-  localStorage.setItem('pdfAnalysisFontSize', size);
-}
-
-/**
- * Increase font size
- */
-function increaseFontSize() {
-  if (currentFontSizeIndex < FONT_SIZES.length - 1) {
-    currentFontSizeIndex++;
-    applyFontSize();
-  }
-}
-
-/**
- * Decrease font size
- */
-function decreaseFontSize() {
-  if (currentFontSizeIndex > 0) {
-    currentFontSizeIndex--;
-    applyFontSize();
-  }
-}
+const loadFontSize = () => fontSizeControl.load();
+const increaseFontSize = () => fontSizeControl.increase();
+const decreaseFontSize = () => fontSizeControl.decrease();
