@@ -1,4 +1,6 @@
 // Base History Repository — CRUD generico parametrizzato sulla chiave di storage
+import { formatRelativeDate } from '../core/display-labels.js';
+import { I18n } from '../i18n/i18n.js';
 
 export class BaseHistoryRepository {
   constructor(storageKey, maxEntries) {
@@ -125,23 +127,7 @@ export class BaseHistoryRepository {
 
   // Utility statiche condivise
   static formatDate(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Ora';
-    if (diffMins < 60) return `${diffMins} min fa`;
-    if (diffHours < 24) return `${diffHours} ore fa`;
-    if (diffDays < 7) return `${diffDays} giorni fa`;
-
-    return date.toLocaleDateString('it-IT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+    return formatRelativeDate(timestamp, Date.now(), I18n.currentLanguage);
   }
 
   static formatFileSize(bytes) {

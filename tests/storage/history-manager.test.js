@@ -286,7 +286,7 @@ describe('HistoryManager', () => {
   describe('Utility methods', () => {
     it('formatDate delegates to BaseHistoryRepository', () => {
       const result = HistoryManager.formatDate(Date.now());
-      expect(result).toBe('Ora');
+      expect(result).toBe('ora');
     });
 
     it('formatFileSize delegates to BaseHistoryRepository', () => {

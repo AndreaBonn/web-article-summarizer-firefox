@@ -291,10 +291,10 @@ describe('BaseHistoryRepository', () => {
   describe('static utilities', () => {
     it('formatDate returns relative time for recent dates', () => {
       const now = Date.now();
-      expect(BaseHistoryRepository.formatDate(now)).toBe('Ora');
-      expect(BaseHistoryRepository.formatDate(now - 5 * 60000)).toBe('5 min fa');
+      expect(BaseHistoryRepository.formatDate(now)).toBe('ora');
+      expect(BaseHistoryRepository.formatDate(now - 5 * 60000)).toBe('5 minuti fa');
       expect(BaseHistoryRepository.formatDate(now - 3 * 3600000)).toBe('3 ore fa');
-      expect(BaseHistoryRepository.formatDate(now - 2 * 86400000)).toBe('2 giorni fa');
+      expect(BaseHistoryRepository.formatDate(now - 4 * 86400000)).toBe('4 giorni fa');
     });
 
     it('formatDate returns formatted date for older dates', () => {

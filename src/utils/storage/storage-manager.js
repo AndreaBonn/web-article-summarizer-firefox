@@ -5,6 +5,7 @@
 
 import { TranslationCache } from './translation-cache.js';
 import { Logger } from '../core/logger.js';
+import { PROVIDERS } from '../core/display-labels.js';
 
 export class StorageManager {
   // API Keys management
@@ -28,6 +29,15 @@ export class StorageManager {
       );
     }
     return stored;
+  }
+
+  // Providers with a usable key, without reading the key values into the caller.
+  static async getConfiguredProviders() {
+    const result = await browser.storage.local.get(['apiKeys']);
+    const apiKeys = result.apiKeys || {};
+    return PROVIDERS.filter(
+      (provider) => typeof apiKeys[provider] === 'string' && apiKeys[provider].trim() !== '',
+    );
   }
 
   // Settings management

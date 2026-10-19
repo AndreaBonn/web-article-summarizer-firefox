@@ -62,6 +62,20 @@ describe('StorageManager', () => {
       expect(await StorageManager.getApiKey('groq')).toBe('gsk_1');
       expect(await StorageManager.getApiKey('openai')).toBe('sk-2');
     });
+
+    it('test_getConfiguredProviders_noKeys_returnsEmptyList', async () => {
+      expect(await StorageManager.getConfiguredProviders()).toEqual([]);
+    });
+
+    it('test_getConfiguredProviders_someKeys_returnsOnlyNonEmptyStringKeysInOrder', async () => {
+      store.apiKeys = {
+        openai: 'sk-2',
+        groq: 'gsk_1',
+        gemini: '   ',
+        anthropic: { encrypted: 'x' },
+      };
+      expect(await StorageManager.getConfiguredProviders()).toEqual(['groq', 'openai']);
+    });
   });
 
   describe('Settings', () => {
