@@ -191,3 +191,33 @@ describe('renderExtractedCitationsHtml', () => {
     expect(html).not.toContain('<script>');
   });
 });
+
+describe('translation shape (F4)', () => {
+  it('test_renderTranslationHtml_historyObjectTranslation_showsTheText', () => {
+    const host = document.createElement('div');
+    host.innerHTML = renderTranslationHtml('Titolo', {
+      text: 'Riga <1>\nRiga 2',
+      targetLanguage: 'it',
+    });
+    expect(host.querySelector('.translation-text').innerHTML).toBe('Riga &lt;1&gt;<br>Riga 2');
+  });
+
+  it('test_mergeHistoryEntryUpdate_stringTranslation_isStoredInHistoryObjectShape', () => {
+    const merged = mergeHistoryEntryUpdate(
+      { id: 'a', translation: null },
+      { translation: 'Testo tradotto', metadata: { language: 'it' } },
+      1234,
+    );
+    expect(merged.translation).toEqual({
+      text: 'Testo tradotto',
+      targetLanguage: 'it',
+      originalLanguage: null,
+      timestamp: 1234,
+    });
+  });
+
+  it('test_mergeHistoryEntryUpdate_objectTranslation_isKeptUnchanged', () => {
+    const tr = { text: 'Gia oggetto', targetLanguage: 'en', originalLanguage: 'it' };
+    expect(mergeHistoryEntryUpdate({ id: 'a' }, { translation: tr }, 1).translation).toBe(tr);
+  });
+});

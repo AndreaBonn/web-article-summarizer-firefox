@@ -1,4 +1,5 @@
 // Reading Mode - testo da leggere per tab
+import { getTranslationText } from '../../shared/translation-text.js';
 import { formatKeyPointsForSpeech, formatQAForSpeech } from '../../shared/speech-text.js';
 
 /**
@@ -18,7 +19,7 @@ export function getSpeechTextForTab(tabName, data) {
       return formatKeyPointsForSpeech(data.keyPoints);
 
     case 'translation':
-      return data?.translation || null;
+      return getTranslationText(data?.translation) || null;
 
     case 'citations':
       if (!data?.citations?.citations) return null;

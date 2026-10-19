@@ -1,6 +1,7 @@
 // Reading Mode - pure helpers for translation/citations rendering and history updates
 
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
+import { getTranslationText } from '../../shared/translation-text.js';
 
 /**
  * Text of a PDF entry, whichever structure holds it.
@@ -9,6 +10,20 @@ import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
  */
 export function resolvePdfText(data) {
   return data.extractedText || data.pdf?.text;
+}
+
+/**
+ * Translation in the shape every history reader expects ({ text, ... }).
+ * Reading mode keeps a plain string in memory; objects pass through unchanged.
+ */
+function toHistoryTranslation(data, now) {
+  if (!data.translation || typeof data.translation !== 'string') return data.translation;
+  return {
+    text: data.translation,
+    targetLanguage: data.metadata?.language || 'it',
+    originalLanguage: null,
+    timestamp: now,
+  };
 }
 
 /**
@@ -21,7 +36,7 @@ export function resolvePdfText(data) {
 export function mergeHistoryEntryUpdate(existing, data, now) {
   return {
     ...existing,
-    translation: data.translation || existing.translation,
+    translation: toHistoryTranslation(data, now) || existing.translation,
     citations: data.citations || existing.citations,
     qa: data.qa || existing.qa,
     timestamp: now,
@@ -50,14 +65,14 @@ export function applyArticleUpdate(history, data, now) {
 /**
  * HTML of the translation tab content.
  * @param {string} title - Article or file title
- * @param {string} translation - Translated text
+ * @param {string|{text: string}} translation - Translated text, plain or history object
  * @returns {string} Escaped HTML, newlines turned into <br>
  */
 export function renderTranslationHtml(title, translation) {
   return `
       <div class="translation-content">
         <h3>${HtmlSanitizer.escape(title)}</h3>
-        <div class="translation-text">${HtmlSanitizer.escape(translation).replace(/\n/g, '<br>')}</div>
+        <div class="translation-text">${HtmlSanitizer.escape(getTranslationText(translation)).replace(/\n/g, '<br>')}</div>
       </div>
     `;
 }

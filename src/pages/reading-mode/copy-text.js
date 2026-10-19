@@ -7,6 +7,8 @@ import {
   formatKeyPointsText,
 } from '../../shared/export-formatters.js';
 
+import { getTranslationText } from '../../shared/translation-text.js';
+
 const SEPARATOR = '='.repeat(60);
 
 function buildNotesText(notes) {
@@ -37,7 +39,7 @@ export function buildReadingModeCopyText(data) {
     text += formatKeyPointsText(keyPoints, true);
   }
 
-  text += formatTranslationText(data.translation);
+  text += formatTranslationText(getTranslationText(data.translation));
   text += formatQAText(data.qa);
   text += formatCitationsText(data.citations?.citations);
   text += buildNotesText(data.notes);

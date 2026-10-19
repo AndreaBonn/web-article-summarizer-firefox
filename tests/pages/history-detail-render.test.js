@@ -133,3 +133,27 @@ describe('detail rendering', () => {
     expect(prepareNotes('')).toEqual({ textareaValue: '', notes: null });
   });
 });
+
+describe('translation stored as a plain string (written by reading mode)', () => {
+  it('test_renderTranslationHtml_stringTranslation_showsTheText', () => {
+    document.body.innerHTML = renderTranslationHtml('<Ciao> dal reading mode');
+    expect(document.querySelector('.translation-text').textContent).toBe('<Ciao> dal reading mode');
+    expect(document.querySelector('.translation-info-modal')).toBeNull();
+  });
+
+  it('test_buildDetailCopyText_stringTranslation_copiesTheText', () => {
+    const text = buildDetailCopyText({
+      summary: 'Sintesi',
+      keyPoints: [],
+      translation: 'Testo tradotto',
+    });
+    expect(text).toContain('TRADUZIONE:\nTesto tradotto\n');
+    expect(text).not.toContain('undefined');
+  });
+
+  it('test_buildDetailCopyText_objectTranslationWithoutText_omitsTheSection', () => {
+    const text = buildDetailCopyText({ summary: 'S', keyPoints: [], translation: {} });
+    expect(text).not.toContain('TRADUZIONE');
+    expect(text).not.toContain('undefined');
+  });
+});

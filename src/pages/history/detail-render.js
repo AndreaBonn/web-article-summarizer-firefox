@@ -1,6 +1,7 @@
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { CitationExtractor } from '../../utils/ai/citation-extractor.js';
 import { formatSummaryWithKeyPointsText } from '../../shared/export-formatters.js';
+import { getTranslationText } from '../../shared/translation-text.js';
 
 export function renderDetailKeypointsHtml(keyPoints) {
   const keypointsHtml = keyPoints
@@ -18,12 +19,17 @@ export function renderDetailKeypointsHtml(keyPoints) {
 }
 
 export function renderTranslationHtml(translation) {
-  if (translation) {
-    return `
-      <div class="translation-info-modal">
+  const text = getTranslationText(translation);
+  if (text) {
+    const info =
+      typeof translation === 'object'
+        ? `<div class="translation-info-modal">
         Tradotto da ${HtmlSanitizer.escape(translation.originalLanguage)} a ${HtmlSanitizer.escape(translation.targetLanguage)}
-      </div>
-      <div class="translation-text">${HtmlSanitizer.escape(translation.text)}</div>
+      </div>`
+        : '';
+    return `
+      ${info}
+      <div class="translation-text">${HtmlSanitizer.escape(text)}</div>
     `;
   } else {
     return `
@@ -113,9 +119,10 @@ export function buildDetailCopyText(entry) {
   let text = formatSummaryWithKeyPointsText(entry.summary, entry.keyPoints);
 
   // Aggiungi traduzione se presente
-  if (entry.translation) {
+  const translationText = getTranslationText(entry.translation);
+  if (translationText) {
     text += `\n${'='.repeat(50)}\n\n`;
-    text += `TRADUZIONE:\n${entry.translation.text}\n`;
+    text += `TRADUZIONE:\n${translationText}\n`;
   }
 
   // Aggiungi Q&A se presenti

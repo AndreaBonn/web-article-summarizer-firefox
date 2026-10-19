@@ -16,6 +16,7 @@ import {
   renderReadingCitationsHtml,
 } from './render.js';
 
+import { renderTranslationHtml } from './reading-mode-history.js';
 // Display content
 export function displayContent() {
   if (!state.currentData) return;
@@ -57,12 +58,10 @@ export function displayContent() {
 
   // Check if translation exists
   if (state.currentData.translation) {
-    elements.translationTabContent.innerHTML = `
-      <div class="translation-content">
-        <h3>${HtmlSanitizer.escape(article.title)}</h3>
-        <div class="translation-text">${HtmlSanitizer.escape(state.currentData.translation)}</div>
-      </div>
-    `;
+    elements.translationTabContent.innerHTML = renderTranslationHtml(
+      article.title,
+      state.currentData.translation,
+    );
   }
 
   // Check if citations exist

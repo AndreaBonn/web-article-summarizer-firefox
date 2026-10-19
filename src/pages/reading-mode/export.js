@@ -4,6 +4,7 @@
 import { state, elements } from './state.js';
 import { PDFExporter } from '../../utils/export/pdf-exporter.js';
 import { Logger } from '../../utils/core/logger.js';
+import { getTranslationText } from '../../shared/translation-text.js';
 import { buildReadingModeCopyText, buildPdfExportArgs } from './copy-text.js';
 
 // Copy all content
@@ -47,7 +48,7 @@ export async function exportToPDF() {
       summary,
       keyPoints,
       metadataData,
-      state.currentData.translation,
+      getTranslationText(state.currentData.translation) || null,
       state.currentData.qa,
       state.currentData.citations,
     );
