@@ -13,6 +13,7 @@ import { Toast } from '../../utils/core/toast.js';
 import { VoiceController } from '../../utils/voice/voice-controller.js';
 import { createTTSButton } from './voice.js';
 import { Logger } from '../../utils/core/logger.js';
+import { unwrapServiceResponse } from '../../utils/core/service-response.js';
 import { ErrorHandler } from '../../utils/core/error-handler.js';
 import { getLanguageNameIT } from '../../utils/i18n/language-names.js';
 
@@ -82,14 +83,12 @@ export async function askQuestion() {
       settings,
     });
 
-    if (!response) {
-      throw new Error('Il servizio non risponde. Riapri il popup e riprova.');
-    }
-    if (!response.success) {
-      throw new Error(response.error);
-    }
+    const result = unwrapServiceResponse(
+      response,
+      'Il servizio non risponde. Riapri il popup e riprova.',
+    );
 
-    const answer = response.result.answer;
+    const answer = result.answer;
 
     elements.qaAnswer.classList.remove('loading');
 
@@ -202,14 +201,12 @@ export async function translateArticle() {
         provider,
       });
 
-      if (!translateResponse) {
-        throw new Error('Il servizio non risponde. Riapri il popup e riprova.');
-      }
-      if (!translateResponse.success) {
-        throw new Error(translateResponse.error);
-      }
+      const result = unwrapServiceResponse(
+        translateResponse,
+        'Il servizio non risponde. Riapri il popup e riprova.',
+      );
 
-      translation = translateResponse.result.translation;
+      translation = result.translation;
 
       // Salva in cache
       await StorageManager.saveCachedTranslation(

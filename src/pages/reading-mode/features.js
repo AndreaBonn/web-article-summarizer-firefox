@@ -5,6 +5,7 @@
 import { state, elements } from './state.js';
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { Logger } from '../../utils/core/logger.js';
+import { unwrapServiceResponse } from '../../utils/core/service-response.js';
 import { StorageManager } from '../../utils/storage/storage-manager.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { Modal } from '../../utils/core/modal.js';
@@ -50,14 +51,12 @@ export async function translateArticle() {
         forceTranslate: false,
       });
 
-      if (!pdfResponse) {
-        throw new Error('Il servizio non risponde. Ricarica la pagina e riprova.');
-      }
-      if (!pdfResponse.success) {
-        throw new Error(pdfResponse.error);
-      }
+      const result = unwrapServiceResponse(
+        pdfResponse,
+        'Il servizio non risponde. Ricarica la pagina e riprova.',
+      );
 
-      translationResult = pdfResponse.result;
+      translationResult = result;
 
       // Check if same language detected
       if (translationResult.sameLanguage) {
@@ -96,16 +95,14 @@ export async function translateArticle() {
         provider,
       });
 
-      if (!translateResponse) {
-        throw new Error('Il servizio non risponde. Ricarica la pagina e riprova.');
-      }
-      if (!translateResponse.success) {
-        throw new Error(translateResponse.error);
-      }
+      const result = unwrapServiceResponse(
+        translateResponse,
+        'Il servizio non risponde. Ricarica la pagina e riprova.',
+      );
 
       translationResult = {
         sameLanguage: false,
-        translation: translateResponse.result.translation,
+        translation: result.translation,
       };
     }
 
@@ -181,14 +178,12 @@ export async function extractCitations() {
         provider,
       });
 
-      if (!pdfResponse) {
-        throw new Error('Il servizio non risponde. Ricarica la pagina e riprova.');
-      }
-      if (!pdfResponse.success) {
-        throw new Error(pdfResponse.error);
-      }
+      const result = unwrapServiceResponse(
+        pdfResponse,
+        'Il servizio non risponde. Ricarica la pagina e riprova.',
+      );
 
-      citations = pdfResponse.result;
+      citations = result;
     } else {
       // For articles, call background script
       const response = await browser.runtime.sendMessage({

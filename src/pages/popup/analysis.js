@@ -17,6 +17,7 @@ import {
   getProviderLabel,
 } from '../../utils/core/display-labels.js';
 import { Logger } from '../../utils/core/logger.js';
+import { unwrapServiceResponse } from '../../utils/core/service-response.js';
 import { addTTSButtons } from './voice.js';
 import { formatQAText, formatTranslationText } from '../../shared/export-formatters.js';
 
@@ -172,14 +173,12 @@ export async function generateSummary() {
       settings: settings,
     });
 
-    if (!response) {
-      throw new Error('Il servizio non risponde. Riapri il popup e riprova.');
-    }
-    if (!response.success) {
-      throw new Error(response.error);
-    }
+    const result = unwrapServiceResponse(
+      response,
+      'Il servizio non risponde. Riapri il popup e riprova.',
+    );
 
-    state.currentResults = response.result;
+    state.currentResults = result;
 
     // STEP 3: Key points (already included, but show the step)
     state.progressTracker.setStep('keypoints');

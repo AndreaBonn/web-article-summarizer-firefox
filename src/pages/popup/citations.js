@@ -11,6 +11,7 @@ import { CitationFormatter } from '../../utils/ai/citation-formatter.js';
 import { Toast } from '../../utils/core/toast.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { Logger } from '../../utils/core/logger.js';
+import { unwrapServiceResponse } from '../../utils/core/service-response.js';
 
 // Citations System
 export async function extractCitations() {
@@ -35,22 +36,20 @@ export async function extractCitations() {
       settings: settings,
     });
 
-    if (!response) {
-      throw new Error('Il servizio non risponde. Riapri il popup e riprova.');
-    }
-    if (!response.success) {
-      throw new Error(response.error);
-    }
+    const result = unwrapServiceResponse(
+      response,
+      'Il servizio non risponde. Riapri il popup e riprova.',
+    );
 
     // Aggiorna la variabile di stato condivisa in features.js
-    const citationsData = response.result.citations;
+    const citationsData = result.citations;
     setCurrentCitations(citationsData);
 
     // Mostra citazioni
     displayCitationsData(citationsData);
 
     // Mostra badge "Da Cache" se applicabile
-    if (response.result.fromCache) {
+    if (result.fromCache) {
       const citationsHeader = document.querySelector('#citations-tab');
       if (citationsHeader && !citationsHeader.querySelector('.cache-badge')) {
         const badge = document.createElement('span');

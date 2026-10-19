@@ -5,6 +5,7 @@ import { state, elements } from './state.js';
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { InputSanitizer } from '../../utils/security/input-sanitizer.js';
 import { Logger } from '../../utils/core/logger.js';
+import { unwrapServiceResponse } from '../../utils/core/service-response.js';
 import { StorageManager } from '../../utils/storage/storage-manager.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { Modal } from '../../utils/core/modal.js';
@@ -59,14 +60,12 @@ export async function askQuestion() {
         provider,
       });
 
-      if (!pdfResponse) {
-        throw new Error('Il servizio non risponde. Ricarica la pagina e riprova.');
-      }
-      if (!pdfResponse.success) {
-        throw new Error(pdfResponse.error);
-      }
+      const result = unwrapServiceResponse(
+        pdfResponse,
+        'Il servizio non risponde. Ricarica la pagina e riprova.',
+      );
 
-      answer = pdfResponse.result.answer;
+      answer = result.answer;
     } else {
       // For articles, prepare article with paragraphs structure
       const articleWithParagraphs = {
@@ -96,14 +95,12 @@ export async function askQuestion() {
         settings,
       });
 
-      if (!qaResponse) {
-        throw new Error('Il servizio non risponde. Ricarica la pagina e riprova.');
-      }
-      if (!qaResponse.success) {
-        throw new Error(qaResponse.error);
-      }
+      const result = unwrapServiceResponse(
+        qaResponse,
+        'Il servizio non risponde. Ricarica la pagina e riprova.',
+      );
 
-      answer = qaResponse.result.answer;
+      answer = result.answer;
     }
 
     // Update answer
