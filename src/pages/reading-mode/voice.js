@@ -12,6 +12,7 @@ import {
   handleTTSStop as helperTTSStop,
 } from '../../shared/voice-page-helper.js';
 import { eventCleanup } from '../../utils/core/event-cleanup.js';
+import { getSpeechTextForTab } from './speech.js';
 
 // ============================================
 // VOICE CONTROLS
@@ -111,41 +112,7 @@ function getCurrentTabText() {
   const activeTab = document.querySelector('.summary-tab.active');
   if (!activeTab) return null;
 
-  const tabName = activeTab.dataset.tab;
-
-  switch (tabName) {
-    case 'summary':
-      return state.currentData?.summary || null;
-
-    case 'keypoints':
-      if (!state.currentData?.keyPoints) return null;
-      return state.currentData.keyPoints
-        .map((point, index) => `${index + 1}. ${point.title}. ${point.description}`)
-        .join('. ');
-
-    case 'translation':
-      return state.currentData?.translation || null;
-
-    case 'citations':
-      if (!state.currentData?.citations?.citations) return null;
-      return state.currentData.citations.citations
-        .map((citation, index) => {
-          let text = `Citazione ${index + 1}. `;
-          if (citation.author) text += `${citation.author}. `;
-          if (citation.quote_text) text += citation.quote_text;
-          return text;
-        })
-        .join('. ');
-
-    case 'qa':
-      if (!state.currentData?.qa || state.currentData.qa.length === 0) return null;
-      return state.currentData.qa
-        .map((item) => `Domanda: ${item.question}. Risposta: ${item.answer}`)
-        .join('. ');
-
-    default:
-      return null;
-  }
+  return getSpeechTextForTab(activeTab.dataset.tab, state.currentData);
 }
 
 /**

@@ -15,6 +15,7 @@ import {
   buildVoiceSelectorHTML,
 } from '../../shared/voice-page-helper.js';
 import { Logger } from '../../utils/core/logger.js';
+import { formatKeyPointsForSpeech } from '../../shared/speech-text.js';
 
 // Voice Controller locale (il popup non usa state.voiceController)
 const voiceHolder = { value: null };
@@ -95,9 +96,7 @@ export function addTTSButtons() {
 
   const keypointsContent = document.getElementById('keypointsContent');
   if (keypointsContent && !keypointsContent.querySelector('.tts-button')) {
-    const keypointsText = state.currentResults.keyPoints
-      .map((kp, i) => `${i + 1}. ${kp.title}. ${kp.description}`)
-      .join('. ');
+    const keypointsText = formatKeyPointsForSpeech(state.currentResults.keyPoints);
     const btn = createTTSButton(keypointsText, voiceLang, 'Leggi Punti Chiave');
     keypointsContent.insertBefore(btn, keypointsContent.firstChild);
   }

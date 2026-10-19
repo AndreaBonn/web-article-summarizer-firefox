@@ -10,6 +10,7 @@ import {
   handleTTSPause as helperTTSPause,
   handleTTSStop as helperTTSStop,
 } from '../../shared/voice-page-helper.js';
+import { getModalSpeechText } from './speech.js';
 
 // ============================================
 // VOICE CONTROLS
@@ -69,43 +70,5 @@ function getCurrentModalTabText() {
   const activeTab = document.querySelector('.modal-tab.active');
   if (!activeTab) return null;
 
-  const tabName = activeTab.dataset.tab;
-
-  switch (tabName) {
-    case 'summary':
-      return state.currentEntry.summary || null;
-
-    case 'keypoints':
-      if (!state.currentEntry.keyPoints) return null;
-      return state.currentEntry.keyPoints
-        .map((point, index) => `${index + 1}. ${point.title}. ${point.description}`)
-        .join('. ');
-
-    case 'translation':
-      if (!state.currentEntry.translation) return null;
-      return state.currentEntry.translation.text || state.currentEntry.translation;
-
-    case 'citations':
-      if (!state.currentEntry.citations?.citations) return null;
-      return state.currentEntry.citations.citations
-        .map((citation, index) => {
-          let text = `Citazione ${index + 1}. `;
-          if (citation.author) text += `${citation.author}. `;
-          if (citation.quote_text || citation.text) text += citation.quote_text || citation.text;
-          return text;
-        })
-        .join('. ');
-
-    case 'qa':
-      if (!state.currentEntry.qa || state.currentEntry.qa.length === 0) return null;
-      return state.currentEntry.qa
-        .map((item) => `Domanda: ${item.question}. Risposta: ${item.answer}`)
-        .join('. ');
-
-    case 'notes':
-      return state.currentEntry.notes || null;
-
-    default:
-      return null;
-  }
+  return getModalSpeechText(activeTab.dataset.tab, state.currentEntry);
 }
