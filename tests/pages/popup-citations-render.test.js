@@ -38,6 +38,12 @@ describe('resolveTotalCitations', () => {
 });
 
 describe('renderCitationsHtml', () => {
+  it('test_renderCitationsHtml_citationItem_carriesBothClassesInOneAttribute', () => {
+    const item = render({ citations: [citation()] }).querySelector('.citation-item');
+    expect(item.classList.contains('citation-item-clickable')).toBe(true);
+    expect(item.getAttribute('class')).toBe('citation-item citation-item-clickable');
+  });
+
   it('test_renderCitationsHtml_totalCitationsZero_headerShowsFallbackCount', () => {
     const host = render({ total_citations: 0, totalCount: 5, citations: [citation()] });
     expect(host.querySelector('.citations-info').textContent).toContain('5 citazioni trovate');

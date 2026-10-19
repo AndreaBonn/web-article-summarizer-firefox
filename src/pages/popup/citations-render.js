@@ -51,11 +51,10 @@ export function renderCitationsHtml(citationsData) {
     const safeParagraph = HtmlSanitizer.escape(String(citation.paragraph || ''));
 
     html += `
-      <div class="citation-item"
+      <div class="citation-item citation-item-clickable"
            data-citation-id="${HtmlSanitizer.escape(String(citation.id))}"
            data-citation-text="${escapedText}"
            data-paragraph="${safeParagraph}"
-           class="citation-item-clickable"
            title="Clicca per evidenziare nell'articolo">
         <div class="citation-header">
           <span class="citation-icon">${typeIcon}</span>
