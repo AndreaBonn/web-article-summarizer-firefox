@@ -10,9 +10,15 @@ import { Toast } from '../../utils/core/toast.js';
 import { ThemeManager } from '../../utils/core/theme-manager.js';
 import { eventCleanup } from '../../utils/core/event-cleanup.js';
 import { loadApiKeys, bindKeyInputs, focusProviderFromHash } from './options-keys.js';
+import {
+  computeUsageSummary,
+  createSerialQueue,
+  applyPreferences,
+  applyPerformanceSettings,
+  formatPerformanceStats,
+} from './options-stats.js';
 
 const STATS_REFRESH_MS = 30000;
-const WORDS_PER_MINUTE = 225;
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -93,11 +99,7 @@ async function loadSettings() {
 
 // Saves run one after the other: two quick changes both read-modify-write `settings`,
 // and in parallel the second would overwrite the first
-let saveQueue = Promise.resolve();
-function queueSave(save) {
-  saveQueue = saveQueue.then(save, save);
-  return saveQueue;
-}
+const queueSave = createSerialQueue();
 
 // Every preference saves itself on change: no section loses edits to another's save button
 function bindAutosave() {
@@ -117,11 +119,10 @@ function bindAutosave() {
 
 async function savePreferences() {
   try {
-    const settings = await StorageManager.getSettings();
-    settings.selectedProvider = document.getElementById('defaultProvider').value;
-    settings.summaryLength = 'detailed'; // Fisso a dettagliato per massima completezza
-    settings.tone = 'neutral'; // Fisso a neutrale
-    settings.saveHistory = document.getElementById('saveHistory').checked;
+    const settings = applyPreferences(await StorageManager.getSettings(), {
+      defaultProvider: document.getElementById('defaultProvider'),
+      saveHistory: document.getElementById('saveHistory'),
+    });
 
     await StorageManager.saveSettings(settings);
     showToast(I18n.t('settings.toast.autosaved'), 'success');
@@ -133,13 +134,13 @@ async function savePreferences() {
 
 async function savePerformanceSettings() {
   try {
-    const settings = await StorageManager.getSettings();
-
-    settings.enableCache = document.getElementById('enableCache').checked;
-    settings.cacheTTL = parseInt(document.getElementById('cacheTTL').value);
-    settings.enableFallback = document.getElementById('enableFallback').checked;
-    settings.enableCompression = document.getElementById('enableCompression').checked;
-    settings.autoCleanup = document.getElementById('autoCleanup').checked;
+    const settings = applyPerformanceSettings(await StorageManager.getSettings(), {
+      enableCache: document.getElementById('enableCache'),
+      cacheTTL: document.getElementById('cacheTTL'),
+      enableFallback: document.getElementById('enableFallback'),
+      enableCompression: document.getElementById('enableCompression'),
+      autoCleanup: document.getElementById('autoCleanup'),
+    });
 
     await StorageManager.saveSettings(settings);
 
@@ -157,25 +158,13 @@ async function savePerformanceSettings() {
 async function loadStats() {
   try {
     const result = await browser.storage.local.get(['stats']);
-    const stats = result.stats || {
-      totalSummaries: 0,
-      totalWords: 0,
-      providerUsage: {},
-      totalTime: 0,
-    };
-
-    document.getElementById('totalSummaries').textContent = stats.totalSummaries;
-    document.getElementById('totalWords').textContent = stats.totalWords.toLocaleString();
-
-    const providers = Object.entries(stats.providerUsage);
-    if (providers.length > 0) {
-      const mostUsed = providers.reduce((a, b) => (a[1] > b[1] ? a : b));
-      document.getElementById('mostUsedProvider').textContent = mostUsed[0];
+    const summary = computeUsageSummary(result.stats);
+    document.getElementById('totalSummaries').textContent = summary.totalSummaries;
+    document.getElementById('totalWords').textContent = summary.totalWordsLabel;
+    if (summary.mostUsedProvider !== undefined) {
+      document.getElementById('mostUsedProvider').textContent = summary.mostUsedProvider;
     }
-
-    const minutesSaved = Math.floor(stats.totalWords / WORDS_PER_MINUTE);
-    const hoursSaved = (minutesSaved / 60).toFixed(1);
-    document.getElementById('timeSaved').textContent = `${hoursSaved}h`;
+    document.getElementById('timeSaved').textContent = summary.timeSavedLabel;
   } catch (error) {
     Logger.error('Errore caricamento statistiche:', error);
     ['totalSummaries', 'totalWords', 'mostUsedProvider', 'timeSaved'].forEach((id) => {
@@ -187,32 +176,22 @@ async function loadStats() {
 async function loadPerformanceStats() {
   try {
     const cacheStats = await new CacheManager().getStats();
-    if (cacheStats) {
-      document.getElementById('cacheEntries').textContent = cacheStats.validEntries;
-      document.getElementById('cacheHitRate').textContent = cacheStats.hitRate + '%';
-      document.getElementById('cacheSize').textContent = cacheStats.sizeMB + ' MB';
-      document.getElementById('cacheSaved').textContent = cacheStats.totalHits;
-    }
+    displayPerformanceStats({ cacheStats });
 
     const apiStats = await new APIResilience().getStats();
-    if (apiStats) {
-      document.getElementById('apiSuccessRate').textContent = apiStats.successRate + '%';
-      document.getElementById('apiRetries').textContent = apiStats.retryCount;
-      document.getElementById('apiFallbacks').textContent = apiStats.fallbackCount;
-      document.getElementById('apiFailures').textContent = apiStats.failureCount;
-    }
+    displayPerformanceStats({ apiStats });
 
     const compressionStats = await new CompressionManager().getStats();
-    if (compressionStats) {
-      document.getElementById('compressedItems').textContent = compressionStats.compressedItems;
-      document.getElementById('compressionRatio').textContent =
-        compressionStats.compressionRatio + '%';
-      document.getElementById('spaceSaved').textContent = compressionStats.savedMB + ' MB';
-      document.getElementById('totalSize').textContent = compressionStats.totalCompressedSize;
-    }
+    displayPerformanceStats({ compressionStats });
   } catch (error) {
     Logger.error('Errore nel caricare statistiche performance:', error);
   }
+}
+
+function displayPerformanceStats(stats) {
+  Object.entries(formatPerformanceStats(stats)).forEach(([id, text]) => {
+    document.getElementById(id).textContent = text;
+  });
 }
 
 async function runCleanup() {
