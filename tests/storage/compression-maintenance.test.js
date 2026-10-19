@@ -118,6 +118,34 @@ describe('CompressionMaintenance', () => {
   });
 
   describe('autoCleanup()', () => {
+    it('test_autoCleanup_zeroRetention_preservesHistory', async () => {
+      const history = [
+        { id: 'old', timestamp: Date.now() - 200 * 24 * 60 * 60 * 1000 },
+        { id: 'recent', timestamp: Date.now() - 24 * 60 * 60 * 1000 },
+      ];
+      store.summaryHistory = structuredClone(history);
+
+      const results = await maintenance.autoCleanup({ deleteHistoryOlderThan: 0 });
+      const persisted = await browser.storage.local.get(['summaryHistory']);
+
+      expect(results.deletedHistory).toBe(0);
+      expect(persisted.summaryHistory).toEqual(history);
+    });
+
+    it('test_autoCleanup_positiveRetention_persistsSurvivingHistory', async () => {
+      const recent = { id: 'recent', timestamp: Date.now() - 24 * 60 * 60 * 1000 };
+      store.summaryHistory = [
+        { id: 'old', timestamp: Date.now() - 200 * 24 * 60 * 60 * 1000 },
+        recent,
+      ];
+
+      const results = await maintenance.autoCleanup({ deleteHistoryOlderThan: 180 });
+      const persisted = await browser.storage.local.get(['summaryHistory']);
+
+      expect(results.deletedHistory).toBe(1);
+      expect(persisted.summaryHistory).toEqual([recent]);
+    });
+
     it('test_autoCleanup_runsAllSteps_returnsResults', async () => {
       store.summaryHistory = [
         {

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { webcrypto } from 'node:crypto';
 
 vi.mock('@utils/core/logger.js', () => ({
   Logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
@@ -34,17 +35,7 @@ beforeEach(() => {
     },
   };
 
-  // Mock crypto.subtle — hash deterministico basato sui byte dell'input.
-  // global.crypto è read-only in jsdom: usare vi.stubGlobal invece di assegnazione diretta.
-  vi.stubGlobal('crypto', {
-    subtle: {
-      digest: vi.fn(async (_algo, data) => {
-        const arr = new Uint8Array(32);
-        for (let i = 0; i < Math.min(data.length, 32); i++) arr[i] = data[i];
-        return arr.buffer;
-      }),
-    },
-  });
+  vi.stubGlobal('crypto', webcrypto);
 
   global.TextEncoder = TextEncoder;
 });
@@ -52,6 +43,19 @@ beforeEach(() => {
 import { TranslationCache } from '@utils/storage/translation-cache.js';
 
 describe('TranslationCache', () => {
+  it('test_save_sameUrlDifferentLanguagesAndProviders_readsEachTranslation', async () => {
+    const url = 'https://example.com/article';
+    await TranslationCache.save(url, 'groq', 'en', 'English text', 'it');
+    await TranslationCache.save(url, 'groq', 'fr', 'Texte français', 'it');
+    await TranslationCache.save(url, 'openai', 'en', 'Alternative English text', 'it');
+
+    expect((await TranslationCache.get(url, 'groq', 'en')).translation).toBe('English text');
+    expect((await TranslationCache.get(url, 'groq', 'fr')).translation).toBe('Texte français');
+    expect((await TranslationCache.get(url, 'openai', 'en')).translation).toBe(
+      'Alternative English text',
+    );
+  });
+
   it('test_save_and_get_validEntry_returnsCachedData', async () => {
     // Arrange
     const url = 'https://example.com/article';

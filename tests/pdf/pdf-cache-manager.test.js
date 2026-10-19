@@ -68,6 +68,13 @@ describe('PDFCacheManager', () => {
   // ─── calculateFileHash ────────────────────────────
 
   describe('calculateFileHash', () => {
+    it('test_calculateFileHash_lowBytes_usesTwoHexDigitsPerByte', async () => {
+      mockDigest.mockResolvedValueOnce(new Uint8Array([0x00, 0x0a, 0x0f, 0x10, 0xff]).buffer);
+      const file = { arrayBuffer: async () => new ArrayBuffer(1) };
+
+      expect(await cache.calculateFileHash(file)).toBe('000a0f10ff');
+    });
+
     it('calcola hash SHA-256 come stringa hex', async () => {
       const file = { arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(10)) };
       const hash = await cache.calculateFileHash(file);
@@ -85,6 +92,22 @@ describe('PDFCacheManager', () => {
   // ─── checkCache ───────────────────────────────────
 
   describe('checkCache', () => {
+    it('test_checkCache_savedAnalysis_returnsExtractedText', async () => {
+      const file = { name: 'report.pdf', size: 512, arrayBuffer: async () => new ArrayBuffer(1) };
+      await cache.saveAnalysis(
+        file,
+        'Revenue increased by 12 percent.',
+        { summary: 'Revenue grew.', keyPoints: ['Growth'] },
+        'openai',
+      );
+
+      const hit = await new PDFCacheManager().checkCache(file);
+
+      expect(hit.found).toBe(true);
+      expect(hit.data.analysis.summary).toBe('Revenue grew.');
+      expect(hit.data.extractedText).toBe('Revenue increased by 12 percent.');
+    });
+
     it('ritorna found:true se file presente in cronologia', async () => {
       store.pdf_analysis_history = [
         { fileHash: 'abcdef12', filename: 'doc.pdf', analysis: { summary: 'cached' } },

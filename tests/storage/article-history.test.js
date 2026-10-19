@@ -47,6 +47,22 @@ describe('ArticleHistory', () => {
   };
 
   describe('saveSummary()', () => {
+    it('test_saveSummary_keyPoints_roundTripThroughHistory', async () => {
+      const id = await ArticleHistory.saveSummary(
+        mockArticle,
+        'Summary',
+        [{ title: 'Storage', description: 'Keep key points available for later reading.' }],
+        mockMetadata,
+      );
+
+      const entry = await ArticleHistory.getSummaryById(id);
+
+      expect(entry.summary).toBe('Summary');
+      expect(entry.keyPoints).toEqual([
+        { title: 'Storage', description: 'Keep key points available for later reading.' },
+      ]);
+    });
+
     it('test_saveSummary_validData_savesAndReturnsId', async () => {
       const id = await ArticleHistory.saveSummary(
         mockArticle,

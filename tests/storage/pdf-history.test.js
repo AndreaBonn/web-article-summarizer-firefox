@@ -54,6 +54,15 @@ describe('PDFHistory', () => {
   });
 
   describe('savePDFAnalysis', () => {
+    it('test_savePDFAnalysis_documentText_roundTripsThroughHistory', async () => {
+      const id = await PDFHistory.savePDFAnalysis(mockPdfInfo, 'Summary', [], mockMetadata);
+
+      const entry = await PDFHistory.getPDFById(id);
+
+      expect(entry.summary).toBe('Summary');
+      expect(entry.pdf.text).toBe('Sample PDF text content');
+    });
+
     it('test_savePDFAnalysis_validInput_returnsId', async () => {
       // Act
       const id = await PDFHistory.savePDFAnalysis(

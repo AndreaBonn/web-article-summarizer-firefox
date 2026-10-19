@@ -74,6 +74,20 @@ describe('CacheStats', () => {
   });
 
   describe('getStats', () => {
+    it('test_getStats_threeSuccessfulReadsOutOfFour_returns75Percent', async () => {
+      const stats = new CacheStats();
+      await stats.logCacheOperation('read', 'a', true);
+      await stats.logCacheOperation('read', 'b', true);
+      await stats.logCacheOperation('read', 'c', true);
+      await stats.logCacheOperation('read', 'd', false);
+      await stats.logCacheOperation('write', 'e', false);
+      await stats.logCacheOperation('write', 'f', true);
+
+      const result = await stats.getStats();
+
+      expect(result.hitRate).toBe(75);
+    });
+
     it('test_getStats_emptyCache_returnsZeros', async () => {
       // Arrange
       store.summaryCache = {};
