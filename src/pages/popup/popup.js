@@ -4,6 +4,7 @@
 import { state, elements, initElements, showState, showError, presentError } from './state.js';
 import { translationState, citationsState } from './features.js';
 import { analyzeArticle, switchTab, copyToClipboard } from './analysis.js';
+import { buildReadingModeData, describeReadingModeStorageError } from './popup-data.js';
 import { exportToPDF, exportToMarkdown, openEmailModal } from './export.js';
 import { askQuestion, translateArticle } from './features.js';
 import { extractCitations } from './citations.js';
@@ -195,30 +196,22 @@ async function openReadingMode() {
     return;
   }
 
-  const readingData = {
+  const readingData = buildReadingModeData({
     article: state.currentArticle,
-    summary: state.currentResults.summary,
-    keyPoints: state.currentResults.keyPoints,
-    translation: translationState.value || null,
-    citations: citationsState.value || null,
-    qa: state.currentQA && state.currentQA.length > 0 ? state.currentQA : null,
-    metadata: {
-      provider: elements.providerSelect.value,
-      language: state.selectedLanguage,
-      contentType: state.currentResults.detectedContentType || state.selectedContentType,
-    },
-  };
+    results: state.currentResults,
+    translation: translationState.value,
+    citations: citationsState.value,
+    qa: state.currentQA,
+    providerValue: elements.providerSelect.value,
+    selectedLanguage: state.selectedLanguage,
+    selectedContentType: state.selectedContentType,
+  });
 
   try {
     await browser.storage.local.set({ readingModeData: readingData });
   } catch (error) {
     Logger.error('Errore apertura reading mode:', error);
-    const isQuotaError = error.message?.includes('QUOTA') || error.message?.includes('quota');
-    showError(
-      isQuotaError
-        ? 'Impossibile aprire la modalità lettura: spazio di archiviazione insufficiente.'
-        : `Impossibile aprire la modalità lettura: ${error.message}`,
-    );
+    showError(describeReadingModeStorageError(error));
     return;
   }
 
