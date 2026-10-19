@@ -132,3 +132,18 @@ describe('citation highlighting', () => {
     ]);
   });
 });
+
+describe('citation highlighting with typographic quotes and unlocatable spans', () => {
+  it('highlights a curly-quote page passage quoted with straight quotes by the AI', () => {
+    document.body.innerHTML = '<p>He said “it’s a long story” to everyone</p>';
+    expect(highlightTextInPage(document, '"it\'s a long story"')).toBe(true);
+    expect(document.querySelector('.citation-highlight').textContent).toBe('“it’s a long story”');
+  });
+  it('returns false when a node matches but no span can be created', () => {
+    // Whitespace runs collapse in the normalized match but not in the raw locator
+    document.body.innerHTML = '<p>some text with hello   world inside it</p>';
+    expect(highlightTextInPage(document, 'hello world')).toBe(false);
+    expect(document.querySelectorAll('.citation-highlight')).toHaveLength(0);
+    expect(document.querySelector('p').textContent).toBe('some text with hello   world inside it');
+  });
+});

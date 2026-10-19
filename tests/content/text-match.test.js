@@ -79,3 +79,20 @@ describe('text matching contract', () => {
     expect(locateHighlightSpan('Hello world', 'different quote')).toBeNull();
   });
 });
+
+describe('typographic quote normalization', () => {
+  it('folds curly double and single quotes to the same form as straight ones', () => {
+    expect(normalizeQuoteText('“Hello” ‘World’')).toBe('"hello" "world"');
+    expect(normalizeQuoteText('“Hello”')).toBe(normalizeQuoteText('"Hello"'));
+    expect(normalizeQuoteText('“don’t”')).toBe(normalizeQuoteText('"don\'t"'));
+  });
+  it('locates a straight-quote citation inside curly-quote page text', () => {
+    expect(
+      locateHighlightSpan('He said “hello world today” loudly', '"hello world today"'),
+    ).toEqual({
+      before: 'He said ',
+      match: '“hello world today”',
+      after: ' loudly',
+    });
+  });
+});

@@ -156,17 +156,18 @@ export function highlightTextInPage(doc, searchText) {
 
   // Scroll al primo highlight e programma rimozione
   const firstHighlight = doc.querySelector('.citation-highlight');
-  if (firstHighlight) {
-    firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    setTimeout(() => {
-      doc.querySelectorAll('.citation-highlight').forEach((el) => {
-        const parent = el.parentNode;
-        parent.replaceChild(doc.createTextNode(el.textContent), el);
-        parent.normalize();
-      });
-    }, CITATION_HIGHLIGHT_DURATION_MS);
+  if (!firstHighlight) {
+    return false;
   }
+  firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  setTimeout(() => {
+    doc.querySelectorAll('.citation-highlight').forEach((el) => {
+      const parent = el.parentNode;
+      parent.replaceChild(doc.createTextNode(el.textContent), el);
+      parent.normalize();
+    });
+  }, CITATION_HIGHLIGHT_DURATION_MS);
 
   return true;
 }

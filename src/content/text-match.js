@@ -23,10 +23,13 @@ export function* parseParagraphRange(paragraphNumber) {
   }
 }
 
+const QUOTE_CHARS = /["\u201C\u201D'\u2018\u2019\u00AB\u00BB]/g;
+
+// Same-length fold: quotes map 1:1, so indexes stay valid on the raw text
+const foldQuotes = (text) => text.toLowerCase().replace(QUOTE_CHARS, '"');
+
 export const normalizeQuoteText = (text) => {
-  return text
-    .toLowerCase()
-    .replace(/[""''«»]/g, '"') // Normalizza virgolette
+  return foldQuotes(text)
     .replace(/\s+/g, ' ') // Normalizza spazi
     .trim();
 };
@@ -84,9 +87,7 @@ export function locateHighlightSpan(text, textToHighlight) {
   if (index !== -1) {
     // Trova l'indice nel testo originale (non normalizzato)
     // Questo è approssimativo ma funziona nella maggior parte dei casi
-    const originalIndex = text
-      .toLowerCase()
-      .indexOf(textToHighlight.toLowerCase().substring(0, 50));
+    const originalIndex = foldQuotes(text).indexOf(foldQuotes(textToHighlight).substring(0, 50));
 
     if (originalIndex !== -1) {
       const before = text.substring(0, originalIndex);
