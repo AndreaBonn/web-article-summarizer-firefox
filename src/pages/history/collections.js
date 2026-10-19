@@ -163,19 +163,15 @@ async function openMultiAnalysis(id) {
   }
 
   // Apri la pagina multi-analysis con i dati salvati
-  browser.storage.local.set(
-    {
-      reopenMultiAnalysis: {
-        id: entry.id,
-        analysis: entry.analysis,
-        articles: entry.articles,
-      },
+  await browser.storage.local.set({
+    reopenMultiAnalysis: {
+      id: entry.id,
+      analysis: entry.analysis,
+      articles: entry.articles,
     },
-    () => {
-      Logger.debug('Reindirizzamento a multi-analysis.html');
-      window.location.href = browser.runtime.getURL('src/pages/multi-analysis/multi-analysis.html');
-    },
-  );
+  });
+  Logger.debug('Reindirizzamento a multi-analysis.html');
+  window.location.href = browser.runtime.getURL('src/pages/multi-analysis/multi-analysis.html');
 }
 
 async function deleteMultiAnalysis(id) {
