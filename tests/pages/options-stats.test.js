@@ -85,6 +85,21 @@ describe('options statistics and preferences', () => {
     expect(settings).toEqual({ selectedProvider: 'groq', cacheTTL: 7 });
   });
 
+  it.each(['', 'abc', '0', '-3'])(
+    'keeps the previous cache TTL when the field holds %j',
+    (value) => {
+      const form = {
+        enableCache: { checked: true },
+        cacheTTL: { value },
+        enableFallback: { checked: true },
+        enableCompression: { checked: true },
+        autoCleanup: { checked: true },
+      };
+      expect(applyPerformanceSettings({ cacheTTL: 14 }, form).cacheTTL).toBe(14);
+      expect(applyPerformanceSettings({}, form).cacheTTL).toBe(7);
+    },
+  );
+
   it('formats all performance counters and units', () => {
     expect(
       formatPerformanceStats({

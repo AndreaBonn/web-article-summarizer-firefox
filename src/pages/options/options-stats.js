@@ -1,4 +1,5 @@
 const WORDS_PER_MINUTE = 225;
+const DEFAULT_CACHE_TTL_DAYS = 7;
 
 export function computeUsageSummary(stats) {
   stats = stats || { totalSummaries: 0, totalWords: 0, providerUsage: {}, totalTime: 0 };
@@ -36,7 +37,13 @@ export function applyPreferences(previousSettings, form) {
 export function applyPerformanceSettings(previousSettings, form) {
   const settings = { ...previousSettings };
   settings.enableCache = form.enableCache.checked;
-  settings.cacheTTL = parseInt(form.cacheTTL.value);
+  const ttl = parseInt(form.cacheTTL.value, 10);
+  if (ttl > 0) {
+    settings.cacheTTL = ttl;
+  } else if (!(settings.cacheTTL > 0)) {
+    // Same default the options page shows when no TTL is stored.
+    settings.cacheTTL = DEFAULT_CACHE_TTL_DAYS;
+  }
   settings.enableFallback = form.enableFallback.checked;
   settings.enableCompression = form.enableCompression.checked;
   settings.autoCleanup = form.autoCleanup.checked;
