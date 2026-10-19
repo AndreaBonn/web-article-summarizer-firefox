@@ -1,14 +1,14 @@
+import { populateSavedEmails, bindEmailModal } from '../../shared/email-modal.js';
 // Popup Export Module - Estratto da popup.js
 // Gestisce: exportToPDF, showExportOptionsModal, exportToMarkdown, showMarkdownExportModal, openEmailModal
 
-import { state, elements, showError } from './state.js';
 import { buildExportMetadata, mergeEmailOptions, hasAnySelected } from './export-options.js';
+import { state, elements, showError } from './state.js';
 import { translationState, citationsState } from './features.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { PDFExporter } from '../../utils/export/pdf-exporter.js';
 import { MarkdownExporter } from '../../utils/export/markdown-exporter.js';
 import { EmailManager } from '../../utils/export/email-manager.js';
-import { Modal } from '../../utils/core/modal.js';
 import { Toast } from '../../utils/core/toast.js';
 import { Logger } from '../../utils/core/logger.js';
 import { showExportModal, computeExportAvailability } from '../../shared/export-modal.js';
@@ -158,76 +158,12 @@ export async function openEmailModal() {
 
   // Carica email salvate
   const savedEmails = await EmailManager.getSavedEmails();
-  let selectedEmail = null;
-
-  // Mostra/nascondi sezione email salvate
-  if (savedEmails.length > 0) {
-    savedEmailsSection.classList.remove('hidden');
-
-    // Popola lista
-    savedEmailsList.innerHTML = '';
-    savedEmails.forEach((email) => {
-      const item = document.createElement('div');
-      item.className = 'saved-email-item';
-
-      const text = document.createElement('span');
-      text.className = 'saved-email-text';
-      text.textContent = email;
-
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'saved-email-delete';
-      deleteBtn.textContent = '🗑️';
-      deleteBtn.title = 'Rimuovi';
-
-      // Click per selezionare
-      item.addEventListener('click', (e) => {
-        if (e.target === deleteBtn) return;
-
-        // Deseleziona tutti
-        document.querySelectorAll('.saved-email-item').forEach((i) => {
-          i.classList.remove('selected');
-        });
-
-        // Seleziona questo
-        item.classList.add('selected');
-        selectedEmail = email;
-        emailInput.value = email;
-      });
-
-      // Click per eliminare
-      deleteBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-
-        const confirmed = await Modal.confirm(
-          `Vuoi rimuovere "${email}" dalla lista?`,
-          'Rimuovi Email',
-          '🗑️',
-        );
-
-        if (confirmed) {
-          await EmailManager.removeEmail(email);
-          item.remove();
-
-          // Nascondi sezione se non ci sono più email
-          if (savedEmailsList.children.length === 0) {
-            savedEmailsSection.classList.add('hidden');
-          }
-
-          // Pulisci input se era selezionata
-          if (selectedEmail === email) {
-            selectedEmail = null;
-            emailInput.value = '';
-          }
-        }
-      });
-
-      item.appendChild(text);
-      item.appendChild(deleteBtn);
-      savedEmailsList.appendChild(item);
-    });
-  } else {
-    savedEmailsSection.classList.add('hidden');
-  }
+  populateSavedEmails({
+    savedEmails,
+    listEl: savedEmailsList,
+    sectionEl: savedEmailsSection,
+    inputEl: emailInput,
+  });
 
   _configureEmailCheckboxes();
 
@@ -239,83 +175,55 @@ export async function openEmailModal() {
   modal.classList.remove('hidden');
 
   // Handler per invio
-  const handleSend = async () => {
-    const email = emailInput.value.trim();
+  bindEmailModal({
+    modal,
+    sendBtn,
+    cancelBtn,
+    emailInput,
+    onSend: async ({ cleanup }) => {
+      const email = emailInput.value.trim();
 
-    if (!email) {
-      Toast.show(I18n.t('email.missing'), 'error');
-      return;
-    }
+      if (!email) {
+        Toast.show(I18n.t('email.missing'), 'error');
+        return;
+      }
 
-    if (!EmailManager.isValidEmail(email)) {
-      Toast.show(I18n.t('email.invalid'), 'error');
-      return;
-    }
+      if (!EmailManager.isValidEmail(email)) {
+        Toast.show(I18n.t('email.invalid'), 'error');
+        return;
+      }
 
-    // Raccogli opzioni selezionate
-    const options = _collectEmailOptions();
-    if (!hasAnySelected(options)) {
-      Toast.show(I18n.t('email.noSection'), 'error');
-      return;
-    }
+      // Raccogli opzioni selezionate
+      const options = _collectEmailOptions();
+      if (!hasAnySelected(options)) {
+        Toast.show(I18n.t('email.noSection'), 'error');
+        return;
+      }
 
-    // Salva email se nuova
-    await EmailManager.saveEmail(email);
+      // Salva email se nuova
+      await EmailManager.saveEmail(email);
 
-    // Genera contenuto email con opzioni
-    const { subject, body } = EmailManager.formatEmailContent(
-      state.currentArticle,
-      options.includeSummary ? state.currentResults.summary : null,
-      options.includeKeypoints ? state.currentResults.keyPoints : null,
-      options.includeTranslation ? translationState.value : null,
-      options.includeQA ? state.currentQA : null,
-      options.includeCitations ? citationsState.value : null,
-    );
+      // Genera contenuto email con opzioni
+      const { subject, body } = EmailManager.formatEmailContent(
+        state.currentArticle,
+        options.includeSummary ? state.currentResults.summary : null,
+        options.includeKeypoints ? state.currentResults.keyPoints : null,
+        options.includeTranslation ? translationState.value : null,
+        options.includeQA ? state.currentQA : null,
+        options.includeCitations ? citationsState.value : null,
+      );
 
-    // Apri client email
-    EmailManager.openEmailClient(email, subject, body);
+      // Apri client email
+      EmailManager.openEmailClient(email, subject, body);
 
-    // Chiudi modal
-    modal.classList.add('hidden');
+      // Chiudi modal
+      modal.classList.add('hidden');
 
-    // Feedback
-    Toast.show(I18n.t('email.clientOpened'), 'success');
+      // Feedback
+      Toast.show(I18n.t('email.clientOpened'), 'success');
 
-    // Cleanup
-    cleanup();
-  };
-
-  // Handler per annulla
-  const handleCancel = () => {
-    modal.classList.add('hidden');
-    cleanup();
-  };
-
-  // Handler per overlay
-  const handleOverlay = (e) => {
-    if (e.target.classList.contains('custom-modal-overlay')) {
-      handleCancel();
-    }
-  };
-
-  // Handler per Enter
-  const handleEnter = (e) => {
-    if (e.key === 'Enter') {
-      handleSend();
-    }
-  };
-
-  // Cleanup function
-  const cleanup = () => {
-    sendBtn.removeEventListener('click', handleSend);
-    cancelBtn.removeEventListener('click', handleCancel);
-    modal.removeEventListener('click', handleOverlay);
-    emailInput.removeEventListener('keypress', handleEnter);
-  };
-
-  // Aggiungi event listeners
-  sendBtn.addEventListener('click', handleSend);
-  cancelBtn.addEventListener('click', handleCancel);
-  modal.addEventListener('click', handleOverlay);
-  emailInput.addEventListener('keypress', handleEnter);
+      // Cleanup
+      cleanup();
+    },
+  });
 }
