@@ -14,6 +14,11 @@ export function showStatus(provider, type, message) {
   statusEl.textContent = message;
 }
 
+// Only the last characters stay readable
+function maskKey(key) {
+  return '•'.repeat(Math.max(0, key.length - VISIBLE_KEY_CHARS)) + key.slice(-VISIBLE_KEY_CHARS);
+}
+
 function formatErrorText(error) {
   if (error.code === 'prefix')
     return I18n.tf('settings.error.prefix', { expected: error.expected });
@@ -27,10 +32,9 @@ export async function loadApiKeys() {
       const key = await StorageManager.getApiKey(provider);
       if (!key) continue;
       const input = document.getElementById(`${provider}Key`);
-      // Only the last characters stay readable
-      const masked =
-        '•'.repeat(Math.max(0, key.length - VISIBLE_KEY_CHARS)) + key.slice(-VISIBLE_KEY_CHARS);
-      input.value = masked;
+      // The mask lives on the element so a later save can replace it
+      input.dataset.maskedValue = maskKey(key);
+      input.value = input.dataset.maskedValue;
       input.dataset.masked = 'true';
       input.addEventListener('focus', () => {
         if (input.dataset.masked === 'true') {
@@ -41,7 +45,7 @@ export async function loadApiKeys() {
       // Left empty: the saved key is still there, show it again instead of a blank field
       input.addEventListener('blur', () => {
         if (input.value.trim() === '' && input.dataset.masked === 'false') {
-          input.value = masked;
+          input.value = input.dataset.maskedValue;
           input.dataset.masked = 'true';
         }
       });
@@ -70,6 +74,7 @@ async function saveKey(provider, reportErrors) {
   }
   try {
     await StorageManager.saveApiKey(provider, key);
+    input.dataset.maskedValue = maskKey(key);
     showStatus(provider, 'success', I18n.t('settings.status.saved'));
   } catch (error) {
     Logger.error('Errore salvataggio API key:', error);
