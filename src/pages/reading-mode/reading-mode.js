@@ -2,6 +2,7 @@
 // Controller: init, caricamento dati, event listeners, theme, resize
 
 import { state, elements, initElements } from './state.js';
+import { loadReadingModeData, computeSplitPercentage } from './reading-mode-data.js';
 import { VoiceController } from '../../utils/voice/voice-controller.js';
 import { Logger } from '../../utils/core/logger.js';
 import { ThemeManager } from '../../utils/core/theme-manager.js';
@@ -74,68 +75,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Load data
 async function loadData() {
-  try {
-    // Try to get data from URL params
-    const params = new URLSearchParams(window.location.search);
-    const historyId = params.get('id');
-    const source = params.get('source');
-
-    // Check if loading PDF analysis
-    if (source === 'pdf' && typeof chrome !== 'undefined' && browser.storage) {
-      const result = await browser.storage.local.get(['pdfReadingMode']);
-      if (result.pdfReadingMode) {
-        state.currentData = result.pdfReadingMode;
-        state.currentData.isPDF = true;
-        // Clean up after loading
-        await browser.storage.local.remove(['pdfReadingMode']);
-        Logger.info('Dati PDF caricati:', state.currentData);
-        return;
-      }
-    }
-
-    if (historyId && typeof chrome !== 'undefined' && browser.storage) {
-      // Load from history using browser.storage (use summaryHistory)
-      const result = await browser.storage.local.get(['summaryHistory']);
-      const history = result.summaryHistory || [];
-      state.currentData = history.find((item) => String(item.id) === String(historyId));
-
-      if (!state.currentData) {
-        throw new Error('Riassunto non trovato nella cronologia');
-      }
-
-      Logger.info('Dati caricati dalla cronologia:', state.currentData);
-    } else if (typeof chrome !== 'undefined' && browser.storage) {
-      // Try to load from browser.storage (passed from popup)
-      const result = await browser.storage.local.get(['readingModeData']);
-      if (result.readingModeData) {
-        state.currentData = result.readingModeData;
-        // Clean up after loading
-        await browser.storage.local.remove(['readingModeData']);
-      } else {
-        // No data available - show helpful message
-        throw new Error('NODATA');
-      }
-    } else {
-      // Fallback to sessionStorage (for test files)
-      const sessionData = sessionStorage.getItem('readingModeData');
-      if (sessionData) {
-        try {
-          state.currentData = JSON.parse(sessionData);
-        } catch {
-          Logger.warn('sessionStorage: dati corrotti, ignorati');
-          throw new Error('NODATA');
-        }
-      } else {
-        throw new Error('NODATA');
-      }
-    }
-  } catch (error) {
-    if (error.message === 'NODATA') {
-      throw error;
-    }
-    Logger.error('Error loading data:', error);
-    throw error;
-  }
+  const hasExtensionStorage = typeof chrome !== 'undefined' && !!browser.storage;
+  state.currentData = await loadReadingModeData({
+    search: window.location.search,
+    storage: hasExtensionStorage ? browser.storage.local : undefined,
+    // Touch sessionStorage only on the fallback path, as before the extraction
+    sessionStorage: hasExtensionStorage ? undefined : window.sessionStorage,
+    hasExtensionStorage,
+  });
 }
 
 // Setup event listeners
@@ -246,10 +193,10 @@ function startResize(_e) {
 
     const container = document.querySelector('.reading-container');
     const containerRect = container.getBoundingClientRect();
-    const percentage = ((moveEvent.clientX - containerRect.left) / containerRect.width) * 100;
+    const percentage = computeSplitPercentage(moveEvent.clientX, containerRect);
 
     // Limit between 20% and 80%
-    if (percentage >= 20 && percentage <= 80) {
+    if (percentage !== null) {
       document.querySelector('.article-panel').style.flex = `0 0 ${percentage}%`;
       document.querySelector('.summary-panel').style.flex = `0 0 ${100 - percentage}%`;
     }
