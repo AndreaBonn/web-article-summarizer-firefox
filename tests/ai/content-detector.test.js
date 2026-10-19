@@ -47,6 +47,16 @@ describe('ContentDetector.detectContentType()', () => {
     expect(ContentDetector.detectContentType(article)).toBe('business');
   });
 
+  it('test_detectContentType_onlyMoneyAmountWithSuffix_restituisceBusiness', () => {
+    const article = makeArticle('Notizie dal settore', 'Acme closed a seed round of $5M last week.');
+    expect(ContentDetector.detectContentType(article)).toBe('business');
+  });
+
+  it('test_detectContentType_amountWithoutSuffix_restituisceGeneral', () => {
+    const article = makeArticle('Notizie dal settore', 'Acme paid $5 for a coffee last week.');
+    expect(ContentDetector.detectContentType(article)).toBe('general');
+  });
+
   it('test_detectContentType_primaPersona_restittuisceOpinion', () => {
     const article = makeArticle(
       'Il futuro dei social network',

@@ -34,7 +34,7 @@ export class ContentDetector {
     const businessTerms =
       /\b(revenue|market|strategy|roi|growth|company|business|ceo|azienda|mercato|strategia)\b/g;
     scores.business += (contentSample.match(businessTerms) || []).length;
-    if (/\$\d+[MBK]|€\d+[MBK]/.test(contentSample)) scores.business += 2;
+    if (/\$\d+[mbk]|€\d+[mbk]/.test(contentSample)) scores.business += 2;
 
     // Opinion: prima persona e argomenti
     const opinionTerms =
