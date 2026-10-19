@@ -13,6 +13,7 @@ import {
 } from '../pages/reading-mode/pdf.js';
 import { ErrorHandler } from '../utils/core/error-handler.js';
 import { Logger } from '../utils/core/logger.js';
+import { openWelcomeOnInstall } from './install-welcome.js';
 
 const VALID_PROVIDERS = new Set(['groq', 'openai', 'anthropic', 'gemini']);
 
@@ -36,6 +37,9 @@ browser.alarms.onAlarm.addListener((alarm) => {
 browser.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     Logger.info('AI Article Summarizer installato');
+    openWelcomeOnInstall(details).catch((error) =>
+      Logger.warn('Impossibile aprire la pagina di benvenuto:', error.message),
+    );
   } else if (details.reason === 'update') {
     Logger.info(
       'AI Article Summarizer aggiornato alla versione',
