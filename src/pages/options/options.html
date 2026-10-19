@@ -3,95 +3,184 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title data-i18n="settings.title">Impostazioni - AI Article Summarizer</title>
+    <title data-i18n="settings.pageTitle">Impostazioni - AI Article Summarizer</title>
     <link rel="stylesheet" href="../../shared/styles/base.css" />
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
     <div class="container">
-      <header>
-        <h1 data-i18n="settings.title">AI Article Summarizer - Impostazioni</h1>
-        <select
-          id="uiLanguageSelect"
-          class="ui-language-select ui-language-position"
-          title="Lingua Interfaccia"
-        >
-          <option value="it">🇮🇹 Italiano</option>
-          <option value="en">🇺🇸 English</option>
-        </select>
+      <header class="page-header">
+        <h1 data-i18n="settings.title">Impostazioni</h1>
+        <div class="header-tools">
+          <label class="ui-language-label" for="uiLanguageSelect" data-i18n="common.uiLanguageTitle"
+            >Lingua interfaccia</label
+          >
+          <select id="uiLanguageSelect" class="ui-language-select">
+            <option value="it">Italiano</option>
+            <option value="en">English</option>
+          </select>
+          <button
+            class="theme-btn"
+            data-theme-toggle
+            aria-label="Cambia Tema"
+            title="Cambia Tema"
+          ></button>
+        </div>
       </header>
 
       <main>
+        <!-- Welcome: opened by the service worker on first install -->
+        <section id="welcome" class="card welcome-card hidden" aria-labelledby="welcomeTitle">
+          <h2 id="welcomeTitle" data-i18n="welcome.title">AI Article Summarizer è installato</h2>
+          <p class="welcome-intro" data-i18n="welcome.intro">
+            Riassume qualsiasi articolo in pochi secondi, con punti chiave, traduzione e domande.
+          </p>
+          <ol class="welcome-steps">
+            <li data-i18n="welcome.step1">
+              Fissa l'icona nella barra degli strumenti: menu dei componenti aggiuntivi (il pezzo di
+              puzzle) ▸ ingranaggio accanto all'estensione ▸ «Fissa alla barra degli strumenti».
+            </li>
+            <li data-i18n="welcome.step2">
+              Collega un servizio AI: crea una chiave e incollala qui sotto. Per iniziare va bene
+              Groq, che ha la registrazione gratuita.
+            </li>
+            <li data-i18n="welcome.step3">Apri un articolo e premi «Riassumi questa pagina».</li>
+          </ol>
+          <button id="welcomeStartBtn" class="btn btn-primary" data-i18n="welcome.start">
+            Collega un servizio AI
+          </button>
+        </section>
+
         <!-- API Keys Section -->
-        <section class="card">
-          <h2 data-i18n="settings.apiKeys">API Keys</h2>
+        <section class="card" id="keysSection">
+          <h2 data-i18n="settings.apiKeys">Chiavi dei servizi AI</h2>
           <p class="info" data-i18n="settings.apiKeys.desc">
-            Le tue chiavi sono salvate localmente e criptate per sicurezza.
+            Le chiavi restano salvate solo in questo browser. Basta un servizio per iniziare.
           </p>
 
-          <div class="api-key-group">
-            <label>
-              <span class="provider-name">Groq API Key</span>
+          <div class="api-key-group" id="groqGroup">
+            <div class="api-key-head">
+              <label for="groqKey" class="provider-name">Groq</label>
               <span class="provider-desc" data-i18n="settings.provider.groq"
                 >Veloce ed economico</span
               >
-            </label>
-            <div class="input-group">
-              <input type="password" id="groqKey" placeholder="gsk_..." />
-              <button class="btn-test" data-provider="groq" data-i18n="settings.test">Test</button>
+              <a
+                class="key-link"
+                href="https://console.groq.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-i18n="settings.getKeyFree"
+                >Ottieni la chiave (gratis) ↗</a
+              >
             </div>
-            <div id="groqStatus" class="status"></div>
+            <div class="input-group">
+              <input
+                type="password"
+                id="groqKey"
+                placeholder="gsk_..."
+                autocomplete="off"
+                spellcheck="false"
+                aria-describedby="groqSteps groqStatus"
+              />
+              <button class="btn-test" data-provider="groq" data-i18n="settings.test">Prova</button>
+            </div>
+            <p id="groqSteps" class="key-steps" data-i18n="settings.steps.groq"></p>
+            <div id="groqStatus" class="status" role="status"></div>
           </div>
 
-          <div class="api-key-group">
-            <label>
-              <span class="provider-name">OpenAI API Key</span>
+          <div class="api-key-group" id="openaiGroup">
+            <div class="api-key-head">
+              <label for="openaiKey" class="provider-name">OpenAI</label>
               <span class="provider-desc" data-i18n="settings.provider.openai">Alta qualità</span>
-            </label>
+              <a
+                class="key-link"
+                href="https://platform.openai.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-i18n="settings.getKey"
+                >Ottieni la chiave ↗</a
+              >
+            </div>
             <div class="input-group">
-              <input type="password" id="openaiKey" placeholder="sk-..." />
+              <input
+                type="password"
+                id="openaiKey"
+                placeholder="sk-..."
+                autocomplete="off"
+                spellcheck="false"
+                aria-describedby="openaiSteps openaiStatus"
+              />
               <button class="btn-test" data-provider="openai" data-i18n="settings.test">
-                Test
+                Prova
               </button>
             </div>
-            <div id="openaiStatus" class="status"></div>
+            <p id="openaiSteps" class="key-steps" data-i18n="settings.steps.openai"></p>
+            <div id="openaiStatus" class="status" role="status"></div>
           </div>
 
-          <div class="api-key-group">
-            <label>
-              <span class="provider-name">Anthropic API Key</span>
+          <div class="api-key-group" id="anthropicGroup">
+            <div class="api-key-head">
+              <label for="anthropicKey" class="provider-name">Anthropic (Claude)</label>
               <span class="provider-desc" data-i18n="settings.provider.anthropic"
                 >Analisi dettagliata</span
               >
-            </label>
+              <a
+                class="key-link"
+                href="https://console.anthropic.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-i18n="settings.getKey"
+                >Ottieni la chiave ↗</a
+              >
+            </div>
             <div class="input-group">
-              <input type="password" id="anthropicKey" placeholder="sk-ant-..." />
+              <input
+                type="password"
+                id="anthropicKey"
+                placeholder="sk-ant-..."
+                autocomplete="off"
+                spellcheck="false"
+                aria-describedby="anthropicSteps anthropicStatus"
+              />
               <button class="btn-test" data-provider="anthropic" data-i18n="settings.test">
-                Test
+                Prova
               </button>
             </div>
-            <div id="anthropicStatus" class="status"></div>
+            <p id="anthropicSteps" class="key-steps" data-i18n="settings.steps.anthropic"></p>
+            <div id="anthropicStatus" class="status" role="status"></div>
           </div>
 
-          <div class="api-key-group">
-            <label>
-              <span class="provider-name">Google Gemini API Key</span>
+          <div class="api-key-group" id="geminiGroup">
+            <div class="api-key-head">
+              <label for="geminiKey" class="provider-name">Google Gemini</label>
               <span class="provider-desc" data-i18n="settings.provider.gemini"
                 >Multimodale e versatile</span
               >
-            </label>
+              <a
+                class="key-link"
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-i18n="settings.getKey"
+                >Ottieni la chiave ↗</a
+              >
+            </div>
             <div class="input-group">
-              <input type="password" id="geminiKey" placeholder="AIza..." />
+              <input
+                type="password"
+                id="geminiKey"
+                placeholder="AIza..."
+                autocomplete="off"
+                spellcheck="false"
+                aria-describedby="geminiSteps geminiStatus"
+              />
               <button class="btn-test" data-provider="gemini" data-i18n="settings.test">
-                Test
+                Prova
               </button>
             </div>
-            <div id="geminiStatus" class="status"></div>
+            <p id="geminiSteps" class="key-steps" data-i18n="settings.steps.gemini"></p>
+            <div id="geminiStatus" class="status" role="status"></div>
           </div>
-
-          <button id="saveKeysBtn" class="btn btn-primary" data-i18n="settings.save">
-            Salva API Keys
-          </button>
         </section>
 
         <!-- Preferences Section -->
@@ -99,7 +188,9 @@
           <h2 data-i18n="settings.preferences">Preferenze</h2>
 
           <div class="setting-group">
-            <label data-i18n="settings.defaultProvider">Provider Predefinito</label>
+            <label for="defaultProvider" data-i18n="settings.defaultProvider"
+              >Servizio AI predefinito</label
+            >
             <select id="defaultProvider">
               <option value="groq">Groq</option>
               <option value="openai">OpenAI</option>
@@ -114,21 +205,40 @@
               <span data-i18n="settings.saveHistory">Salva Analisi nella Cronologia</span>
             </label>
           </div>
-
-          <div class="setting-group">
-            <label class="checkbox-label">
-              <input type="checkbox" id="darkMode" />
-              <span data-i18n="settings.darkMode">Dark Mode</span>
-            </label>
-          </div>
-
-          <button id="saveSettingsBtn" class="btn btn-primary" data-i18n="settings.savePreferences">
-            Salva Preferenze
-          </button>
+          <p class="autosave-note" data-i18n="settings.autosaveNote">
+            Le modifiche si salvano da sole.
+          </p>
         </section>
 
-        <!-- Performance & Reliability Section -->
+        <!-- Usage statistics -->
         <section class="card">
+          <h2 data-i18n="settings.statistics">Statistiche</h2>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value" id="totalSummaries">0</div>
+              <div class="stat-label" data-i18n="settings.stats.summaries">Riassunti Generati</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="totalWords">0</div>
+              <div class="stat-label" data-i18n="settings.stats.words">Parole Elaborate</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="mostUsedProvider">-</div>
+              <div class="stat-label" data-i18n="settings.stats.provider">Servizio più usato</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="timeSaved">0h</div>
+              <div class="stat-label" data-i18n="settings.stats.timeSaved">Tempo Risparmiato</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Advanced: cache, reliability, compression, maintenance -->
+        <details class="card advanced">
+          <summary data-i18n="settings.advanced">
+            Avanzate: cache, affidabilità, compressione, manutenzione
+          </summary>
+
           <h2 data-i18n="settings.performance">Performance e Affidabilità</h2>
 
           <div class="setting-group">
@@ -187,13 +297,6 @@
             </p>
           </div>
 
-          <button id="savePerformanceBtn" class="btn btn-primary" data-i18n="settings.perf.save">
-            Salva Impostazioni Performance
-          </button>
-        </section>
-
-        <!-- Performance Stats Section -->
-        <section class="card">
           <h2 data-i18n="settings.perf.statsTitle">Statistiche Performance</h2>
 
           <div class="stats-section">
@@ -289,105 +392,13 @@
               Cancella Log
             </button>
           </div>
-        </section>
-
-        <!-- Statistics Section -->
-        <section class="card">
-          <h2 data-i18n="settings.statistics">Statistiche</h2>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <div class="stat-value" id="totalSummaries">0</div>
-              <div class="stat-label" data-i18n="settings.stats.summaries">Riassunti Generati</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value" id="totalWords">0</div>
-              <div class="stat-label" data-i18n="settings.stats.words">Parole Elaborate</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value" id="mostUsedProvider">-</div>
-              <div class="stat-label" data-i18n="settings.stats.provider">Provider Più Usato</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value" id="timeSaved">0h</div>
-              <div class="stat-label" data-i18n="settings.stats.timeSaved">Tempo Risparmiato</div>
-            </div>
-          </div>
-          <button
-            id="clearCacheBtn"
-            class="btn btn-secondary"
-            data-i18n="settings.stats.clearCache"
-          >
-            Cancella Cache
-          </button>
-        </section>
-
-        <!-- Help Section -->
-        <section class="card">
-          <h2 data-i18n="settings.help">Come Ottenere le API Keys</h2>
-
-          <div class="help-item">
-            <h3>Groq</h3>
-            <ol>
-              <li>
-                <span data-i18n="settings.help.visit">Visita</span>
-                <a href="https://console.groq.com" target="_blank">console.groq.com</a>
-              </li>
-              <li data-i18n="settings.help.register">Registrati gratuitamente</li>
-              <li data-i18n="settings.help.createKey">Vai su "API Keys" e crea una nuova chiave</li>
-            </ol>
-          </div>
-
-          <div class="help-item">
-            <h3>OpenAI</h3>
-            <ol>
-              <li>
-                <span data-i18n="settings.help.visit">Visita</span>
-                <a href="https://platform.openai.com" target="_blank">platform.openai.com</a>
-              </li>
-              <li data-i18n="settings.help.registerCredit">Registrati e aggiungi credito</li>
-              <li data-i18n="settings.help.createKey">Vai su "API Keys" e crea una nuova chiave</li>
-            </ol>
-          </div>
-
-          <div class="help-item">
-            <h3>Anthropic</h3>
-            <ol>
-              <li>
-                <span data-i18n="settings.help.visit">Visita</span>
-                <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
-              </li>
-              <li data-i18n="settings.help.registerOnly">Registrati</li>
-              <li data-i18n="settings.help.createKey">Vai su "API Keys" e crea una nuova chiave</li>
-            </ol>
-          </div>
-
-          <div class="help-item">
-            <h3>Google Gemini</h3>
-            <ol>
-              <li>
-                <span data-i18n="settings.help.visit">Visita</span>
-                <a href="https://aistudio.google.com/app/apikey" target="_blank"
-                  >aistudio.google.com/app/apikey</a
-                >
-              </li>
-              <li data-i18n="settings.help.registerGoogle">Accedi con il tuo account Google</li>
-              <li data-i18n="settings.help.createKeyGemini">
-                Clicca su "Create API Key" per generare una nuova chiave
-              </li>
-              <li data-i18n="settings.help.geminiNote">
-                Nota: Gemini offre un tier gratuito generoso per iniziare
-              </li>
-            </ol>
-          </div>
-        </section>
+        </details>
       </main>
 
       <footer>
-        <p>AI Article Summarizer v1.0.0</p>
+        <p>AI Article Summarizer <span id="appVersion"></span></p>
       </footer>
     </div>
-
-    <div id="toast" class="toast hidden"></div>
 
     <!-- Custom Modal -->
     <div id="customModal" class="custom-modal hidden">
@@ -397,8 +408,20 @@
         <h3 id="modalTitle" class="custom-modal-title">Titolo</h3>
         <p id="modalMessage" class="custom-modal-message">Messaggio</p>
         <div class="custom-modal-buttons">
-          <button id="modalCancelBtn" class="modal-btn modal-btn-cancel hidden">Annulla</button>
-          <button id="modalConfirmBtn" class="modal-btn modal-btn-confirm">OK</button>
+          <button
+            id="modalCancelBtn"
+            class="modal-btn modal-btn-cancel hidden"
+            data-i18n="modal.cancel"
+          >
+            Annulla
+          </button>
+          <button
+            id="modalConfirmBtn"
+            class="modal-btn modal-btn-confirm"
+            data-i18n="modal.confirm"
+          >
+            OK
+          </button>
         </div>
       </div>
     </div>

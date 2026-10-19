@@ -12,22 +12,53 @@ body {
   padding: 24px;
 }
 
-header {
-  text-align: center;
-  margin-bottom: 32px;
-  position: relative;
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
-header h1 {
+.page-header h1 {
   font-size: 24px;
   color: var(--text-primary);
 }
 
-.ui-language-select {
-  padding: 8px 12px;
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-language-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   border: 2px solid var(--border-color);
   border-radius: 8px;
-  font-size: 16px;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.theme-btn:hover {
+  border-color: var(--color-accent);
+}
+
+.ui-language-select {
+  padding: 6px 10px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
   background: var(--input-bg);
   color: var(--text-primary);
   cursor: pointer;
@@ -36,13 +67,13 @@ header h1 {
 }
 
 .ui-language-select:hover {
-  border-color: #667eea;
+  border-color: var(--color-accent);
 }
 
 .ui-language-select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
 }
 
 main {
@@ -122,7 +153,7 @@ main {
 
 .input-group input:focus {
   outline: none;
-  border-color: #ff6b00;
+  border-color: var(--color-accent);
 }
 
 .btn-test {
@@ -259,12 +290,12 @@ main {
 }
 
 .btn-primary {
-  background: #ff6b00;
+  background: var(--color-accent);
   color: #fff;
 }
 
 .btn-primary:hover {
-  background: #e55f00;
+  background: var(--color-accent-hover);
 }
 
 .btn-secondary {
@@ -299,7 +330,7 @@ main {
 .stat-value {
   font-size: 24px;
   font-weight: 600;
-  color: #ff6b00;
+  color: var(--color-accent-text);
   margin-bottom: 4px;
 }
 
@@ -309,40 +340,6 @@ main {
 }
 
 /* Help */
-.help-item {
-  margin-bottom: 20px;
-  padding: 16px;
-  background: var(--color-bg-tertiary);
-  border-radius: 8px;
-  transition: background-color 0.3s;
-}
-
-.help-item h3 {
-  font-size: 15px;
-  margin-bottom: 8px;
-  color: var(--text-primary);
-}
-
-.help-item ol {
-  margin-left: 20px;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.help-item ol li {
-  margin-bottom: 4px;
-}
-
-.help-item a {
-  color: #0066cc;
-  text-decoration: none;
-}
-
-.help-item a:hover {
-  text-decoration: underline;
-}
-
-/* Footer */
 footer {
   text-align: center;
   margin-top: 32px;
@@ -350,44 +347,6 @@ footer {
   border-top: 1px solid var(--color-border-light);
   color: var(--text-secondary);
   font-size: 13px;
-}
-
-/* Toast */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  padding: 12px 20px;
-  background: #2d3436;
-  color: #fff;
-  border-radius: 6px;
-  font-size: 14px;
-  box-shadow: var(--shadow-md);
-  animation: slideIn 0.3s ease;
-  z-index: 1000;
-}
-
-.toast.hidden {
-  display: none;
-}
-
-.toast.success {
-  background: #00b894;
-}
-
-.toast.error {
-  background: #d63031;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(400px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
 }
 
 /* Performance Stats */
@@ -436,17 +395,75 @@ body.dark-mode .status.loading {
   color: #fbbf24;
 }
 
-body.dark-mode .help-item a {
-  color: #60a5fa;
+/* Welcome (first install) */
+.welcome-card {
+  border: 2px solid var(--color-accent-subtle);
 }
 
-.toast.info {
-  background: #3b82f6;
+.welcome-intro {
+  color: var(--text-secondary);
+  margin-bottom: 12px;
 }
 
-/* UI language select position (replaces inline style) */
-.ui-language-position {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+.welcome-steps {
+  padding-left: 20px;
+  margin-bottom: 16px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.welcome-steps li {
+  margin-bottom: 6px;
+}
+
+/* API key fields */
+.api-key-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin-bottom: 6px;
+}
+
+.key-link {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-accent-text);
+}
+
+.key-steps {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.api-key-group.highlight {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 6px;
+  border-radius: 8px;
+}
+
+.autosave-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Advanced: closed by default */
+.advanced > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.advanced[open] > summary {
+  margin-bottom: 16px;
+}
+
+.advanced h2 {
+  margin-top: 8px;
+}
+
+.input-group input {
+  min-width: 0;
 }
