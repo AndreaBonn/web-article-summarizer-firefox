@@ -10,13 +10,14 @@ import { displayPDFContent } from './display-pdf.js';
 import { Modal } from '../../utils/core/modal.js';
 import {
   computeSyncedScrollTop,
+  findKeypointParagraphs,
   isSafeIframeUrl,
   renderArticleTextHtml,
   renderKeypointsTabHtml,
   renderReadingCitationsHtml,
 } from './render.js';
-
 import { renderTranslationHtml } from './reading-mode-history.js';
+
 // Display content
 export function displayContent() {
   if (!state.currentData) return;
@@ -136,15 +137,15 @@ function highlightParagraph(paragraphNumber) {
       el.classList.remove('highlight');
     });
 
-    // Find and highlight target paragraph
-    const targetPara = elements.articleText.querySelector(`[data-paragraph="${paragraphNumber}"]`);
-    if (targetPara) {
-      targetPara.classList.add('highlight');
-      targetPara.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Find and highlight target paragraphs (a key point can span a range, e.g. "3-5")
+    const targets = findKeypointParagraphs(elements.articleText, paragraphNumber);
+    if (targets.length > 0) {
+      targets.forEach((el) => el.classList.add('highlight'));
+      targets[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
 
       // Remove highlight after 3 seconds
       setTimeout(() => {
-        targetPara.classList.remove('highlight');
+        targets.forEach((el) => el.classList.remove('highlight'));
       }, 3000);
     }
   } else {

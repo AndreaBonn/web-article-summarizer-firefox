@@ -4,6 +4,7 @@ import {
   isSafeIframeUrl,
   renderArticleTextHtml,
   renderKeypointsTabHtml,
+  findKeypointParagraphs,
   renderReadingCitationsHtml,
 } from '../../src/pages/reading-mode/render.js';
 
@@ -140,6 +141,38 @@ describe('renderReadingCitationsHtml', () => {
     expect(host.querySelector('.citation-author-badge b')).toBeNull();
     expect(host.querySelector('.citation-source s')).toBeNull();
     expect(host.querySelector('.citation-text').textContent).toBe('"<img src=x>"');
+  });
+});
+
+describe('renderReadingCitationsHtml id escaping (F13)', () => {
+  it('test_renderReadingCitationsHtml_htmlInCitationId_isEscaped', () => {
+    const host = toDom(renderReadingCitationsHtml([cit({ id: '<img src=x onerror=alert(1)>' })]));
+    expect(host.querySelector('img')).toBeNull();
+    expect(host.querySelector('.citation-number').textContent).toBe(
+      '#<img src=x onerror=alert(1)>',
+    );
+  });
+});
+
+describe('findKeypointParagraphs (F18)', () => {
+  const container = () =>
+    toDom(renderArticleTextHtml({ title: 'T', content: 'a\n\nb\n\nc\n\nd\n\ne\n\nf' }));
+  const numbers = (els) => els.map((el) => el.dataset.paragraph);
+
+  it('test_findKeypointParagraphs_range_returnsEveryParagraphInRange', () => {
+    expect(numbers(findKeypointParagraphs(container(), '3-5'))).toEqual(['3', '4', '5']);
+  });
+  it('test_findKeypointParagraphs_singleNumberOrString_returnsThatParagraph', () => {
+    expect(numbers(findKeypointParagraphs(container(), 2))).toEqual(['2']);
+    expect(numbers(findKeypointParagraphs(container(), '6'))).toEqual(['6']);
+  });
+  it('test_findKeypointParagraphs_absurdUpperBound_stopsAtLastParagraph', () => {
+    expect(numbers(findKeypointParagraphs(container(), '5-99999999999'))).toEqual(['5', '6']);
+  });
+  it('test_findKeypointParagraphs_unknownOrGarbageRef_returnsEmpty', () => {
+    expect(findKeypointParagraphs(container(), '40')).toEqual([]);
+    expect(findKeypointParagraphs(container(), 'abc')).toEqual([]);
+    expect(findKeypointParagraphs(container(), undefined)).toEqual([]);
   });
 });
 

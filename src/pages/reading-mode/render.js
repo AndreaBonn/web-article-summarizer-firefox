@@ -2,6 +2,7 @@
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { Logger } from '../../utils/core/logger.js';
 import { CitationFormatter } from '../../utils/ai/citation-formatter.js';
+import { parseParagraphRange } from '../../content/text-match.js';
 
 const MAX_QUOTE_CHARS = 300;
 const SAFE_PROTOCOLS = ['https:', 'http:'];
@@ -48,7 +49,7 @@ export function renderReadingCitationsHtml(citations) {
           <div class="citation-item">
             <div class="citation-header">
               <span class="citation-icon">${typeIcon}</span>
-              <div class="citation-number">#${citation.id || index + 1}</div>
+              <div class="citation-number">#${HtmlSanitizer.escape(String(citation.id || index + 1))}</div>
               ${author ? `<span class="citation-author-badge">${HtmlSanitizer.escape(author)}</span>` : ''}
               ${paragraph ? `<div class="citation-ref">§${HtmlSanitizer.escape(String(paragraph))}</div>` : ''}
             </div>
@@ -104,6 +105,28 @@ export function isSafeIframeUrl(url) {
 export function computeSyncedScrollTop(source, target) {
   const scrollPercentage = source.scrollTop / (source.scrollHeight - source.clientHeight);
   return scrollPercentage * (target.scrollHeight - target.clientHeight);
+}
+
+/**
+ * Paragraph elements a key point refers to: a single number or a "start-end" range.
+ * The range comes from LLM output, so it is capped at the last paragraph present.
+ * @param {ParentNode} container - Element holding the [data-paragraph] paragraphs
+ * @param {string|number} paragraphRef - e.g. 3 or "3-5"
+ * @returns {Element[]} Matching paragraphs in ascending order
+ */
+export function findKeypointParagraphs(container, paragraphRef) {
+  const byNumber = new Map();
+  container.querySelectorAll('[data-paragraph]').forEach((el) => {
+    byNumber.set(Number(el.dataset.paragraph), el);
+  });
+  const last = Math.max(0, ...byNumber.keys());
+
+  const found = [];
+  for (const n of parseParagraphRange(paragraphRef)) {
+    if (n > last) break;
+    if (byNumber.has(n)) found.push(byNumber.get(n));
+  }
+  return found;
 }
 
 export function renderKeypointsTabHtml(keyPoints) {
