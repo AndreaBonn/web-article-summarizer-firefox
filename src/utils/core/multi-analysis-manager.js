@@ -95,7 +95,7 @@ Rispondi SOLO con il JSON.`;
       return {
         related: result.related !== false,
         reason: result.reason || null,
-        confidence: result.confidence || 0.5,
+        confidence: result.confidence ?? 0.5,
       };
     } catch (error) {
       Logger.error('Errore parsing correlazione:', error);

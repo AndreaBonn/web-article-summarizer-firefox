@@ -163,6 +163,16 @@ describe('MultiAnalysisManager', () => {
       expect(result.confidence).toBe(0.7);
     });
 
+    it('mantiene confidence 0 senza rimpiazzarla col default', async () => {
+      APIClient.generateCompletion.mockResolvedValue(
+        '{"related": false, "confidence": 0, "reason": "Nessuna relazione"}',
+      );
+
+      const result = await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq', 'key');
+
+      expect(result.confidence).toBe(0);
+    });
+
     it('fallback related=true se reason mancante nella risposta', async () => {
       APIClient.generateCompletion.mockResolvedValue('{"related": true}');
 
