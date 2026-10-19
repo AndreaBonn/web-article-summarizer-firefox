@@ -8,22 +8,22 @@ import { StorageManager } from '../../utils/storage/storage-manager.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { HistoryManager } from '../../utils/storage/history-manager.js';
 import { ContentClassifier } from '../../utils/ai/content-classifier.js';
-import { CitationExtractor } from '../../utils/ai/citation-extractor.js';
 import { ErrorHandler, UNSUPPORTED_PAGE_MARKER } from '../../utils/core/error-handler.js';
 import { Toast } from '../../utils/core/toast.js';
-import {
-  isSupportedArticleUrl,
-  getContentTypeLabel,
-  getProviderLabel,
-} from '../../utils/core/display-labels.js';
+import { isSupportedArticleUrl, getContentTypeLabel } from '../../utils/core/display-labels.js';
 import { Logger } from '../../utils/core/logger.js';
 import { unwrapServiceResponse } from '../../utils/core/service-response.js';
 import { addTTSButtons } from './voice.js';
 import {
-  formatQAText,
-  formatTranslationText,
-  formatSummaryWithKeyPointsText,
-} from '../../shared/export-formatters.js';
+  toExtractionError,
+  truncateContent,
+  findSavedContentType,
+  resolveContentTypeOutcome,
+  formatArticleMeta,
+  renderKeypointsHtml,
+  buildHistoryMetadata,
+  buildCopyText,
+} from './analysis-format.js';
 
 export async function analyzeArticle() {
   showState('loading');
@@ -48,16 +48,7 @@ export async function analyzeArticle() {
         action: 'extractArticle',
       });
     } catch (msgError) {
-      if (
-        msgError.message?.includes('Could not establish connection') ||
-        msgError.message?.includes('Receiving end does not exist')
-      ) {
-        throw new Error(
-          'Impossibile comunicare con la pagina. Ricarica la pagina (F5) e riprova.',
-          { cause: msgError },
-        );
-      }
-      throw msgError;
+      throw toExtractionError(msgError);
     }
 
     if (!response || !response.success) {
@@ -68,24 +59,26 @@ export async function analyzeArticle() {
     state.currentArticle.url = tab.url;
 
     // Limit article content size to prevent excessive resource usage
-    const MAX_CONTENT_LENGTH = 50000;
-    if (state.currentArticle.content && state.currentArticle.content.length > MAX_CONTENT_LENGTH) {
-      state.currentArticle.content = state.currentArticle.content.substring(0, MAX_CONTENT_LENGTH);
+    const fullContent = state.currentArticle.content;
+    const truncatedContent = truncateContent(fullContent);
+    if (truncatedContent !== fullContent) {
+      state.currentArticle.content = truncatedContent;
     }
 
     // Display article info
     elements.articleTitle.textContent = state.currentArticle.title;
-    elements.articleStats.textContent = formatArticleMeta();
+    elements.articleStats.textContent = formatArticleMeta(
+      state.currentArticle,
+      state.currentResults,
+      elements.providerSelect.value,
+    );
 
     // Check if the article has already been analyzed before
     const history = await HistoryManager.getHistory();
-    const previousAnalysis = history.find(
-      (entry) => entry.article.url === state.currentArticle.url,
-    );
+    const savedContentType = findSavedContentType(history, state.currentArticle.url);
 
-    if (previousAnalysis && previousAnalysis.metadata && previousAnalysis.metadata.contentType) {
+    if (savedContentType) {
       // Article already analyzed with a saved contentType
-      const savedContentType = previousAnalysis.metadata.contentType;
 
       // Set the saved article type in selects
       state.selectedContentType = savedContentType;
@@ -191,13 +184,9 @@ export async function generateSummary() {
     // STEP 4: Save
     state.progressTracker.setStep('save');
 
-    if (state.selectedContentType === 'auto') {
-      state.currentResults.detectedContentType = finalContentType;
-      state.currentResults.contentTypeMethod = 'auto';
-    } else {
-      state.currentResults.detectedContentType = state.selectedContentType;
-      state.currentResults.contentTypeMethod = 'manual';
-    }
+    const outcome = resolveContentTypeOutcome(state.selectedContentType, finalContentType);
+    state.currentResults.detectedContentType = outcome.detectedContentType;
+    state.currentResults.contentTypeMethod = outcome.contentTypeMethod;
 
     await new Promise((resolve) => setTimeout(resolve, 200));
 
@@ -209,18 +198,6 @@ export async function generateSummary() {
   }
 }
 
-function formatArticleMeta() {
-  const article = state.currentArticle;
-  const parts = [
-    `${article.wordCount} ${I18n.t('article.words')}`,
-    `${article.readingTimeMinutes} ${I18n.t('article.readingTime')}`,
-  ];
-  const type = state.currentResults?.detectedContentType;
-  if (type && type !== 'auto') parts.push(getContentTypeLabel(type, I18n.currentLanguage));
-  if (state.currentResults) parts.push(getProviderLabel(elements.providerSelect.value));
-  return parts.join(' · ');
-}
-
 export async function displayResults() {
   // Display summary (sanitized AI content)
   let summaryHtml = `<p>${HtmlSanitizer.escape(state.currentResults.summary)}</p>`;
@@ -229,24 +206,15 @@ export async function displayResults() {
       `<p class="cache-badge">${HtmlSanitizer.escape(I18n.t('results.fromCache'))}</p>` +
       summaryHtml;
   }
-  elements.articleStats.textContent = formatArticleMeta();
+  elements.articleStats.textContent = formatArticleMeta(
+    state.currentArticle,
+    state.currentResults,
+    elements.providerSelect.value,
+  );
   elements.summaryContent.innerHTML = summaryHtml;
 
   // Display key points
-  let keypointsHtml = `<p class="keypoints-hint">${HtmlSanitizer.escape(I18n.t('keypoints.clickHint'))}</p>`;
-  const showLabel = HtmlSanitizer.escape(I18n.t('keypoints.showInArticle'));
-  state.currentResults.keyPoints.forEach((point, index) => {
-    const paragraphs = HtmlSanitizer.escape(String(point.paragraphs));
-    keypointsHtml += `
-      <div class="keypoint" role="button" tabindex="0" data-paragraph="${paragraphs}">
-        <div class="keypoint-header">
-          <div class="keypoint-title">${index + 1}. ${HtmlSanitizer.escape(point.title)}</div>
-          <div class="keypoint-ref" title="§${paragraphs}">${showLabel}</div>
-        </div>
-        <div class="keypoint-desc">${HtmlSanitizer.escape(point.description)}</div>
-      </div>
-    `;
-  });
+  const keypointsHtml = renderKeypointsHtml(state.currentResults.keyPoints);
   elements.keypointsContent.innerHTML = keypointsHtml;
 
   // Add click handler for highlight
@@ -276,13 +244,12 @@ export async function displayResults() {
 
   // Save to history
   try {
-    const metadata = {
-      provider: elements.providerSelect.value,
-      language: state.selectedLanguage,
-      contentType: state.currentResults.detectedContentType || state.selectedContentType,
-      contentTypeMethod: state.currentResults.contentTypeMethod || 'manual',
-      fromCache: state.currentResults.fromCache || false,
-    };
+    const metadata = buildHistoryMetadata({
+      providerValue: elements.providerSelect.value,
+      selectedLanguage: state.selectedLanguage,
+      selectedContentType: state.selectedContentType,
+      results: state.currentResults,
+    });
 
     await HistoryManager.saveSummary(
       state.currentArticle,
@@ -330,38 +297,14 @@ export function switchTab(tabName) {
 export async function copyToClipboard() {
   if (!state.currentResults) return;
 
-  let text = formatSummaryWithKeyPointsText(
-    state.currentResults.summary,
-    state.currentResults.keyPoints,
-  );
-
-  // Aggiungi traduzione se presente
-  if (translationState.value) {
-    text += `\n`;
-    text += formatTranslationText(translationState.value);
-  }
-
-  // Aggiungi Q&A se presenti
-  if (state.currentQA && state.currentQA.length > 0) {
-    text += `\n`;
-    text += formatQAText(state.currentQA);
-  }
-
-  // Aggiungi citazioni se presenti
-  if (
-    citationsState.value &&
-    citationsState.value.citations &&
-    citationsState.value.citations.length > 0
-  ) {
-    text += `\n${'='.repeat(50)}\n\n`;
-    text += `CITAZIONI E BIBLIOGRAFIA:\n\n`;
-    const style = document.getElementById('citationStyleSelect')?.value || 'apa';
-    text += CitationExtractor.generateBibliography(
-      state.currentArticle,
-      citationsState.value.citations,
-      style,
-    );
-  }
+  const text = buildCopyText({
+    results: state.currentResults,
+    translation: translationState.value,
+    qa: state.currentQA,
+    citations: citationsState.value,
+    article: state.currentArticle,
+    citationStyle: document.getElementById('citationStyleSelect')?.value,
+  });
 
   try {
     await navigator.clipboard.writeText(text);
