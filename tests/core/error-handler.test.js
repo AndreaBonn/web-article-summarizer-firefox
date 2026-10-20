@@ -22,11 +22,6 @@ global.browser = {
   },
 };
 
-// Mock Modal (not available in test env)
-vi.mock('@utils/core/modal.js', () => ({
-  Modal: { error: vi.fn().mockResolvedValue(undefined) },
-}));
-
 import { ErrorHandler } from '@utils/core/error-handler.js';
 
 describe('ErrorHandler', () => {
@@ -257,68 +252,6 @@ describe('ErrorHandler', () => {
 
       // Either 'unknown' or a valid url — the catch branch returns 'unknown'
       expect(store.errorLogs[0].url).toBeTypeOf('string');
-    });
-  });
-
-  describe('handleAsync', () => {
-    it('returns resolved value when async function succeeds', async () => {
-      const result = await ErrorHandler.handleAsync(async () => 42, 'ctx');
-
-      expect(result).toBe(42);
-    });
-
-    it('re-throws error after showing it when async function throws', async () => {
-      const error = new Error('async failure');
-
-      await expect(
-        ErrorHandler.handleAsync(async () => {
-          throw error;
-        }, 'ctx'),
-      ).rejects.toThrow('async failure');
-    });
-
-    it('calls showError with the thrown error and context', async () => {
-      const showErrorSpy = vi.spyOn(ErrorHandler, 'showError').mockResolvedValue('handled');
-      const error = new Error('boom');
-
-      try {
-        await ErrorHandler.handleAsync(async () => {
-          throw error;
-        }, 'myCtx');
-      } catch {
-        // expected
-      }
-
-      expect(showErrorSpy).toHaveBeenCalledWith(error, 'myCtx');
-      showErrorSpy.mockRestore();
-    });
-
-    it('works with empty context string', async () => {
-      const result = await ErrorHandler.handleAsync(async () => 'ok');
-
-      expect(result).toBe('ok');
-    });
-  });
-
-  describe('showError', () => {
-    it('returns user-friendly error message', async () => {
-      const msg = await ErrorHandler.showError(new Error('Network down'), '');
-
-      expect(msg).toContain('connessione');
-    });
-
-    it('returns user-friendly message regardless of context (context used internally)', async () => {
-      // showError returns errorMessage (line 25), not fullMessage — context used for modal/log only
-      const msg = await ErrorHandler.showError(new Error('No article found'), 'MyContext');
-
-      expect(msg).toContain('Nessun articolo rilevato');
-    });
-
-    it('returns same message with and without context', async () => {
-      const msgWithCtx = await ErrorHandler.showError(new Error('No article found'), 'ctx');
-      const msgNoCtx = await ErrorHandler.showError(new Error('No article found'), '');
-
-      expect(msgWithCtx).toBe(msgNoCtx);
     });
   });
 

@@ -1,5 +1,4 @@
 // Error Handler - Gestione centralizzata degli errori con feedback utente
-import { Modal } from './modal.js';
 import { Logger } from './logger.js';
 import { I18n } from '../i18n/i18n.js';
 
@@ -54,26 +53,6 @@ function findMappedMessage(message) {
 }
 
 export class ErrorHandler {
-  /**
-   * Mostra un errore all'utente con feedback visivo
-   */
-  static async showError(error, context = '') {
-    const errorMessage = this.getErrorMessage(error);
-    const fullMessage = context ? `${context}: ${errorMessage}` : errorMessage;
-
-    Logger.error('Errore:', error);
-
-    // Mostra notifica visiva all'utente (Modal richiede DOM — non disponibile nel service worker)
-    if (typeof document !== 'undefined' && document.getElementById('customModal')) {
-      await Modal.error(fullMessage, I18n.t('modal.errorTitle'));
-    }
-
-    // Log per telemetria
-    await this.logError(error, context);
-
-    return errorMessage;
-  }
-
   /**
    * Error kind that decides which recovery action the UI offers.
    * @returns {'missing_key'|'unsupported_page'|'page_unreachable'|'generic'}
@@ -211,19 +190,6 @@ export class ErrorHandler {
       await browser.storage.local.set({ errorLogs: logs });
     } catch (logError) {
       Logger.error('Impossibile salvare log errore:', logError);
-    }
-  }
-
-  /**
-   * Wrapper per try-catch con gestione automatica errori.
-   * Mostra l'errore all'utente e lo ri-propaga al chiamante.
-   */
-  static async handleAsync(asyncFn, context = '') {
-    try {
-      return await asyncFn();
-    } catch (error) {
-      await this.showError(error, context);
-      throw error;
     }
   }
 }

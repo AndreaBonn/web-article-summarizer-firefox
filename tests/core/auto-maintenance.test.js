@@ -174,25 +174,6 @@ describe('AutoMaintenance', () => {
     });
   });
 
-  describe('getLastMaintenanceStats()', () => {
-    it('test_getLastMaintenanceStats_noData_returnsNulls', async () => {
-      const stats = await maintenance.getLastMaintenanceStats();
-      expect(stats.lastRun).toBeUndefined();
-      expect(stats.nextRun).toBeNull();
-    });
-
-    it('test_getLastMaintenanceStats_withData_calculatesNextRun', async () => {
-      const now = Date.now();
-      store.lastMaintenanceRun = now;
-      store.lastMaintenanceResults = { cacheExpired: 3 };
-
-      const stats = await maintenance.getLastMaintenanceStats();
-      expect(stats.lastRun).toBe(now);
-      expect(stats.nextRun).toBe(now + 24 * 60 * 60 * 1000);
-      expect(stats.results.cacheExpired).toBe(3);
-    });
-  });
-
   describe('scheduleMaintenance()', () => {
     it('test_scheduleMaintenance_createsAlarm', async () => {
       await maintenance.scheduleMaintenance();

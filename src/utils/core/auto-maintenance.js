@@ -106,7 +106,6 @@ export class AutoMaintenance {
       // Salva timestamp ultima manutenzione
       await browser.storage.local.set({
         [this.lastMaintenanceKey]: Date.now(),
-        lastMaintenanceResults: results,
       });
 
       Logger.info('Manutenzione completata:', results);
@@ -191,35 +190,5 @@ export class AutoMaintenance {
     } catch (error) {
       Logger.error('Manutenzione automatica fallita:', error);
     }
-  }
-
-  /**
-   * Ottieni statistiche ultima manutenzione
-   */
-  async getLastMaintenanceStats() {
-    try {
-      const result = await browser.storage.local.get([
-        'lastMaintenanceResults',
-        this.lastMaintenanceKey,
-      ]);
-
-      return {
-        lastRun: result[this.lastMaintenanceKey],
-        results: result.lastMaintenanceResults,
-        nextRun: result[this.lastMaintenanceKey]
-          ? result[this.lastMaintenanceKey] + this.maintenanceInterval
-          : null,
-      };
-    } catch (error) {
-      Logger.error('Errore lettura statistiche manutenzione:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Forza esecuzione manutenzione
-   */
-  async forceRun() {
-    return await this.runMaintenance();
   }
 }
