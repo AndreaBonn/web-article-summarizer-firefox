@@ -2,7 +2,6 @@
 import { Logger } from '../../utils/core/logger.js';
 import { StorageManager } from '../../utils/storage/storage-manager.js';
 import { I18n } from '../../utils/i18n/i18n.js';
-import { APIResilience } from '../../utils/ai/api-resilience.js';
 import { CacheManager } from '../../utils/storage/cache-manager.js';
 import { AutoMaintenance } from '../../utils/core/auto-maintenance.js';
 import { Modal } from '../../utils/core/modal.js';
@@ -91,7 +90,6 @@ async function loadSettings() {
 
     document.getElementById('enableCache').checked = settings.enableCache !== false;
     document.getElementById('cacheTTL').value = settings.cacheTTL || 7;
-    document.getElementById('enableFallback').checked = settings.enableFallback || false;
     document.getElementById('autoCleanup').checked = settings.autoCleanup !== false;
   } catch (error) {
     Logger.error('Errore caricamento impostazioni:', error);
@@ -110,7 +108,7 @@ function bindAutosave() {
       queueSave(savePreferences),
     );
   });
-  ['enableCache', 'cacheTTL', 'enableFallback', 'autoCleanup'].forEach((id) => {
+  ['enableCache', 'cacheTTL', 'autoCleanup'].forEach((id) => {
     eventCleanup.addEventListener(document.getElementById(id), 'change', () =>
       queueSave(savePerformanceSettings),
     );
@@ -137,7 +135,6 @@ async function savePerformanceSettings() {
     const settings = applyPerformanceSettings(await StorageManager.getSettings(), {
       enableCache: document.getElementById('enableCache'),
       cacheTTL: document.getElementById('cacheTTL'),
-      enableFallback: document.getElementById('enableFallback'),
       autoCleanup: document.getElementById('autoCleanup'),
     });
 
@@ -176,9 +173,6 @@ async function loadPerformanceStats() {
   try {
     const cacheStats = await new CacheManager().getStats();
     displayPerformanceStats({ cacheStats });
-
-    const apiStats = await new APIResilience().getStats();
-    displayPerformanceStats({ apiStats });
   } catch (error) {
     Logger.error('Errore nel caricare statistiche performance:', error);
   }
@@ -224,7 +218,6 @@ async function clearLogs() {
     I18n.t('settings.logs.clearTitle'),
   );
   if (confirmed) {
-    await new APIResilience().clearLogs();
     await new CacheManager().clearLogs();
     showToast(I18n.t('settings.logs.cleared'), 'success');
     await loadPerformanceStats();

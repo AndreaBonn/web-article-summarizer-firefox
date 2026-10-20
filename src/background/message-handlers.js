@@ -51,7 +51,7 @@ export async function handleGenerateSummary(article, provider, settings) {
       }
     }
 
-    // 2. Call API with retry
+    // 2. Call API
     const responseText = await APIClient.callAPI(provider, apiKey, article, settings);
 
     // 3. Parse response

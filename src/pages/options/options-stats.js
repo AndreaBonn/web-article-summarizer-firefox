@@ -44,24 +44,17 @@ export function applyPerformanceSettings(previousSettings, form) {
     // Same default the options page shows when no TTL is stored.
     settings.cacheTTL = DEFAULT_CACHE_TTL_DAYS;
   }
-  settings.enableFallback = form.enableFallback.checked;
   settings.autoCleanup = form.autoCleanup.checked;
   return settings;
 }
 
-export function formatPerformanceStats({ cacheStats, apiStats }) {
+export function formatPerformanceStats({ cacheStats }) {
   const labels = {};
   if (cacheStats) {
     labels.cacheEntries = cacheStats.validEntries;
     labels.cacheHitRate = cacheStats.hitRate + '%';
     labels.cacheSize = cacheStats.sizeMB + ' MB';
     labels.cacheSaved = cacheStats.totalHits;
-  }
-  if (apiStats) {
-    labels.apiSuccessRate = apiStats.successRate + '%';
-    labels.apiRetries = apiStats.retryCount;
-    labels.apiFallbacks = apiStats.fallbackCount;
-    labels.apiFailures = apiStats.failureCount;
   }
   return labels;
 }

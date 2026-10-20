@@ -70,14 +70,12 @@ describe('options statistics and preferences', () => {
       applyPerformanceSettings(settings, {
         enableCache: { checked: false },
         cacheTTL: { value: '14' },
-        enableFallback: { checked: true },
         autoCleanup: { checked: true },
       }),
     ).toEqual({
       selectedProvider: 'groq',
       cacheTTL: 14,
       enableCache: false,
-      enableFallback: true,
       autoCleanup: true,
     });
     expect(settings).toEqual({ selectedProvider: 'groq', cacheTTL: 7 });
@@ -89,7 +87,6 @@ describe('options statistics and preferences', () => {
       const form = {
         enableCache: { checked: true },
         cacheTTL: { value },
-        enableFallback: { checked: true },
         autoCleanup: { checked: true },
       };
       expect(applyPerformanceSettings({ cacheTTL: 14 }, form).cacheTTL).toBe(14);
@@ -101,19 +98,14 @@ describe('options statistics and preferences', () => {
     expect(
       formatPerformanceStats({
         cacheStats: { validEntries: 8, hitRate: 75, sizeMB: 2, totalHits: 6 },
-        apiStats: { successRate: 90, retryCount: 2, fallbackCount: 1, failureCount: 3 },
       }),
     ).toEqual({
       cacheEntries: 8,
       cacheHitRate: '75%',
       cacheSize: '2 MB',
       cacheSaved: 6,
-      apiSuccessRate: '90%',
-      apiRetries: 2,
-      apiFallbacks: 1,
-      apiFailures: 3,
     });
-    expect(formatPerformanceStats({ cacheStats: null, apiStats: null })).toEqual({});
+    expect(formatPerformanceStats({ cacheStats: null })).toEqual({});
   });
 
   it('serializes successful tasks and returns each result', async () => {

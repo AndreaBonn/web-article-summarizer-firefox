@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock delle dipendenze esterne che richiedono fetch o storage Chrome
-vi.mock('@utils/ai/api-resilience.js', () => ({ APIResilience: class {} }));
 vi.mock('@utils/storage/cache-manager.js', () => ({ CacheManager: class {} }));
 vi.mock('@utils/ai/prompt-registry.js', () => ({
   PromptRegistry: {

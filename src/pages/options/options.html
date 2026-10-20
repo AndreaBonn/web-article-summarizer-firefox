@@ -233,13 +233,11 @@
           </div>
         </section>
 
-        <!-- Advanced: cache, reliability, maintenance -->
+        <!-- Advanced: cache, maintenance -->
         <details class="card advanced">
-          <summary data-i18n="settings.advanced">
-            Avanzate: cache, affidabilità, manutenzione
-          </summary>
+          <summary data-i18n="settings.advanced">Avanzate: cache e manutenzione</summary>
 
-          <h2 data-i18n="settings.performance">Performance e Affidabilità</h2>
+          <h2 data-i18n="settings.performance">Performance</h2>
 
           <div class="setting-group">
             <label class="checkbox-label">
@@ -262,19 +260,6 @@
               <option value="14" data-i18n="settings.perf.cacheTTL.14">14 giorni</option>
               <option value="30" data-i18n="settings.perf.cacheTTL.30">30 giorni</option>
             </select>
-          </div>
-
-          <div class="setting-group">
-            <label class="checkbox-label">
-              <input type="checkbox" id="enableFallback" />
-              <span data-i18n="settings.perf.enableFallback"
-                >Abilita Fallback Automatico tra Provider</span
-              >
-            </label>
-            <p class="setting-desc" data-i18n="settings.perf.fallbackDesc">
-              Se il provider selezionato fallisce, prova automaticamente con un altro provider
-              configurato. Nota: Ogni provider usa il proprio prompt ottimizzato.
-            </p>
           </div>
 
           <div class="setting-group">
@@ -309,28 +294,6 @@
                 <div class="stat-label" data-i18n="settings.perf.apiSaved">
                   Chiamate API Risparmiate
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="stats-section">
-            <h3 data-i18n="settings.perf.apiReliability">Affidabilità API</h3>
-            <div class="stats-grid">
-              <div class="stat-item">
-                <div class="stat-value" id="apiSuccessRate">-</div>
-                <div class="stat-label" data-i18n="settings.perf.successRate">Success Rate</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-value" id="apiRetries">-</div>
-                <div class="stat-label" data-i18n="settings.perf.retries">Retry Eseguiti</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-value" id="apiFallbacks">-</div>
-                <div class="stat-label" data-i18n="settings.perf.fallbacks">Fallback Usati</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-value" id="apiFailures">-</div>
-                <div class="stat-label" data-i18n="settings.perf.failures">Fallimenti</div>
               </div>
             </div>
           </div>
