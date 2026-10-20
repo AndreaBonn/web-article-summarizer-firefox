@@ -22,6 +22,10 @@ function fakeBrowser() {
       onMessage: { addListener: vi.fn() },
     },
     alarms: { onAlarm: { addListener: vi.fn() } },
+    storage: {
+      local: { get: vi.fn().mockResolvedValue({}) },
+      onChanged: { addListener: vi.fn() },
+    },
   };
 }
 
@@ -42,6 +46,8 @@ describe('service worker wiring', () => {
     const listener = browser.runtime.onMessage.addListener.mock.calls[0][0];
     expect(listener({ action: 'unknown' }, { id: 'extension-id' }, vi.fn())).toBe(false);
     expect(browser.alarms.onAlarm.addListener).toHaveBeenCalledOnce();
+    expect(browser.storage.onChanged.addListener).toHaveBeenCalledOnce();
+    expect(browser.storage.local.get).toHaveBeenCalledWith(['uiLanguage']);
     const alarm = { name: 'maintenance' };
     browser.alarms.onAlarm.addListener.mock.calls[0][0](alarm);
     expect(maintenance.handleAlarm).toHaveBeenCalledWith(alarm);

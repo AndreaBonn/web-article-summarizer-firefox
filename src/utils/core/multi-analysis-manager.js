@@ -11,6 +11,7 @@ import {
   generateComparison,
   generateQA,
 } from './multi-analysis-generators.js';
+import { I18n } from '../i18n/i18n.js';
 
 export class MultiAnalysisManager {
   static async checkArticlesRelation(articles) {
@@ -109,17 +110,17 @@ Rispondi SOLO con il JSON.`;
     result.metadata = { provider };
 
     if (options.globalSummary) {
-      progressCallback('Generazione riassunto globale...', 30);
+      progressCallback(I18n.t('multi.progressGlobalSummary'), 30);
       result.globalSummary = await generateGlobalSummary(articles, provider);
     }
 
     if (options.comparison) {
-      progressCallback('Confronto idee tra articoli...', 55);
+      progressCallback(I18n.t('multi.progressComparison'), 55);
       result.comparison = await generateComparison(articles, provider);
     }
 
     if (options.qa) {
-      progressCallback('Generazione Q&A...', 75);
+      progressCallback(I18n.t('multi.progressQA'), 75);
       const qaResult = await generateQA(articles, provider);
       result.qa = {
         interactive: true,
@@ -133,7 +134,7 @@ Rispondi SOLO con il JSON.`;
       };
     }
 
-    progressCallback('Completamento...', 95);
+    progressCallback(I18n.t('multi.progressFinishing'), 95);
 
     return result;
   }

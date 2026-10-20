@@ -144,7 +144,7 @@ describe('Modal', () => {
       await p;
 
       expect(icon.textContent).toBe('✅');
-      expect(title.textContent).toBe('Successo');
+      expect(title.textContent).toBe('modal.successTitle');
     });
 
     it('test_error_usesErrorIcon', async () => {
@@ -154,7 +154,7 @@ describe('Modal', () => {
       await p;
 
       expect(icon.textContent).toBe('❌');
-      expect(title.textContent).toBe('Errore');
+      expect(title.textContent).toBe('modal.errorTitle');
     });
 
     it('test_warning_usesWarningIcon', async () => {
@@ -164,7 +164,7 @@ describe('Modal', () => {
       await p;
 
       expect(icon.textContent).toBe('⚠️');
-      expect(title.textContent).toBe('Attenzione');
+      expect(title.textContent).toBe('modal.warningTitle');
     });
   });
 });

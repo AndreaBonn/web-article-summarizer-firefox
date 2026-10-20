@@ -1,6 +1,7 @@
 // Error Handler - Gestione centralizzata degli errori con feedback utente
 import { Modal } from './modal.js';
 import { Logger } from './logger.js';
+import { I18n } from '../i18n/i18n.js';
 
 const MAX_ERROR_LOGS = 50;
 export const UNSUPPORTED_PAGE_MARKER = '[UNSUPPORTED_PAGE]';
@@ -17,7 +18,7 @@ export class ErrorHandler {
 
     // Mostra notifica visiva all'utente (Modal richiede DOM — non disponibile nel service worker)
     if (typeof document !== 'undefined' && document.getElementById('customModal')) {
-      await Modal.error(fullMessage, 'Errore');
+      await Modal.error(fullMessage, I18n.t('modal.errorTitle'));
     }
 
     // Log per telemetria
@@ -52,76 +53,64 @@ export class ErrorHandler {
 
     // Errori di estrazione articolo
     if (message.includes('No article found')) {
-      return 'Nessun articolo rilevato in questa pagina. Prova con un articolo di blog o news.';
+      return I18n.t('error.noArticle');
     }
     if (message.includes('Article too short')) {
-      return 'Articolo troppo breve per essere riassunto (minimo 200 parole).';
+      return I18n.t('error.tooShort');
     }
 
     // Errori API
     if (message.includes('API key non configurata')) {
-      return 'Manca la chiave del servizio AI scelto. Si configura una volta sola.';
+      return I18n.t('errorMsg.missingKey');
     }
     if (message.includes('401') || message.includes('Unauthorized')) {
-      return 'API key non valida. Verifica la configurazione nelle impostazioni.';
+      return I18n.t('error.invalidKey');
     }
     const rateLimitMatch = message.match(/\[RATE_LIMIT:(\w+)]/);
     if (rateLimitMatch) {
-      const provider = rateLimitMatch[1];
-      return (
-        `Rate limit raggiunto per ${provider}. ` +
-        'Non è un problema del sistema: la tua chiave API ha esaurito le richieste disponibili. ' +
-        'Puoi cambiare chiave API o passare a un altro provider nelle impostazioni (⚙️).'
-      );
+      return I18n.tf('errorMsg.rateLimitProvider', { provider: rateLimitMatch[1] });
     }
     if (message.includes('429') || message.includes('Too Many Requests')) {
-      return (
-        'Rate limit raggiunto. La tua chiave API ha esaurito le richieste disponibili. ' +
-        'Puoi cambiare chiave API o passare a un altro provider nelle impostazioni (⚙️).'
-      );
+      return I18n.t('errorMsg.rateLimit');
     }
     if (message.includes('403') || message.includes('Forbidden')) {
-      return 'Accesso negato. Verifica i permessi della tua API key.';
+      return I18n.t('errorMsg.forbidden');
     }
     if (message.includes('500') || message.includes('Internal Server Error')) {
-      return 'Errore del server API. Riprova tra qualche minuto.';
+      return I18n.t('errorMsg.serverError');
     }
     if (message.includes('503') || message.includes('Service Unavailable')) {
-      return 'Servizio temporaneamente non disponibile. Riprova più tardi.';
+      return I18n.t('errorMsg.unavailable');
     }
 
     // Errori di rete
     if (message.includes('Network') || message.includes('fetch')) {
-      return 'Errore di connessione. Verifica la tua connessione internet.';
+      return I18n.t('error.network');
     }
     if (message.toLowerCase().includes('timeout')) {
-      return 'Richiesta scaduta. Il server ha impiegato troppo tempo a rispondere.';
+      return I18n.t('errorMsg.timeout');
     }
 
     // Pagine che lo script di estrazione non può leggere
     if (message.includes(UNSUPPORTED_PAGE_MARKER)) {
-      return (
-        "Questa pagina non si può riassumere: l'estensione legge gli articoli dei siti https. " +
-        'Le pagine di Firefox (about:) e i siti http non sono supportati. ' +
-        'Per un documento PDF usa «Analisi PDF».'
-      );
+      return I18n.t('errorMsg.unsupportedPage');
     }
     if (
       message.includes('Could not establish connection') ||
       message.includes('Receiving end does not exist') ||
       message.includes('Impossibile comunicare con la pagina')
     ) {
-      return 'Impossibile comunicare con la pagina. Ricarica la pagina (F5) e riprova.';
+      return I18n.t('errorMsg.pageUnreachable');
     }
 
     // Errori di cache
     if (message.includes('QUOTA_BYTES')) {
-      return 'Spazio di archiviazione esaurito. Pulisci la cache nelle impostazioni.';
+      return I18n.t('errorMsg.storageFull');
     }
 
     // Errore non riconosciuto — messaggio generico per l'utente
     Logger.error('Errore non classificato:', message);
-    return 'Si è verificato un errore imprevisto. Riprova.';
+    return I18n.t('errorMsg.unexpected');
   }
 
   /**

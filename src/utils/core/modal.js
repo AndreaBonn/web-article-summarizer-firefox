@@ -62,30 +62,30 @@ export const Modal = {
     });
   },
 
-  alert(message, title = 'AI Article Summarizer', icon = '\u2139\uFE0F') {
+  alert(message, title = I18n.t('modal.defaultTitle'), icon = '\u2139\uFE0F') {
     return this.show({ type: 'alert', title, message, icon, confirmText: 'OK' });
   },
 
-  confirm(message, title = 'Conferma', icon = '\u2753') {
+  confirm(message, title = I18n.t('modal.confirmTitle'), icon = '\u2753') {
     return this.show({
       type: 'confirm',
       title,
       message,
       icon,
       confirmText: 'OK',
-      cancelText: 'Annulla',
+      cancelText: I18n.t('modal.cancel'),
     });
   },
 
-  success(message, title = 'Successo') {
+  success(message, title = I18n.t('modal.successTitle')) {
     return this.show({ type: 'alert', title, message, icon: '\u2705', confirmText: 'OK' });
   },
 
-  error(message, title = 'Errore') {
+  error(message, title = I18n.t('modal.errorTitle')) {
     return this.show({ type: 'alert', title, message, icon: '\u274C', confirmText: 'OK' });
   },
 
-  warning(message, title = 'Attenzione') {
+  warning(message, title = I18n.t('modal.warningTitle')) {
     return this.show({ type: 'alert', title, message, icon: '\u26A0\uFE0F', confirmText: 'OK' });
   },
 };

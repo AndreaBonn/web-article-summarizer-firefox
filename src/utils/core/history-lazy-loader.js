@@ -116,7 +116,7 @@ export class HistoryLazyLoader {
         <div class="history-item-actions">
           <button class="btn-favorite ${entry.favorite ? 'active' : ''}"
                   data-id="${this.escapeHtml(entry.id)}"
-                  title="${entry.favorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}">
+                  title="${I18n.t(entry.favorite ? 'history.removeFavorite' : 'history.addFavorite')}">
             ${entry.favorite ? '★' : '☆'}
           </button>
           <span class="history-item-date">${HistoryManager.formatDate(entry.timestamp)}</span>
@@ -149,7 +149,7 @@ export class HistoryLazyLoader {
         const isFavorite = await this.onFavoriteToggle(entry.id);
         favoriteBtn.classList.toggle('active', isFavorite);
         favoriteBtn.textContent = isFavorite ? '★' : '☆';
-        favoriteBtn.title = isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti';
+        favoriteBtn.title = I18n.t(isFavorite ? 'history.removeFavorite' : 'history.addFavorite');
         entry.favorite = isFavorite;
       }
     });

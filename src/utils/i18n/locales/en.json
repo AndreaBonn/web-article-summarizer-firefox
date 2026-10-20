@@ -599,5 +599,22 @@
   "voice.resume": "Resume",
   "voice.selectVoice": "Choose voice",
   "voice.local": "Local",
-  "voice.remote": "Remote"
+  "voice.remote": "Remote",
+
+  "errorMsg.missingKey": "The selected AI service has no key yet. You only need to set it up once.",
+  "errorMsg.rateLimitProvider": "Rate limit reached for {provider}. This is not a problem with the extension: your API key has used up its available requests. You can change the API key or switch to another provider in the settings (⚙️).",
+  "errorMsg.rateLimit": "Rate limit reached. Your API key has used up its available requests. You can change the API key or switch to another provider in the settings (⚙️).",
+  "errorMsg.forbidden": "Access denied. Check the permissions of your API key.",
+  "errorMsg.serverError": "The API server returned an error. Try again in a few minutes.",
+  "errorMsg.unavailable": "Service temporarily unavailable. Try again later.",
+  "errorMsg.timeout": "Request timed out. The server took too long to respond.",
+  "errorMsg.unsupportedPage": "This page cannot be summarized: the extension reads articles on https sites. Firefox pages (about:) and http sites are not supported. For a PDF document use \"PDF Analysis\".",
+  "errorMsg.pageUnreachable": "Cannot reach the page. Reload it (F5) and try again.",
+  "errorMsg.storageFull": "Storage is full. Clear the cache in the settings.",
+  "errorMsg.unexpected": "An unexpected error occurred. Try again.",
+
+  "multi.progressGlobalSummary": "Writing the global summary...",
+  "multi.progressComparison": "Comparing ideas across articles...",
+  "multi.progressQA": "Generating Q&A...",
+  "multi.progressFinishing": "Finishing..."
 }

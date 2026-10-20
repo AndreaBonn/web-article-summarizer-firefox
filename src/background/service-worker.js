@@ -2,7 +2,11 @@ import { AutoMaintenance } from '../utils/core/auto-maintenance.js';
 import { Logger } from '../utils/core/logger.js';
 import { openWelcomeOnInstall } from './install-welcome.js';
 import { createMessageListener } from './message-router.js';
+import { applyStoredUiLanguage, watchUiLanguage } from './ui-language.js';
 import * as handlers from './message-handlers.js';
+
+applyStoredUiLanguage().catch((err) => Logger.warn('UI language not loaded:', err));
+watchUiLanguage();
 
 // Initialize automatic cache maintenance
 const autoMaintenance = new AutoMaintenance();

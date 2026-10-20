@@ -599,5 +599,22 @@
   "voice.resume": "Riprendi",
   "voice.selectVoice": "Seleziona voce",
   "voice.local": "Locale",
-  "voice.remote": "Remota"
+  "voice.remote": "Remota",
+
+  "errorMsg.missingKey": "Manca la chiave del servizio AI scelto. Si configura una volta sola.",
+  "errorMsg.rateLimitProvider": "Rate limit raggiunto per {provider}. Non è un problema del sistema: la tua chiave API ha esaurito le richieste disponibili. Puoi cambiare chiave API o passare a un altro provider nelle impostazioni (⚙️).",
+  "errorMsg.rateLimit": "Rate limit raggiunto. La tua chiave API ha esaurito le richieste disponibili. Puoi cambiare chiave API o passare a un altro provider nelle impostazioni (⚙️).",
+  "errorMsg.forbidden": "Accesso negato. Verifica i permessi della tua API key.",
+  "errorMsg.serverError": "Errore del server API. Riprova tra qualche minuto.",
+  "errorMsg.unavailable": "Servizio temporaneamente non disponibile. Riprova più tardi.",
+  "errorMsg.timeout": "Richiesta scaduta. Il server ha impiegato troppo tempo a rispondere.",
+  "errorMsg.unsupportedPage": "Questa pagina non si può riassumere: l'estensione legge gli articoli dei siti https. Le pagine di Firefox (about:) e i siti http non sono supportati. Per un documento PDF usa «Analisi PDF».",
+  "errorMsg.pageUnreachable": "Impossibile comunicare con la pagina. Ricarica la pagina (F5) e riprova.",
+  "errorMsg.storageFull": "Spazio di archiviazione esaurito. Pulisci la cache nelle impostazioni.",
+  "errorMsg.unexpected": "Si è verificato un errore imprevisto. Riprova.",
+
+  "multi.progressGlobalSummary": "Generazione riassunto globale...",
+  "multi.progressComparison": "Confronto idee tra articoli...",
+  "multi.progressQA": "Generazione Q&A...",
+  "multi.progressFinishing": "Completamento..."
 }
