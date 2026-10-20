@@ -85,6 +85,10 @@ export class HistoryManager {
     return MultiAnalysisHistory.saveMultiAnalysis(analysis, articles);
   }
 
+  static async importMultiAnalysis(backupEntry) {
+    return MultiAnalysisHistory.importMultiAnalysis(backupEntry);
+  }
+
   static async getMultiAnalysisHistory() {
     return MultiAnalysisHistory.getMultiAnalysisHistory();
   }

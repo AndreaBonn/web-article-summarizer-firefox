@@ -286,6 +286,46 @@ describe('ArticleHistory', () => {
       expect(history.map((e) => e.id)).toEqual([liveId, 'original-id']);
     });
 
+    const seedFull = (count, favoriteIds = []) => {
+      store.summaryHistory = Array.from({ length: count }, (_, i) => ({
+        id: `e${i}`,
+        timestamp: 2000000000000 - i * 1000,
+        favorite: favoriteIds.includes(`e${i}`),
+        article: mockArticle,
+        summary: 's',
+        keyPoints: [],
+        metadata: mockMetadata,
+      }));
+    };
+
+    it('test_importSummary_fullHistoryWithOldFavorite_keepsTheFavorite', async () => {
+      seedFull(50, ['e49']);
+
+      const returned = await ArticleHistory.importSummary({
+        ...backupEntry(),
+        favorite: false,
+        timestamp: 2000000000000 - 10500,
+      });
+
+      const ids = (await ArticleHistory.getHistory()).map((e) => e.id);
+      expect(returned).toBe('original-id');
+      expect(ids).toContain('e49');
+      expect(ids).toContain('original-id');
+      expect(ids).toHaveLength(50);
+      expect(ids).not.toContain('e48');
+    });
+
+    it('test_importSummary_fullHistoryAndOlderThanAll_returnsNullAndStoresNothing', async () => {
+      seedFull(50);
+
+      const returned = await ArticleHistory.importSummary({ ...backupEntry(), favorite: false });
+
+      const ids = (await ArticleHistory.getHistory()).map((e) => e.id);
+      expect(returned).toBeNull();
+      expect(ids).toHaveLength(50);
+      expect(ids).not.toContain('original-id');
+    });
+
     it('test_importSummary_optionalFieldsAbsent_defaultsToEmpty', async () => {
       await ArticleHistory.importSummary({
         id: 'min',

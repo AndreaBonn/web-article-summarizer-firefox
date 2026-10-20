@@ -161,4 +161,59 @@ describe('importHistory', () => {
     ]);
     expect(saved.analysis.globalSummary).toBe('G');
   });
+
+  it('does not duplicate multi-analysis entries when the same backup is imported twice', async () => {
+    const backup = makeBackup();
+    backup.data.singleArticles = [];
+    backup.data.multiAnalysis = [
+      {
+        id: 'multi-1',
+        timestamp: 1700000000000,
+        articles: [{ id: 'a1', title: 'First', url: 'https://example.com/1', wordCount: 10 }],
+        analysis: {
+          globalSummary: 'G',
+          comparison: 'C',
+          qa: { interactive: false, questions: [] },
+        },
+        metadata: { articlesCount: 1, provider: 'groq' },
+      },
+    ];
+
+    await importHistory(pickFile(backup));
+    await importHistory(pickFile(backup));
+
+    const saved = await HistoryManager.getMultiAnalysisHistory();
+    expect(saved).toHaveLength(1);
+    expect(saved[0].id).toBe('multi-1');
+    expect(Modal.alert).toHaveBeenLastCalledWith(
+      expect.stringContaining('Analisi multiple importate: 0'),
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it('does not count entries dropped by the history limit as imported', async () => {
+    store.summaryHistory = Array.from({ length: 50 }, (_, i) => ({
+      id: `e${i}`,
+      timestamp: 2000000000000 - i * 1000,
+      article: { title: 'T', url: `https://example.com/${i}` },
+      summary: 's',
+      keyPoints: [],
+      metadata: { provider: 'openai' },
+    }));
+
+    const backup = makeBackup();
+    backup.data.singleArticles[0].favorite = false;
+
+    await importHistory(pickFile(backup));
+
+    const history = await HistoryManager.getHistory();
+    expect(history).toHaveLength(50);
+    expect(history.map((e) => e.id)).not.toContain('entry-1');
+    expect(Modal.alert).toHaveBeenLastCalledWith(
+      expect.stringContaining('Articoli singoli importati: 0'),
+      expect.anything(),
+      expect.anything(),
+    );
+  });
 });

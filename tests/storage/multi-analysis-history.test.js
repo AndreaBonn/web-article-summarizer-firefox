@@ -128,4 +128,57 @@ describe('MultiAnalysisHistory', () => {
       expect(entry.analysis.qa.questions[0].answer).toBe('This.');
     });
   });
+
+  describe('importMultiAnalysis()', () => {
+    const backupEntry = () => ({
+      id: 'multi-orig',
+      timestamp: 1700000000000,
+      favorite: true,
+      articles: [{ id: 'a1', title: 'Article 1', url: 'https://a.com', wordCount: 100 }],
+      analysis: {
+        globalSummary: 'G',
+        comparison: 'C',
+        qa: { interactive: false, articles: [], questions: [] },
+      },
+      metadata: { articlesCount: 1, provider: 'groq' },
+    });
+
+    it('test_importMultiAnalysis_backupEntry_keepsIdAndTimestamp', async () => {
+      const returned = await MultiAnalysisHistory.importMultiAnalysis(backupEntry());
+
+      const [saved] = await MultiAnalysisHistory.getMultiAnalysisHistory();
+      expect(returned).toBe('multi-orig');
+      expect(saved).toEqual(
+        expect.objectContaining({
+          id: 'multi-orig',
+          timestamp: 1700000000000,
+          favorite: true,
+          articles: backupEntry().articles,
+          metadata: backupEntry().metadata,
+        }),
+      );
+      expect(saved.analysis).toEqual(
+        expect.objectContaining({ globalSummary: 'G', comparison: 'C' }),
+      );
+    });
+
+    it('test_importMultiAnalysis_articlesNotAnArray_importsWithoutArticles', async () => {
+      const returned = await MultiAnalysisHistory.importMultiAnalysis({
+        ...backupEntry(),
+        articles: 'corrupted',
+      });
+
+      const [saved] = await MultiAnalysisHistory.getMultiAnalysisHistory();
+      expect(returned).toBe('multi-orig');
+      expect(saved.articles).toEqual([]);
+    });
+
+    it('test_importMultiAnalysis_sameEntryTwice_leavesOneAnalysis', async () => {
+      await MultiAnalysisHistory.importMultiAnalysis(backupEntry());
+      const second = await MultiAnalysisHistory.importMultiAnalysis(backupEntry());
+
+      expect(second).toBeNull();
+      expect(await MultiAnalysisHistory.getMultiAnalysisHistory()).toHaveLength(1);
+    });
+  });
 });

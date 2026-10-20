@@ -5,14 +5,14 @@ import { Logger } from '../core/logger.js';
 const repo = new BaseHistoryRepository('multiAnalysisHistory', 30);
 
 export class MultiAnalysisHistory {
-  static async saveMultiAnalysis(analysis, articles) {
-    Logger.debug('saveMultiAnalysis chiamato con:', { analysis, articles });
-    const entry = {
+  // `articles` are flattened summaries: { id, title, url, wordCount }
+  static buildEntry(analysis, articles) {
+    return {
       articles: articles.map((a) => ({
         id: a.id,
-        title: a.article.title,
-        url: a.article.url,
-        wordCount: a.article.wordCount,
+        title: a.title,
+        url: a.url,
+        wordCount: a.wordCount,
       })),
       analysis: {
         globalSummary: analysis.globalSummary || null,
@@ -28,10 +28,44 @@ export class MultiAnalysisHistory {
         provider: analysis.metadata?.provider || 'unknown',
       },
     };
+  }
+
+  static async saveMultiAnalysis(analysis, articles) {
+    Logger.debug('saveMultiAnalysis chiamato con:', { analysis, articles });
+    const entry = MultiAnalysisHistory.buildEntry(
+      analysis,
+      articles.map((a) => ({
+        id: a.id,
+        title: a.article.title,
+        url: a.article.url,
+        wordCount: a.article.wordCount,
+      })),
+    );
 
     const id = await repo.save(entry);
     Logger.info('✓ Analisi multi-articolo salvata.');
     return id;
+  }
+
+  /**
+   * Restores an analysis from a backup keeping its original id and timestamp, so that
+   * importing the same backup again is recognised as a duplicate.
+   * @returns {Promise<string|null>} the stored id, or null when already present or cut by the limit
+   */
+  static async importMultiAnalysis(backupEntry) {
+    const entry = {
+      ...MultiAnalysisHistory.buildEntry(
+        { ...backupEntry.analysis, metadata: backupEntry.metadata },
+        Array.isArray(backupEntry.articles) ? backupEntry.articles : [],
+      ),
+      id:
+        typeof backupEntry.id === 'string' && backupEntry.id !== ''
+          ? backupEntry.id
+          : crypto.randomUUID(),
+      timestamp: Number.isFinite(backupEntry.timestamp) ? backupEntry.timestamp : Date.now(),
+      favorite: backupEntry.favorite === true,
+    };
+    return repo.importEntry(entry);
   }
 
   static async getMultiAnalysisHistory() {

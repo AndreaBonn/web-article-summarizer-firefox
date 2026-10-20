@@ -35,12 +35,10 @@ export class ArticleHistory {
   /**
    * Restores an entry from a backup keeping its original id and timestamp, so that
    * importing the same backup again is recognised as a duplicate.
-   * @returns {Promise<string|null>} the stored id, or null when the id was already present
+   * @returns {Promise<string|null>} the stored id, or null when the id was already present or the entry was cut by the limit
    */
   static async importSummary(backupEntry) {
-    const history = await repo._getAll();
     const hasId = typeof backupEntry.id === 'string' && backupEntry.id !== '';
-    if (hasId && history.some((e) => e.id === backupEntry.id)) return null;
 
     const entry = {
       ...ArticleHistory.buildEntry(
@@ -58,9 +56,7 @@ export class ArticleHistory {
     if (backupEntry.qa) entry.qa = backupEntry.qa;
     if (backupEntry.citations) entry.citations = backupEntry.citations;
 
-    const merged = [...history, entry].sort((a, b) => b.timestamp - a.timestamp);
-    await repo._saveAll(merged.slice(0, repo.maxEntries));
-    return entry.id;
+    return repo.importEntry(entry);
   }
 
   static async getHistory() {

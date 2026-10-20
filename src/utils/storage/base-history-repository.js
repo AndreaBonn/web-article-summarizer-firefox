@@ -60,6 +60,25 @@ export class BaseHistoryRepository {
     return entry.id;
   }
 
+  /**
+   * Inserts an entry that already carries its id and timestamp (backup restore), newest first,
+   * applying the same truncation as save().
+   * @returns {Promise<string|null>} the id, or null when already present or cut by the limit
+   */
+  async importEntry(entry) {
+    const history = await this._getAll();
+    if (history.some((e) => e.id === entry.id)) return null;
+
+    let merged = [...history, entry].sort((a, b) => b.timestamp - a.timestamp);
+    if (merged.length > this.maxEntries) {
+      merged = this._truncateKeepingFavorites(merged);
+    }
+    if (!merged.some((e) => e.id === entry.id)) return null;
+
+    await this._saveAll(merged);
+    return entry.id;
+  }
+
   // Favorites are never dropped (clear() protects them too). The freed slots go to the newest
   // non-favorites; the entry just saved (index 0) always stays, so with maxEntries or more
   // favorites the list exceeds maxEntries instead of losing user data.
