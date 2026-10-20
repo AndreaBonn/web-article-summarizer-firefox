@@ -5,7 +5,7 @@ vi.mock('@utils/core/modal.js', () => ({
 }));
 vi.mock('@utils/storage/storage-manager.js', () => ({ StorageManager: { getSettings: vi.fn() } }));
 
-import { importHistory } from '@pages/history/io-backup.js';
+import { downloadHistory, importHistory } from '@pages/history/io-backup.js';
 import { state } from '@pages/history/state.js';
 import { HistoryManager } from '@utils/storage/history-manager.js';
 import { Modal } from '@utils/core/modal.js';
@@ -74,6 +74,7 @@ describe('importHistory', () => {
     });
     state.loadHistory = vi.fn();
     state.loadMultiAnalysisHistory = vi.fn();
+    state.loadPDFHistory = vi.fn();
     Modal.confirm.mockResolvedValue(true);
     Modal.alert.mockResolvedValue(undefined);
     Modal.error.mockResolvedValue(undefined);
@@ -212,6 +213,100 @@ describe('importHistory', () => {
     expect(history.map((e) => e.id)).not.toContain('entry-1');
     expect(Modal.alert).toHaveBeenLastCalledWith(
       expect.stringContaining('Articoli singoli importati: 0'),
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+});
+
+const PDF_ENTRY = {
+  id: 'pdf-1',
+  timestamp: 1700000000000,
+  pdf: { name: 'paper.pdf', size: 2048, pages: 4, text: 'Testo estratto', metadata: {} },
+  summary: 'PDF summary',
+  keyPoints: [{ title: 'K', description: 'D' }],
+  translation: { text: 'Tradotto', targetLanguage: 'it', originalLanguage: 'en' },
+  qa: [{ question: 'Q?', answer: 'A.' }],
+  citations: { citations: [{ id: 'c1', text: 'quote' }] },
+  notes: 'pdf notes',
+  favorite: true,
+  metadata: { provider: 'anthropic', language: 'en', summaryLength: 'detailed', fromCache: false },
+};
+
+describe('PDF analyses in backup and restore', () => {
+  let exported;
+
+  beforeEach(() => {
+    for (const key of Object.keys(store)) delete store[key];
+    document.body.innerHTML =
+      '<button id="downloadHistoryBtn">Download</button><button id="importHistoryBtn">Import</button>';
+    vi.stubGlobal('browser', {
+      storage: {
+        local: {
+          get: vi.fn(async (keys) =>
+            Object.fromEntries(
+              keys.filter((k) => store[k] !== undefined).map((k) => [k, structuredClone(store[k])]),
+            ),
+          ),
+          set: vi.fn(async (data) => Object.assign(store, structuredClone(data))),
+        },
+      },
+    });
+    exported = null;
+    vi.stubGlobal('URL', { createObjectURL: () => 'blob:x', revokeObjectURL: () => {} });
+    vi.stubGlobal(
+      'Blob',
+      class {
+        constructor([text]) {
+          exported = JSON.parse(text);
+        }
+      },
+    );
+    HTMLAnchorElement.prototype.click = () => {};
+    state.loadHistory = vi.fn();
+    state.loadMultiAnalysisHistory = vi.fn();
+    state.loadPDFHistory = vi.fn();
+    Modal.confirm.mockResolvedValue(true);
+    Modal.alert.mockResolvedValue(undefined);
+    Modal.error.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it('a downloaded backup carries the PDF history and restores it whole', async () => {
+    store.pdfHistory = [structuredClone(PDF_ENTRY)];
+    const { StorageManager } = await import('@utils/storage/storage-manager.js');
+    StorageManager.getSettings.mockResolvedValue({});
+
+    await downloadHistory();
+    expect(Modal.error).not.toHaveBeenCalled();
+    expect(exported.data.pdfAnalysis).toHaveLength(1);
+
+    delete store.pdfHistory;
+    await importHistory(pickFile(exported));
+
+    expect(await HistoryManager.getPDFHistory()).toEqual([PDF_ENTRY]);
+    expect(state.loadPDFHistory).toHaveBeenCalled();
+    expect(Modal.alert).toHaveBeenLastCalledWith(
+      expect.stringContaining('Analisi PDF importate: 1'),
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it('does not duplicate PDF analyses when the same backup is imported twice', async () => {
+    const backup = makeBackup();
+    backup.data.pdfAnalysis = [structuredClone(PDF_ENTRY)];
+
+    await importHistory(pickFile(backup));
+    await importHistory(pickFile(backup));
+
+    expect(await HistoryManager.getPDFHistory()).toHaveLength(1);
+    expect(Modal.alert).toHaveBeenLastCalledWith(
+      expect.stringContaining('Analisi PDF importate: 0'),
       expect.anything(),
       expect.anything(),
     );

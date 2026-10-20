@@ -46,6 +46,7 @@ state.searchOptimizer = new SearchOptimizer();
 // Registra callbacks sullo state per evitare circular imports tra i moduli
 state.loadHistory = () => loadHistory();
 state.loadMultiAnalysisHistory = () => loadMultiAnalysisHistory();
+state.loadPDFHistory = () => loadPDFHistory();
 
 // Modal System — caricato da utils/modal.js
 

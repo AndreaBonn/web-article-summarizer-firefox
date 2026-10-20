@@ -4,6 +4,7 @@ import {
   sanitizeTextField,
   sanitizeArticleEntry,
   sanitizeMultiAnalysisEntry,
+  sanitizePDFEntry,
   validateImportFile,
   parseBackup,
   selectNewEntries,
@@ -117,11 +118,11 @@ describe('backup import contract', () => {
     'accepts MIME type %s at the size limit',
     (type) => {
       expect(
-        validateImportFile({ name: 'backup.json', type, size: 10 * 1024 * 1024 }),
+        validateImportFile({ name: 'backup.json', type, size: 50 * 1024 * 1024 }),
       ).toBeUndefined();
       expect(() =>
-        validateImportFile({ name: 'backup.json', type, size: 10 * 1024 * 1024 + 1 }),
-      ).toThrow('File troppo grande (max 10 MB)');
+        validateImportFile({ name: 'backup.json', type, size: 50 * 1024 * 1024 + 1 }),
+      ).toThrow('File troppo grande (max 50 MB)');
     },
   );
   it.each([
@@ -182,12 +183,14 @@ describe('backup import contract', () => {
       data: {
         singleArticles: [{ id: 'a' }],
         multiAnalysis: [{ id: 'b' }],
+        pdfAnalysis: [],
         settings: { language: 'it' },
         stats: { totalSummaries: 3, totalWords: 50 },
       },
       metadata: {
         totalSingleArticles: 1,
         totalMultiAnalysis: 1,
+        totalPDFAnalysis: 0,
         totalSummaries: 3,
         totalWords: 50,
       },
@@ -202,7 +205,13 @@ describe('backup import contract', () => {
         stats: {},
         now: new Date('2026-01-01'),
       }).metadata,
-    ).toEqual({ totalSingleArticles: 0, totalMultiAnalysis: 0, totalSummaries: 0, totalWords: 0 });
+    ).toEqual({
+      totalSingleArticles: 0,
+      totalMultiAnalysis: 0,
+      totalPDFAnalysis: 0,
+      totalSummaries: 0,
+      totalWords: 0,
+    });
   });
   it('asks for additive import confirmation with the backup date and counts', () => {
     const exportDate = '2026-01-01T12:00:00Z';
@@ -212,7 +221,7 @@ describe('backup import contract', () => {
         metadata: { totalSingleArticles: 2, totalMultiAnalysis: 1 },
       }),
     ).toBe(
-      `Vuoi importare questo backup?\n\n📅 Data backup:\n${new Date(exportDate).toLocaleString('it-IT')}\n\n📄 Articoli singoli: 2\n🔬 Analisi multiple: 1\n\n⚠️ ATTENZIONE:\nQuesto AGGIUNGERÀ i dati al tuo storico\nesistente (non li sostituirà).`,
+      `Vuoi importare questo backup?\n\n📅 Data backup:\n${new Date(exportDate).toLocaleString('it-IT')}\n\n📄 Articoli singoli: 2\n🔬 Analisi multiple: 1\n📑 Analisi PDF: 0\n\n⚠️ ATTENZIONE:\nQuesto AGGIUNGERÀ i dati al tuo storico\nesistente (non li sostituirà).`,
     );
   });
   it('shows zero counts when metadata has no totals', () => {
@@ -230,5 +239,94 @@ describe('backup import contract', () => {
     expect(buildImportConfirmMessage({ exportDate: '2026-01-01' })).toContain(
       '📄 Articoli singoli: 0\n🔬 Analisi multiple: 0',
     );
+  });
+});
+
+describe('PDF analyses in the backup', () => {
+  it('puts the PDF history in the payload and counts it in the metadata', () => {
+    const payload = buildBackupPayload({
+      singleHistory: [],
+      multiHistory: [],
+      pdfHistory: [{ id: 'p1' }, { id: 'p2' }],
+      settings: {},
+      stats: {},
+      now: new Date('2026-01-01'),
+    });
+    expect(payload.data.pdfAnalysis).toEqual([{ id: 'p1' }, { id: 'p2' }]);
+    expect(payload.metadata.totalPDFAnalysis).toBe(2);
+  });
+
+  it('accepts a backup that holds only PDF analyses', () => {
+    const text = JSON.stringify({ version: '1.0.0', data: { pdfAnalysis: [{ id: 'p1' }] } });
+    expect(parseBackup(text).data.pdfAnalysis).toHaveLength(1);
+  });
+
+  it('still rejects a backup with no importable collection', () => {
+    const text = JSON.stringify({ version: '1.0.0', data: { settings: {} } });
+    expect(() => parseBackup(text)).toThrow('Il backup non contiene dati importabili');
+  });
+
+  it('shows the PDF count in the import confirmation', () => {
+    const message = buildImportConfirmMessage({
+      exportDate: '2026-01-01',
+      data: { pdfAnalysis: [{}, {}] },
+    });
+    expect(message).toContain('📑 Analisi PDF: 2');
+  });
+
+  it('accepts a backup larger than 10 MB and rejects one over 50 MB', () => {
+    const file = (size) => ({ name: 'b.json', type: 'application/json', size });
+    expect(() => validateImportFile(file(30 * 1024 * 1024))).not.toThrow();
+    expect(() => validateImportFile(file(51 * 1024 * 1024))).toThrow('max 50 MB');
+  });
+
+  it('sanitizes PDF text fields, numbers and metadata in place', () => {
+    const entry = {
+      pdf: { name: 'n'.repeat(600), text: 'testo', size: 'x', pages: 3 },
+      summary: 's',
+      translation: { text: 't' },
+      notes: 'n'.repeat(10001),
+      metadata: { provider: 'evil', language: 'en' },
+    };
+    sanitizePDFEntry(entry);
+    expect(entry.pdf).toEqual({ name: 'n'.repeat(500), text: 'testo', size: 0, pages: 3 });
+    expect(entry.notes).toHaveLength(10000);
+    expect(entry.metadata).toEqual({ provider: 'groq', language: 'en', contentType: undefined });
+  });
+
+  it('gives an entry without a pdf object an empty one', () => {
+    const entry = { summary: 's' };
+    sanitizePDFEntry(entry);
+    expect(entry.pdf).toEqual({ name: '', text: '', size: 0, pages: 0 });
+  });
+
+  it('turns malformed summary, key points, Q&A and citations into renderable values', () => {
+    const entry = {
+      pdf: { name: 'x.pdf', text: '' },
+      keyPoints: [null, { title: 'ok' }, { description: 'no title' }, 'str'],
+      qa: 'not a list',
+      citations: ['wrong shape'],
+    };
+    sanitizePDFEntry(entry);
+    expect(entry.summary).toBe('');
+    expect(entry.keyPoints).toEqual([{ title: 'ok' }]);
+    expect(entry.qa).toBeNull();
+    expect(entry.citations).toBeNull();
+  });
+
+  it('keeps well-formed Q&A and citations', () => {
+    const qa = [{ question: 'q', answer: 'a' }];
+    const citations = { citations: [{ text: 'c' }] };
+    const entry = { pdf: {}, summary: 's', keyPoints: 'bad', qa, citations };
+    sanitizePDFEntry(entry);
+    expect(entry.qa).toBe(qa);
+    expect(entry.citations).toBe(citations);
+    expect(entry.keyPoints).toEqual([]);
+  });
+
+  it('skips null and non-object entries instead of aborting the import', () => {
+    expect(selectNewEntries([null, 'x', { id: 'a' }, { id: 'b' }], new Set(['b']))).toEqual([
+      { id: 'a' },
+    ]);
   });
 });

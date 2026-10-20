@@ -10,4 +10,5 @@ export const state = {
   // Callbacks impostati da history.js per evitare circular imports
   loadHistory: null,
   loadMultiAnalysisHistory: null,
+  loadPDFHistory: null,
 };

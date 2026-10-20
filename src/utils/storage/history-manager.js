@@ -119,6 +119,10 @@ export class HistoryManager {
     return PDFHistory.savePDFAnalysis(pdfInfo, summary, keyPoints, metadata);
   }
 
+  static async importPDFAnalysis(backupEntry) {
+    return PDFHistory.importPDFAnalysis(backupEntry);
+  }
+
   static async getPDFHistory() {
     return PDFHistory.getPDFHistory();
   }

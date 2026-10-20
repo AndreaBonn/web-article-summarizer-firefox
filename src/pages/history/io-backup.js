@@ -2,6 +2,7 @@ import {
   sanitizeMetadata,
   sanitizeArticleEntry,
   sanitizeMultiAnalysisEntry,
+  sanitizePDFEntry,
   validateImportFile,
   parseBackup,
   selectNewEntries,
@@ -31,6 +32,7 @@ export async function downloadHistory() {
     // Ottieni tutta la cronologia
     const singleHistory = await HistoryManager.getHistory();
     const multiHistory = await HistoryManager.getMultiAnalysisHistory();
+    const pdfHistory = await HistoryManager.getPDFHistory();
 
     // Ottieni anche le impostazioni e statistiche
     const settings = await StorageManager.getSettings();
@@ -41,6 +43,7 @@ export async function downloadHistory() {
     const backup = buildBackupPayload({
       singleHistory,
       multiHistory,
+      pdfHistory,
       settings,
       stats,
       now: new Date(),
@@ -76,6 +79,7 @@ export async function downloadHistory() {
       `Backup completato con successo!\n\n` +
         `📄 Articoli singoli: ${singleHistory.length}\n` +
         `🔬 Analisi multiple: ${multiHistory.length}\n` +
+        `📑 Analisi PDF: ${pdfHistory.length}\n` +
         `📊 Totale riassunti: ${stats.totalSummaries || 0}\n` +
         `📝 Parole elaborate: ${(stats.totalWords || 0).toLocaleString()}\n\n` +
         `File salvato:\n${filename}`,
@@ -160,9 +164,24 @@ export async function importHistory(event) {
       }
     }
 
+    // Importa analisi PDF
+    let importedPDF = 0;
+    if (Array.isArray(backup.data.pdfAnalysis)) {
+      const currentPDF = await HistoryManager.getPDFHistory();
+      const currentIds = new Set(currentPDF.map((h) => h.id));
+
+      for (const pdfEntry of selectNewEntries(backup.data.pdfAnalysis, currentIds)) {
+        sanitizePDFEntry(pdfEntry);
+        const storedId = await HistoryManager.importPDFAnalysis(pdfEntry);
+        if (storedId === null) continue;
+        importedPDF++;
+      }
+    }
+
     // Ricarica cronologia
     await state.loadHistory();
     await state.loadMultiAnalysisHistory();
+    await state.loadPDFHistory();
 
     // Ripristina bottone
     btn.textContent = '✓ Importato!';
@@ -175,7 +194,8 @@ export async function importHistory(event) {
     await Modal.alert(
       `Importazione completata con successo!\n\n` +
         `📄 Articoli singoli importati: ${importedSingle}\n` +
-        `🔬 Analisi multiple importate: ${importedMulti}\n\n` +
+        `🔬 Analisi multiple importate: ${importedMulti}\n` +
+        `📑 Analisi PDF importate: ${importedPDF}\n\n` +
         `La cronologia è stata aggiornata.`,
       'Importazione Completata',
       '✅',

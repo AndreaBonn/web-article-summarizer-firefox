@@ -33,6 +33,45 @@ export class PDFHistory {
     return id;
   }
 
+  /**
+   * Restores a PDF analysis from a backup keeping its original id and timestamp, so that
+   * importing the same backup again is recognised as a duplicate.
+   * @returns {Promise<string|null>} the stored id, or null when the id was already present or the entry was cut by the limit
+   */
+  static async importPDFAnalysis(backupEntry) {
+    const pdf = backupEntry.pdf && typeof backupEntry.pdf === 'object' ? backupEntry.pdf : {};
+    const metadata =
+      backupEntry.metadata && typeof backupEntry.metadata === 'object' ? backupEntry.metadata : {};
+    const entry = {
+      pdf: {
+        name: pdf.name,
+        size: pdf.size,
+        pages: pdf.pages,
+        text: pdf.text,
+        metadata: pdf.metadata && typeof pdf.metadata === 'object' ? pdf.metadata : {},
+      },
+      summary: backupEntry.summary,
+      keyPoints: backupEntry.keyPoints,
+      translation: backupEntry.translation ?? null,
+      qa: backupEntry.qa ?? null,
+      citations: backupEntry.citations ?? null,
+      notes: backupEntry.notes ?? null,
+      metadata: {
+        provider: metadata.provider,
+        language: metadata.language,
+        summaryLength: metadata.summaryLength,
+        fromCache: metadata.fromCache === true,
+      },
+      id:
+        typeof backupEntry.id === 'string' && backupEntry.id !== ''
+          ? backupEntry.id
+          : crypto.randomUUID(),
+      timestamp: Number.isFinite(backupEntry.timestamp) ? backupEntry.timestamp : Date.now(),
+      favorite: backupEntry.favorite === true,
+    };
+    return repo.importEntry(entry);
+  }
+
   static async getPDFHistory() {
     return repo.getAll();
   }
