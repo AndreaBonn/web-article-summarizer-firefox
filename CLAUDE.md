@@ -34,7 +34,7 @@ Supporta 4 provider LLM: Groq, OpenAI, Anthropic (Claude), Google Gemini.
 │   └── utils/                          — Shared utilities by domain
 │       ├── ai/                         — API client, prompts, classification, citations
 │       │   └── prompts/                — Split prompt modules (summary, keypoints, translation, citation)
-│       ├── storage/                    — Browser storage, cache, compression, history
+│       ├── storage/                    — Browser storage, cache, history (plus recovery of formerly compressed data)
 │       ├── export/                     — PDF, Markdown, email export
 │       ├── pdf/                        — PDF parsing and caching
 │       ├── i18n/                       — Internationalization (I18n.initPage() for page setup)
@@ -65,7 +65,7 @@ and imports its modules + utils.
 - `@mozilla/readability` — Article content extraction
 - `jspdf` — PDF export
 - `pdfjs-dist` — PDF parsing (worker in `public/workers/pdf.worker.min.js`)
-- `lz-string` — Compression for storage
+- `lz-string` — Decodes history summaries compressed by older versions
 - `web-ext` — Firefox extension development/packaging tool
 
 ## Key Patterns

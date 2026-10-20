@@ -45,12 +45,11 @@ export function applyPerformanceSettings(previousSettings, form) {
     settings.cacheTTL = DEFAULT_CACHE_TTL_DAYS;
   }
   settings.enableFallback = form.enableFallback.checked;
-  settings.enableCompression = form.enableCompression.checked;
   settings.autoCleanup = form.autoCleanup.checked;
   return settings;
 }
 
-export function formatPerformanceStats({ cacheStats, apiStats, compressionStats }) {
+export function formatPerformanceStats({ cacheStats, apiStats }) {
   const labels = {};
   if (cacheStats) {
     labels.cacheEntries = cacheStats.validEntries;
@@ -63,12 +62,6 @@ export function formatPerformanceStats({ cacheStats, apiStats, compressionStats 
     labels.apiRetries = apiStats.retryCount;
     labels.apiFallbacks = apiStats.fallbackCount;
     labels.apiFailures = apiStats.failureCount;
-  }
-  if (compressionStats) {
-    labels.compressedItems = compressionStats.compressedItems;
-    labels.compressionRatio = compressionStats.compressionRatio + '%';
-    labels.spaceSaved = compressionStats.savedMB + ' MB';
-    labels.totalSize = compressionStats.totalCompressedSize;
   }
   return labels;
 }

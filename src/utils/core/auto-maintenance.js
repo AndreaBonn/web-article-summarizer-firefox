@@ -1,6 +1,6 @@
 // Auto Maintenance - Cleanup automatico in background
 import { CacheManager } from '../storage/cache-manager.js';
-import { CompressionManager } from '../storage/compression-manager.js';
+import { restoreCompressedData } from '../storage/compressed-data-recovery.js';
 import { Logger } from '../core/logger.js';
 
 export class AutoMaintenance {
@@ -13,6 +13,13 @@ export class AutoMaintenance {
    * Inizializza il sistema di manutenzione automatica
    */
   async initialize() {
+    // Runs on every start, whatever autoCleanup says: it repairs data, it does not clean it
+    try {
+      await restoreCompressedData();
+    } catch (error) {
+      Logger.error('Ripristino dati compressi fallito:', error);
+    }
+
     // Controlla se è necessario eseguire la manutenzione
     const shouldRun = await this.shouldRunMaintenance();
 
@@ -63,8 +70,6 @@ export class AutoMaintenance {
         timestamp: Date.now(),
         cacheExpired: 0,
         cacheLRU: 0,
-        historyCompressed: 0,
-        cacheCompressed: 0,
         historyDeleted: 0,
         errors: [],
       };
@@ -89,25 +94,7 @@ export class AutoMaintenance {
         results.errors.push({ step: 'cleanLRU', error: error.message });
       }
 
-      // 3. Comprimi dati vecchi (se abilitato)
-      if (settings.enableCompression) {
-        try {
-          const compressionManager = new CompressionManager();
-
-          // Comprimi cronologia > 30 giorni
-          results.historyCompressed = await compressionManager.compressOldHistory(30);
-          Logger.info(`Cronologie compresse: ${results.historyCompressed}`);
-
-          // Comprimi cache > 7 giorni
-          results.cacheCompressed = await compressionManager.compressOldCache(7);
-          Logger.info(`Cache compresse: ${results.cacheCompressed}`);
-        } catch (error) {
-          Logger.error('Errore compressione:', error);
-          results.errors.push({ step: 'compression', error: error.message });
-        }
-      }
-
-      // 4. Elimina cronologia molto vecchia (> 180 giorni)
+      // 3. Elimina cronologia molto vecchia (> 180 giorni)
       try {
         results.historyDeleted = await this.deleteOldHistory(180);
         Logger.info(`Cronologie eliminate: ${results.historyDeleted}`);
@@ -164,7 +151,6 @@ export class AutoMaintenance {
       return (
         result.settings || {
           autoCleanup: true,
-          enableCompression: true,
         }
       );
     } catch (error) {
@@ -172,7 +158,6 @@ export class AutoMaintenance {
       // Safe fallback: do nothing rather than risk unwanted cleanup
       return {
         autoCleanup: false,
-        enableCompression: false,
       };
     }
   }

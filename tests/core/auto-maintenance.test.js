@@ -16,17 +16,6 @@ vi.mock('@utils/storage/cache-manager.js', () => ({
   },
 }));
 
-vi.mock('@utils/storage/compression-manager.js', () => ({
-  CompressionManager: class {
-    compressOldHistory() {
-      return Promise.resolve(2);
-    }
-    compressOldCache() {
-      return Promise.resolve(1);
-    }
-  },
-}));
-
 const store = {};
 global.browser = {
   storage: {
@@ -84,11 +73,11 @@ describe('AutoMaintenance', () => {
   describe('getSettings()', () => {
     it('test_getSettings_noSettings_returnsDefaults', async () => {
       const settings = await maintenance.getSettings();
-      expect(settings).toEqual({ autoCleanup: true, enableCompression: true });
+      expect(settings).toEqual({ autoCleanup: true });
     });
 
     it('test_getSettings_customSettings_returnsStored', async () => {
-      store.settings = { autoCleanup: false, enableCompression: false };
+      store.settings = { autoCleanup: false };
       const settings = await maintenance.getSettings();
       expect(settings.autoCleanup).toBe(false);
     });
@@ -96,7 +85,7 @@ describe('AutoMaintenance', () => {
     it('test_getSettings_error_returnsSafeDefaults', async () => {
       browser.storage.local.get.mockRejectedValueOnce(new Error('fail'));
       const settings = await maintenance.getSettings();
-      expect(settings).toEqual({ autoCleanup: false, enableCompression: false });
+      expect(settings).toEqual({ autoCleanup: false });
     });
   });
 
@@ -132,7 +121,7 @@ describe('AutoMaintenance', () => {
 
   describe('runMaintenance()', () => {
     it('test_runMaintenance_historyRetention_keepsHundredDayOldEntry', async () => {
-      store.settings = { autoCleanup: true, enableCompression: false };
+      store.settings = { autoCleanup: true };
       const dayMs = 24 * 60 * 60 * 1000;
       const retained = { id: 'retained', timestamp: Date.now() - 100 * dayMs };
       store.summaryHistory = [retained, { id: 'expired', timestamp: Date.now() - 200 * dayMs }];
@@ -144,13 +133,11 @@ describe('AutoMaintenance', () => {
     });
 
     it('test_runMaintenance_autoCleanupEnabled_runsAllSteps', async () => {
-      store.settings = { autoCleanup: true, enableCompression: true };
+      store.settings = { autoCleanup: true };
       const results = await maintenance.runMaintenance();
 
       expect(results.cacheExpired).toBe(5);
       expect(results.cacheLRU).toBe(3);
-      expect(results.historyCompressed).toBe(2);
-      expect(results.cacheCompressed).toBe(1);
       expect(results.errors).toEqual([]);
       expect(store.lastMaintenanceRun).toBeDefined();
     });
@@ -164,7 +151,7 @@ describe('AutoMaintenance', () => {
 
   describe('handleAlarm()', () => {
     it('test_handleAlarm_correctName_runsMaintenance', async () => {
-      store.settings = { autoCleanup: true, enableCompression: false };
+      store.settings = { autoCleanup: true };
       await maintenance.handleAlarm({ name: 'autoMaintenance' });
       expect(store.lastMaintenanceRun).toBeDefined();
     });
@@ -200,6 +187,42 @@ describe('AutoMaintenance', () => {
       expect(browser.alarms.create).toHaveBeenCalledWith('autoMaintenance', {
         periodInMinutes: 1440,
       });
+    });
+  });
+
+  describe('compression recovery', () => {
+    it('test_initialize_autoCleanupOff_stillRestoresCompressedSummaries', async () => {
+      const LZString = (await import('lz-string')).default;
+      const text = 'riassunto '.repeat(200);
+      store.settings = { autoCleanup: false };
+      store.summaryHistory = [
+        {
+          id: 'a',
+          timestamp: Date.now(),
+          summary: LZString.compressToUTF16(text),
+          compressed: true,
+        },
+      ];
+
+      await maintenance.initialize();
+
+      expect(store.summaryHistory[0].summary).toBe(text);
+      expect(store.summaryHistory[0]).not.toHaveProperty('compressed');
+    });
+
+    it('test_runMaintenance_legacyCompressionSetting_leavesOldSummariesReadable', async () => {
+      // Settings saved by earlier versions still carry the option, checked by default
+      store.settings = { autoCleanup: true, enableCompression: true };
+      const old = {
+        id: 'o',
+        timestamp: Date.now() - 60 * 24 * 60 * 60 * 1000,
+        summary: 'x'.repeat(2000),
+      };
+      store.summaryHistory = [structuredClone(old)];
+
+      await maintenance.runMaintenance();
+
+      expect(store.summaryHistory).toEqual([old]);
     });
   });
 });

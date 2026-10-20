@@ -233,10 +233,10 @@
           </div>
         </section>
 
-        <!-- Advanced: cache, reliability, compression, maintenance -->
+        <!-- Advanced: cache, reliability, maintenance -->
         <details class="card advanced">
           <summary data-i18n="settings.advanced">
-            Avanzate: cache, affidabilità, compressione, manutenzione
+            Avanzate: cache, affidabilità, manutenzione
           </summary>
 
           <h2 data-i18n="settings.performance">Performance e Affidabilità</h2>
@@ -274,16 +274,6 @@
             <p class="setting-desc" data-i18n="settings.perf.fallbackDesc">
               Se il provider selezionato fallisce, prova automaticamente con un altro provider
               configurato. Nota: Ogni provider usa il proprio prompt ottimizzato.
-            </p>
-          </div>
-
-          <div class="setting-group">
-            <label class="checkbox-label">
-              <input type="checkbox" id="enableCompression" checked />
-              <span data-i18n="settings.perf.enableCompression">Abilita Compressione Dati</span>
-            </label>
-            <p class="setting-desc" data-i18n="settings.perf.compressionDesc">
-              Comprimi automaticamente cronologia e cache vecchie per risparmiare spazio
             </p>
           </div>
 
@@ -341,34 +331,6 @@
               <div class="stat-item">
                 <div class="stat-value" id="apiFailures">-</div>
                 <div class="stat-label" data-i18n="settings.perf.failures">Fallimenti</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="stats-section">
-            <h3 data-i18n="settings.perf.compression">Compressione</h3>
-            <div class="stats-grid">
-              <div class="stat-item">
-                <div class="stat-value" id="compressedItems">-</div>
-                <div class="stat-label" data-i18n="settings.perf.compressedItems">
-                  Item Compressi
-                </div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-value" id="compressionRatio">-</div>
-                <div class="stat-label" data-i18n="settings.perf.compressionRatio">
-                  Ratio Compressione
-                </div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-value" id="spaceSaved">-</div>
-                <div class="stat-label" data-i18n="settings.perf.spaceSaved">
-                  Spazio Risparmiato
-                </div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-value" id="totalSize">-</div>
-                <div class="stat-label" data-i18n="settings.perf.totalSize">Dimensione Totale</div>
               </div>
             </div>
           </div>

@@ -71,7 +71,6 @@ describe('options statistics and preferences', () => {
         enableCache: { checked: false },
         cacheTTL: { value: '14' },
         enableFallback: { checked: true },
-        enableCompression: { checked: false },
         autoCleanup: { checked: true },
       }),
     ).toEqual({
@@ -79,7 +78,6 @@ describe('options statistics and preferences', () => {
       cacheTTL: 14,
       enableCache: false,
       enableFallback: true,
-      enableCompression: false,
       autoCleanup: true,
     });
     expect(settings).toEqual({ selectedProvider: 'groq', cacheTTL: 7 });
@@ -92,7 +90,6 @@ describe('options statistics and preferences', () => {
         enableCache: { checked: true },
         cacheTTL: { value },
         enableFallback: { checked: true },
-        enableCompression: { checked: true },
         autoCleanup: { checked: true },
       };
       expect(applyPerformanceSettings({ cacheTTL: 14 }, form).cacheTTL).toBe(14);
@@ -105,12 +102,6 @@ describe('options statistics and preferences', () => {
       formatPerformanceStats({
         cacheStats: { validEntries: 8, hitRate: 75, sizeMB: 2, totalHits: 6 },
         apiStats: { successRate: 90, retryCount: 2, fallbackCount: 1, failureCount: 3 },
-        compressionStats: {
-          compressedItems: 4,
-          compressionRatio: 60,
-          savedMB: 3,
-          totalCompressedSize: 200,
-        },
       }),
     ).toEqual({
       cacheEntries: 8,
@@ -121,14 +112,8 @@ describe('options statistics and preferences', () => {
       apiRetries: 2,
       apiFallbacks: 1,
       apiFailures: 3,
-      compressedItems: 4,
-      compressionRatio: '60%',
-      spaceSaved: '3 MB',
-      totalSize: 200,
     });
-    expect(
-      formatPerformanceStats({ cacheStats: null, apiStats: null, compressionStats: null }),
-    ).toEqual({});
+    expect(formatPerformanceStats({ cacheStats: null, apiStats: null })).toEqual({});
   });
 
   it('serializes successful tasks and returns each result', async () => {

@@ -4,7 +4,7 @@ import { StorageManager } from '../../utils/storage/storage-manager.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { APIResilience } from '../../utils/ai/api-resilience.js';
 import { CacheManager } from '../../utils/storage/cache-manager.js';
-import { CompressionManager } from '../../utils/storage/compression-manager.js';
+import { AutoMaintenance } from '../../utils/core/auto-maintenance.js';
 import { Modal } from '../../utils/core/modal.js';
 import { Toast } from '../../utils/core/toast.js';
 import { ThemeManager } from '../../utils/core/theme-manager.js';
@@ -19,6 +19,9 @@ import {
 } from './options-stats.js';
 
 const STATS_REFRESH_MS = 30000;
+// Same limits the background maintenance applies
+const HISTORY_RETENTION_DAYS = 180;
+const MAX_CACHE_ENTRIES = 100;
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -89,7 +92,6 @@ async function loadSettings() {
     document.getElementById('enableCache').checked = settings.enableCache !== false;
     document.getElementById('cacheTTL').value = settings.cacheTTL || 7;
     document.getElementById('enableFallback').checked = settings.enableFallback || false;
-    document.getElementById('enableCompression').checked = settings.enableCompression !== false;
     document.getElementById('autoCleanup').checked = settings.autoCleanup !== false;
   } catch (error) {
     Logger.error('Errore caricamento impostazioni:', error);
@@ -108,13 +110,11 @@ function bindAutosave() {
       queueSave(savePreferences),
     );
   });
-  ['enableCache', 'cacheTTL', 'enableFallback', 'enableCompression', 'autoCleanup'].forEach(
-    (id) => {
-      eventCleanup.addEventListener(document.getElementById(id), 'change', () =>
-        queueSave(savePerformanceSettings),
-      );
-    },
-  );
+  ['enableCache', 'cacheTTL', 'enableFallback', 'autoCleanup'].forEach((id) => {
+    eventCleanup.addEventListener(document.getElementById(id), 'change', () =>
+      queueSave(savePerformanceSettings),
+    );
+  });
 }
 
 async function savePreferences() {
@@ -138,7 +138,6 @@ async function savePerformanceSettings() {
       enableCache: document.getElementById('enableCache'),
       cacheTTL: document.getElementById('cacheTTL'),
       enableFallback: document.getElementById('enableFallback'),
-      enableCompression: document.getElementById('enableCompression'),
       autoCleanup: document.getElementById('autoCleanup'),
     });
 
@@ -180,9 +179,6 @@ async function loadPerformanceStats() {
 
     const apiStats = await new APIResilience().getStats();
     displayPerformanceStats({ apiStats });
-
-    const compressionStats = await new CompressionManager().getStats();
-    displayPerformanceStats({ compressionStats });
   } catch (error) {
     Logger.error('Errore nel caricare statistiche performance:', error);
   }
@@ -198,19 +194,10 @@ async function runCleanup() {
   showToast(I18n.t('settings.cleanup.running'), 'info');
 
   try {
-    const results = await new CompressionManager().autoCleanup({
-      compressHistoryOlderThan: 30,
-      compressCacheOlderThan: 7,
-      deleteHistoryOlderThan: 180,
-      maxCacheEntries: 100,
-    });
+    const deletedHistory = await new AutoMaintenance().deleteOldHistory(HISTORY_RETENTION_DAYS);
+    const cleanedCache = await new CacheManager().cleanLRU(MAX_CACHE_ENTRIES);
 
-    const message = I18n.tf('settings.cleanup.completed', {
-      compressedHistory: results.compressedHistory,
-      compressedCache: results.compressedCache,
-      deletedHistory: results.deletedHistory,
-      cleanedCache: results.cleanedCache,
-    });
+    const message = I18n.tf('settings.cleanup.completed', { deletedHistory, cleanedCache });
     showToast(message, 'success');
     await loadPerformanceStats();
   } catch (error) {
