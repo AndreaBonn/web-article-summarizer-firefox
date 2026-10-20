@@ -69,6 +69,14 @@ describe('I18n.t()', () => {
     I18n.currentLanguage = 'en';
     expect(I18n.t('initial.welcome')).toBe('Welcome');
   });
+
+  // es/fr/de are partial stubs: a key they lack must not reach the UI or an export as raw text
+  it('ricade sull italiano per una chiave che la lingua corrente non ha', () => {
+    I18n.currentLanguage = 'es';
+    expect(I18n.t('initial.welcome')).toBe('Benvenuto');
+    expect(I18n.t('app.title')).toBe('Resumidor Web');
+    expect(I18n.t('nonexistent.key')).toBe('nonexistent.key');
+  });
 });
 
 // ---------------------------------------------------------------------------

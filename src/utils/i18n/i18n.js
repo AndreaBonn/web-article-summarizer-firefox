@@ -52,8 +52,11 @@ export const I18n = {
   },
 
   // Ottieni traduzione
+  // es/fr/de cover only part of the keys: a missing one falls back to Italian, the complete
+  // reference locale, so no raw key reaches the UI or an exported document
   t(key) {
-    const translation = this.translations[this.currentLanguage]?.[key];
+    const translation =
+      this.translations[this.currentLanguage]?.[key] || this.translations.it?.[key];
     return translation || key;
   },
 
