@@ -173,63 +173,6 @@ export class ErrorHandler {
   }
 
   /**
-   * Ottieni statistiche errori
-   */
-  static async getErrorStats() {
-    try {
-      const result = await browser.storage.local.get(['errorLogs']);
-      const logs = result.errorLogs || [];
-
-      const last24h = logs.filter((log) => Date.now() - log.timestamp < 24 * 60 * 60 * 1000);
-
-      const errorTypes = {};
-      last24h.forEach((log) => {
-        const type = this.categorizeError(log.message);
-        errorTypes[type] = (errorTypes[type] || 0) + 1;
-      });
-
-      return {
-        total: logs.length,
-        last24h: last24h.length,
-        errorTypes,
-      };
-    } catch (error) {
-      Logger.error('Errore nel calcolare statistiche errori:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Categorizza errore per statistiche
-   */
-  static categorizeError(message) {
-    if (message.includes('API') || message.includes('401') || message.includes('429')) {
-      return 'API';
-    }
-    if (message.includes('Network') || message.includes('fetch')) {
-      return 'Network';
-    }
-    if (message.includes('article') || message.includes('extract')) {
-      return 'Extraction';
-    }
-    if (message.includes('cache') || message.includes('storage')) {
-      return 'Storage';
-    }
-    return 'Other';
-  }
-
-  /**
-   * Pulisci log errori
-   */
-  static async clearErrorLogs() {
-    try {
-      await browser.storage.local.remove(['errorLogs']);
-    } catch (error) {
-      Logger.warn('Impossibile pulire log errori:', error);
-    }
-  }
-
-  /**
    * Wrapper per try-catch con gestione automatica errori.
    * Mostra l'errore all'utente e lo ri-propaga al chiamante.
    */

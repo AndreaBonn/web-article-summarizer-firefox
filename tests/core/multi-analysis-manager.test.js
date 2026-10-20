@@ -388,158 +388,15 @@ describe('MultiAnalysisManager', () => {
   // saveAnalysis
   // ---------------------------------------------------------------------------
 
-  describe('saveAnalysis', () => {
-    it('salva analisi in browser.storage.local con id = Date.now()', async () => {
-      const analysis = { articles: [], globalSummary: 'test' };
-      const before = Date.now();
-
-      await MultiAnalysisManager.saveAnalysis(analysis);
-
-      expect(analysis.id).toBeGreaterThanOrEqual(before);
-      expect(browser.storage.local.set).toHaveBeenCalledWith({
-        multiAnalysisHistory: [analysis],
-      });
-    });
-
-    it('inserisce nuova analisi in testa alla history esistente', async () => {
-      const existing = { id: 1, articles: [] };
-      browser.storage.local.get.mockResolvedValue({
-        multiAnalysisHistory: [existing],
-      });
-
-      const newAnalysis = { articles: [], globalSummary: 'nuova' };
-      await MultiAnalysisManager.saveAnalysis(newAnalysis);
-
-      const saved = browser.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
-      expect(saved[0]).toBe(newAnalysis);
-      expect(saved[1]).toBe(existing);
-    });
-
-    it('test_saveAnalysis_thirtyExisting_keepsNewestAndDropsOldest', async () => {
-      const existingHistory = Array.from({ length: 30 }, (_, i) => ({ id: 30 - i, articles: [] }));
-      browser.storage.local.get.mockResolvedValue({
-        multiAnalysisHistory: existingHistory,
-      });
-
-      const newAnalysis = { articles: [], globalSummary: 'Newest analysis' };
-      await MultiAnalysisManager.saveAnalysis(newAnalysis);
-
-      const saved = browser.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
-      expect(saved).toEqual([
-        newAnalysis,
-        ...Array.from({ length: 29 }, (_, i) => ({ id: 30 - i, articles: [] })),
-      ]);
-    });
-
-    it('gestisce history vuota (prima analisi)', async () => {
-      browser.storage.local.get.mockResolvedValue({});
-
-      await MultiAnalysisManager.saveAnalysis({ articles: [] });
-
-      const saved = browser.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
-      expect(saved).toHaveLength(1);
-    });
-  });
-
   // ---------------------------------------------------------------------------
   // getAnalysisHistory
   // ---------------------------------------------------------------------------
-
-  describe('getAnalysisHistory', () => {
-    it('restituisce array vuoto se nessuna history salvata', async () => {
-      browser.storage.local.get.mockResolvedValue({});
-
-      const result = await MultiAnalysisManager.getAnalysisHistory();
-
-      expect(result).toEqual([]);
-    });
-
-    it('restituisce history salvata', async () => {
-      const history = [{ id: 1 }, { id: 2 }];
-      browser.storage.local.get.mockResolvedValue({ multiAnalysisHistory: history });
-
-      const result = await MultiAnalysisManager.getAnalysisHistory();
-
-      expect(result).toEqual(history);
-      expect(result).toHaveLength(2);
-    });
-  });
 
   // ---------------------------------------------------------------------------
   // getAnalysisById
   // ---------------------------------------------------------------------------
 
-  describe('getAnalysisById', () => {
-    it('trova analisi per id corrispondente', async () => {
-      const history = [
-        { id: 100, title: 'prima' },
-        { id: 200, title: 'seconda' },
-      ];
-      browser.storage.local.get.mockResolvedValue({ multiAnalysisHistory: history });
-
-      const result = await MultiAnalysisManager.getAnalysisById(200);
-
-      expect(result.title).toBe('seconda');
-    });
-
-    it('restituisce undefined se id non trovato', async () => {
-      browser.storage.local.get.mockResolvedValue({
-        multiAnalysisHistory: [{ id: 1 }],
-      });
-
-      const result = await MultiAnalysisManager.getAnalysisById(999);
-
-      expect(result).toBeUndefined();
-    });
-
-    it('restituisce undefined se history vuota', async () => {
-      browser.storage.local.get.mockResolvedValue({});
-
-      const result = await MultiAnalysisManager.getAnalysisById(1);
-
-      expect(result).toBeUndefined();
-    });
-  });
-
   // ---------------------------------------------------------------------------
   // deleteAnalysis
   // ---------------------------------------------------------------------------
-
-  describe('deleteAnalysis', () => {
-    it('rimuove analisi con id specificato', async () => {
-      browser.storage.local.get.mockResolvedValue({
-        multiAnalysisHistory: [
-          { id: 1, title: 'keep' },
-          { id: 2, title: 'delete' },
-          { id: 3, title: 'keep2' },
-        ],
-      });
-
-      await MultiAnalysisManager.deleteAnalysis(2);
-
-      const saved = browser.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
-      expect(saved).toHaveLength(2);
-      expect(saved.find((a) => a.id === 2)).toBeUndefined();
-    });
-
-    it('non modifica history se id non presente', async () => {
-      browser.storage.local.get.mockResolvedValue({
-        multiAnalysisHistory: [{ id: 1 }, { id: 2 }],
-      });
-
-      await MultiAnalysisManager.deleteAnalysis(999);
-
-      const saved = browser.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
-      expect(saved).toHaveLength(2);
-    });
-
-    it('gestisce history vuota senza errore', async () => {
-      browser.storage.local.get.mockResolvedValue({});
-
-      await MultiAnalysisManager.deleteAnalysis(1);
-
-      const saved = browser.storage.local.set.mock.calls[0][0].multiAnalysisHistory;
-      expect(saved).toEqual([]);
-    });
-  });
 });

@@ -51,28 +51,19 @@ describe('loadReadingModeData', () => {
     ]);
   });
 
-  it('loads the matching numeric history identifier from URL text', async () => {
-    const storage = createStorage({ summaryHistory: [{ id: 6 }, { id: 7, summary: 'Saved' }] });
+  it('ignores an id in the URL and loads the popup handoff', async () => {
+    const storage = createStorage({
+      summaryHistory: [{ id: 7, summary: 'From history' }],
+      readingModeData: { summary: 'Handoff' },
+    });
     await expect(
       loadReadingModeData({ search: '?id=7', storage, hasExtensionStorage: true }),
-    ).resolves.toEqual({ id: 7, summary: 'Saved' });
-    expect(storage.calls).toEqual([['get', ['summaryHistory']]]);
+    ).resolves.toEqual({ summary: 'Handoff' });
+    expect(storage.calls).toEqual([
+      ['get', ['readingModeData']],
+      ['remove', ['readingModeData']],
+    ]);
   });
-
-  it.each([{}, { summaryHistory: [{ id: 8 }] }])(
-    'rejects a missing history entry: %j',
-    async (data) => {
-      const errorLog = vi.spyOn(Logger, 'error').mockImplementation(() => {});
-      await expect(
-        loadReadingModeData({
-          search: '?id=7',
-          storage: createStorage(data),
-          hasExtensionStorage: true,
-        }),
-      ).rejects.toThrow('Riassunto non trovato nella cronologia');
-      expect(errorLog).toHaveBeenCalledWith('Error loading data:', expect.any(Error));
-    },
-  );
 
   it('reports NODATA for an empty extension handoff', async () => {
     await expect(

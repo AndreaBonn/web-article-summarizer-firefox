@@ -26,7 +26,6 @@ global.browser = {
         Object.assign(store, JSON.parse(JSON.stringify(data)));
         return Promise.resolve();
       }),
-      getBytesInUse: vi.fn(() => Promise.resolve(4096)),
     },
   },
 };
@@ -61,7 +60,6 @@ describe('PDFCacheManager', () => {
     it('configura costanti', () => {
       expect(cache.STORAGE_KEY).toBe('pdf_analysis_history');
       expect(cache.MAX_ENTRIES).toBe(50);
-      expect(cache.DAYS_TO_KEEP).toBe(30);
     });
   });
 
@@ -273,73 +271,6 @@ describe('PDFCacheManager', () => {
       await cache.deleteEntry('nonexistent');
       const savedData = browser.storage.local.set.mock.calls[0][0];
       expect(savedData.pdf_analysis_history).toHaveLength(1);
-    });
-  });
-
-  // ─── cleanOldEntries ──────────────────────────────
-
-  describe('cleanOldEntries', () => {
-    it('rimuove entry più vecchie di daysToKeep', async () => {
-      const now = Date.now();
-      const old = now - 31 * 24 * 60 * 60 * 1000; // 31 giorni fa
-      const recent = now - 1 * 24 * 60 * 60 * 1000; // 1 giorno fa
-
-      store.pdf_analysis_history = [
-        { id: 'pdf_old', timestamp: old },
-        { id: 'pdf_new', timestamp: recent },
-      ];
-
-      await cache.cleanOldEntries(30);
-
-      const savedData = browser.storage.local.set.mock.calls[0][0];
-      expect(savedData.pdf_analysis_history).toHaveLength(1);
-      expect(savedData.pdf_analysis_history[0].id).toBe('pdf_new');
-    });
-
-    it('non salva se niente da rimuovere', async () => {
-      const now = Date.now();
-      store.pdf_analysis_history = [{ id: 'pdf_1', timestamp: now }];
-
-      await cache.cleanOldEntries(30);
-      expect(browser.storage.local.set).not.toHaveBeenCalled();
-    });
-
-    it('accetta daysToKeep personalizzato', async () => {
-      const now = Date.now();
-      const fiveDaysAgo = now - 5 * 24 * 60 * 60 * 1000;
-
-      store.pdf_analysis_history = [{ id: 'pdf_1', timestamp: fiveDaysAgo }];
-
-      await cache.cleanOldEntries(3);
-
-      const savedData = browser.storage.local.set.mock.calls[0][0];
-      expect(savedData.pdf_analysis_history).toHaveLength(0);
-    });
-
-    it('non crasha su errore', async () => {
-      browser.storage.local.get.mockRejectedValueOnce(new Error('fail'));
-      await expect(cache.cleanOldEntries()).resolves.toBeUndefined();
-    });
-  });
-
-  // ─── getStorageStats ──────────────────────────────
-
-  describe('getStorageStats', () => {
-    it('ritorna statistiche corrette', async () => {
-      store.pdf_analysis_history = [{ id: 'pdf_1' }, { id: 'pdf_2' }];
-
-      const stats = await cache.getStorageStats();
-      expect(stats.totalEntries).toBe(2);
-      expect(stats.bytesInUse).toBe(4096);
-      expect(stats.maxEntries).toBe(50);
-      expect(stats.daysToKeep).toBe(30);
-    });
-
-    it('ritorna null su errore di getBytesInUse', async () => {
-      store.pdf_analysis_history = [{ id: 'pdf_1' }];
-      browser.storage.local.getBytesInUse.mockRejectedValueOnce(new Error('fail'));
-      const stats = await cache.getStorageStats();
-      expect(stats).toBeNull();
     });
   });
 });

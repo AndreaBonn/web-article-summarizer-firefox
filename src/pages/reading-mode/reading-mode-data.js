@@ -10,7 +10,6 @@ export async function loadReadingModeData({
   try {
     // Try to get data from URL params
     const params = new URLSearchParams(search);
-    const historyId = params.get('id');
     const source = params.get('source');
 
     // Check if loading PDF analysis
@@ -26,18 +25,7 @@ export async function loadReadingModeData({
       }
     }
 
-    if (historyId && hasExtensionStorage) {
-      // Load from history using browser.storage (use summaryHistory)
-      const result = await storage.get(['summaryHistory']);
-      const history = result.summaryHistory || [];
-      currentData = history.find((item) => String(item.id) === String(historyId));
-
-      if (!currentData) {
-        throw new Error('Riassunto non trovato nella cronologia');
-      }
-
-      Logger.info('Dati caricati dalla cronologia:', currentData);
-    } else if (hasExtensionStorage) {
+    if (hasExtensionStorage) {
       // Try to load from browser.storage (passed from popup)
       const result = await storage.get(['readingModeData']);
       if (result.readingModeData) {

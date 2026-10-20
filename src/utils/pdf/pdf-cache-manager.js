@@ -5,7 +5,6 @@ export class PDFCacheManager {
   constructor() {
     this.STORAGE_KEY = 'pdf_analysis_history';
     this.MAX_ENTRIES = 50;
-    this.DAYS_TO_KEEP = 30;
   }
 
   /**
@@ -142,47 +141,6 @@ export class PDFCacheManager {
     } catch (error) {
       Logger.error('Errore eliminazione entry:', error);
       throw error;
-    }
-  }
-
-  /**
-   * Pulisci elementi vecchi
-   * @param {number} daysToKeep - Giorni da mantenere
-   */
-  async cleanOldEntries(daysToKeep = 30) {
-    try {
-      const history = await this.getHistory();
-      const cutoffTime = Date.now() - daysToKeep * 24 * 60 * 60 * 1000;
-
-      const filtered = history.filter((entry) => entry.timestamp > cutoffTime);
-
-      if (filtered.length < history.length) {
-        await this.saveHistory(filtered);
-        Logger.info(`✓ Puliti ${history.length - filtered.length} elementi vecchi`);
-      }
-    } catch (error) {
-      Logger.error('Errore pulizia cronologia:', error);
-    }
-  }
-
-  /**
-   * Ottieni statistiche storage
-   * @returns {Promise<object>}
-   */
-  async getStorageStats() {
-    try {
-      const history = await this.getHistory();
-      const bytesInUse = await browser.storage.local.getBytesInUse(this.STORAGE_KEY);
-
-      return {
-        totalEntries: history.length,
-        bytesInUse,
-        maxEntries: this.MAX_ENTRIES,
-        daysToKeep: this.DAYS_TO_KEEP,
-      };
-    } catch (error) {
-      Logger.error('Errore statistiche storage:', error);
-      return null;
     }
   }
 }

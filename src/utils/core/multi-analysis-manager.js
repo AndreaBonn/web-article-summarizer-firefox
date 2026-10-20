@@ -137,35 +137,4 @@ Rispondi SOLO con il JSON.`;
 
     return result;
   }
-
-  static async saveAnalysis(analysis) {
-    const result = await browser.storage.local.get(['multiAnalysisHistory']);
-    let history = result.multiAnalysisHistory || [];
-
-    analysis.id = Date.now();
-
-    history.unshift(analysis);
-
-    if (history.length > 30) {
-      history = history.slice(0, 30);
-    }
-
-    await browser.storage.local.set({ multiAnalysisHistory: history });
-  }
-
-  static async getAnalysisHistory() {
-    const result = await browser.storage.local.get(['multiAnalysisHistory']);
-    return result.multiAnalysisHistory || [];
-  }
-
-  static async getAnalysisById(id) {
-    const history = await this.getAnalysisHistory();
-    return history.find((a) => a.id === id);
-  }
-
-  static async deleteAnalysis(id) {
-    const history = await this.getAnalysisHistory();
-    const filtered = history.filter((a) => a.id !== id);
-    await browser.storage.local.set({ multiAnalysisHistory: filtered });
-  }
 }
