@@ -10,6 +10,7 @@ import { StorageManager } from '../../utils/storage/storage-manager.js';
 import { I18n } from '../../utils/i18n/i18n.js';
 import { Modal } from '../../utils/core/modal.js';
 import { HistoryManager } from '../../utils/storage/history-manager.js';
+import { getTranslationText } from '../../shared/translation-text.js';
 import {
   resolvePdfText,
   applyArticleUpdate,
@@ -306,7 +307,7 @@ export async function updateDataInStorage() {
         const targetLang = state.currentData.metadata?.language || 'it';
         await HistoryManager.updatePDFWithTranslation(
           pdfId,
-          state.currentData.translation,
+          getTranslationText(state.currentData.translation),
           targetLang,
           null,
         );

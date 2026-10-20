@@ -1,5 +1,6 @@
 // History - testo da leggere per tab del modal dettaglio
 import { formatKeyPointsForSpeech, formatQAForSpeech } from '../../shared/speech-text.js';
+import { getTranslationText } from '../../shared/translation-text.js';
 
 /**
  * Testo TTS del tab indicato per una voce di cronologia, o null.
@@ -18,8 +19,7 @@ export function getModalSpeechText(tabName, entry) {
       return formatKeyPointsForSpeech(entry.keyPoints);
 
     case 'translation':
-      if (!entry.translation) return null;
-      return entry.translation.text || entry.translation;
+      return getTranslationText(entry.translation) || null;
 
     case 'citations':
       if (!entry.citations?.citations) return null;

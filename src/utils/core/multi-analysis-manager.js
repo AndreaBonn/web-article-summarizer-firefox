@@ -5,6 +5,7 @@
 import { StorageManager } from '../storage/storage-manager.js';
 import { APIOrchestrator as APIClient } from '../ai/api-orchestrator.js';
 import { Logger } from './logger.js';
+import { getTranslationText } from '../../shared/translation-text.js';
 import {
   generateGlobalSummary,
   generateComparison,
@@ -35,9 +36,7 @@ export class MultiAnalysisManager {
     // Prepara sintesi degli articoli per l'analisi
     const articlesInfo = articles
       .map((a, index) => {
-        const content = a.translation
-          ? a.translation.text.substring(0, 300)
-          : a.summary.substring(0, 300);
+        const content = (getTranslationText(a.translation) || a.summary).substring(0, 300);
         return `
 ARTICOLO ${index + 1}:
 Titolo: ${a.article.title}

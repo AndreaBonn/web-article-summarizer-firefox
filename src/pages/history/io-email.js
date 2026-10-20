@@ -4,6 +4,7 @@ import { populateSavedEmails, bindEmailModal } from '../../shared/email-modal.js
 import { state } from './state.js';
 import { EmailManager } from '@utils/export/email-manager.js';
 import { Modal } from '@utils/core/modal.js';
+import { getTranslationText } from '../../shared/translation-text.js';
 
 export async function sendCurrentEmail() {
   if (!state.currentEntry) return;
@@ -111,7 +112,7 @@ export async function sendCurrentEmail() {
         options.includeSummary ? state.currentEntry.summary : null,
         options.includeKeypoints ? state.currentEntry.keyPoints : null,
         options.includeTranslation && state.currentEntry.translation
-          ? state.currentEntry.translation.text
+          ? getTranslationText(state.currentEntry.translation)
           : null,
         options.includeQA ? state.currentEntry.qa : null,
       );

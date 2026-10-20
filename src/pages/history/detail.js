@@ -8,6 +8,7 @@ import { HistoryManager } from '../../utils/storage/history-manager.js';
 import { PDFExporter } from '../../utils/export/pdf-exporter.js';
 import { MarkdownExporter } from '../../utils/export/markdown-exporter.js';
 import { Modal } from '../../utils/core/modal.js';
+import { getTranslationText } from '../../shared/translation-text.js';
 import { showExportModal, computeExportAvailability } from '../../shared/export-modal.js';
 import {
   renderDetailKeypointsHtml,
@@ -137,7 +138,7 @@ export function exportCurrentPdf() {
       try {
         const translation =
           options.includeTranslation && state.currentEntry.translation
-            ? state.currentEntry.translation.text
+            ? getTranslationText(state.currentEntry.translation)
             : null;
 
         await PDFExporter.exportToPDF(
@@ -168,7 +169,7 @@ export function exportCurrentMarkdown() {
       try {
         const translation =
           options.includeTranslation && state.currentEntry.translation
-            ? state.currentEntry.translation.text
+            ? getTranslationText(state.currentEntry.translation)
             : null;
 
         MarkdownExporter.exportToMarkdown(

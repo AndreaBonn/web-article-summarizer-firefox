@@ -66,6 +66,23 @@ describe('updateDataInStorage (PDF)', () => {
     );
   });
 
+  it('test_updateDataInStorage_pdfWithObjectTranslationFromHistory_savesPlainText', async () => {
+    state.currentData = {
+      isPDF: true,
+      historyId: HISTORY_ID,
+      translation: { text: 'Ciao', targetLanguage: 'it' },
+    };
+
+    await updateDataInStorage();
+
+    expect(HistoryManager.updatePDFWithTranslation).toHaveBeenCalledExactlyOnceWith(
+      HISTORY_ID,
+      'Ciao',
+      'it',
+      null,
+    );
+  });
+
   it('test_updateDataInStorage_pdfWithoutAnyId_savesNothing', async () => {
     state.currentData = { isPDF: true, translation: 'Ciao' };
 

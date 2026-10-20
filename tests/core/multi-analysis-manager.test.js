@@ -210,6 +210,23 @@ describe('MultiAnalysisManager', () => {
       expect(userPrompt).toContain('Translated content');
     });
 
+    it('usa una translation salvata come stringa (reading mode) senza errori', async () => {
+      const articlesWithStringTranslation = [
+        { ...articles[0], translation: 'Traduzione come stringa del primo articolo.' },
+        articles[1],
+      ];
+      APIClient.generateCompletion.mockResolvedValue('{"related": true}');
+
+      await MultiAnalysisManager.checkCorrelationWithAI(
+        articlesWithStringTranslation,
+        'groq',
+        'key',
+      );
+
+      const userPrompt = APIClient.generateCompletion.mock.calls[0][3];
+      expect(userPrompt).toContain('Traduzione come stringa');
+    });
+
     it('passa temperature 0.1 e maxTokens 500 nelle opzioni', async () => {
       APIClient.generateCompletion.mockResolvedValue('{"related": true}');
 

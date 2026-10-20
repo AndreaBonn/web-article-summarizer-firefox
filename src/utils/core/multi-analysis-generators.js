@@ -4,6 +4,7 @@
 import { APIOrchestrator as APIClient } from '../ai/api-orchestrator.js';
 import { parseLLMJson } from '../ai/json-repair.js';
 import { Logger } from './logger.js';
+import { getTranslationText } from '../../shared/translation-text.js';
 import {
   getGlobalSummaryPrompt,
   getComparisonPrompt,
@@ -13,7 +14,7 @@ import {
 export async function generateGlobalSummary(articles, provider, apiKey) {
   const articlesContent = articles
     .map((a, index) => {
-      const content = a.translation ? a.translation.text : a.summary;
+      const content = getTranslationText(a.translation) || a.summary;
       return `
 ## ARTICOLO ${index + 1}: ${a.article.title}
 
@@ -56,7 +57,7 @@ Genera un riassunto globale che integri tutti questi contenuti in una narrazione
 export async function generateComparison(articles, provider, apiKey) {
   const articlesContent = articles
     .map((a, index) => {
-      const content = a.translation ? a.translation.text : a.summary;
+      const content = getTranslationText(a.translation) || a.summary;
       return `
 ## ARTICOLO ${index + 1}: ${a.article.title}
 
@@ -92,7 +93,7 @@ Genera un'analisi comparativa dettagliata che evidenzi idee comuni, conflitti, p
 export async function generateQA(articles, provider, apiKey) {
   const articlesContent = articles
     .map((a, index) => {
-      const content = a.translation ? a.translation.text : a.summary;
+      const content = getTranslationText(a.translation) || a.summary;
       return `
 ## ARTICOLO ${index + 1}: ${a.article.title}
 

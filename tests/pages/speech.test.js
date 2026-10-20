@@ -74,6 +74,7 @@ describe('getModalSpeechText (history)', () => {
 
   it('returns null without translation', () => {
     expect(getModalSpeechText('translation', {})).toBeNull();
+    expect(getModalSpeechText('translation', { translation: { text: '' } })).toBeNull();
   });
 
   it('falls back to citation.text when quote_text is missing', () => {

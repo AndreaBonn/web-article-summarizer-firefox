@@ -81,6 +81,15 @@ describe('generateGlobalSummary()', () => {
     expect(userPrompt).toContain('My summary text');
   });
 
+  it('uses a translation stored as a plain string', async () => {
+    const articles = [makeArticle({ translation: 'Stringa tradotta', summary: 'Original' })];
+    await generateGlobalSummary(articles, 'groq', 'key');
+
+    const userPrompt = APIClient.generateCompletion.mock.calls[0][3];
+    expect(userPrompt).toContain('Stringa tradotta');
+    expect(userPrompt).not.toContain('Original');
+  });
+
   it('uses translation text when translation is present', async () => {
     const articles = [
       makeArticle({ translation: { text: 'Translated content' }, summary: 'Original' }),
