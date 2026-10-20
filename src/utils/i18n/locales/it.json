@@ -148,7 +148,7 @@
   "settings.perf.cacheDesc": "Salva i riassunti in cache per evitare chiamate API duplicate",
   "settings.perf.cacheTTL": "Durata Cache (giorni)",
   "settings.perf.autoCleanup": "Cleanup Automatico",
-  "settings.perf.cleanupDesc": "Pulisci automaticamente cache scadute e cronologia molto vecchia",
+  "settings.perf.cleanupDesc": "Pulisci automaticamente cache scadute e riassunti più vecchi di 180 giorni. I preferiti non vengono mai eliminati.",
   "settings.perf.statsTitle": "Statistiche Performance",
   "settings.perf.cache": "Cache",
   "settings.perf.cacheEntries": "Entry in Cache",

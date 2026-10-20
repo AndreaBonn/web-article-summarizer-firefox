@@ -90,6 +90,18 @@ describe('AutoMaintenance', () => {
   });
 
   describe('deleteOldHistory()', () => {
+    it('test_deleteOldHistory_oldFavorite_isKept', async () => {
+      const dayMs = 24 * 60 * 60 * 1000;
+      const oldFavorite = { id: 'fav', favorite: true, timestamp: Date.now() - 400 * dayMs };
+      const oldPlain = { id: 'plain', timestamp: Date.now() - 400 * dayMs };
+      store.summaryHistory = [oldFavorite, oldPlain];
+
+      const count = await maintenance.deleteOldHistory(180);
+
+      expect(count).toBe(1);
+      expect(store.summaryHistory).toEqual([oldFavorite]);
+    });
+
     it('test_deleteOldHistory_noHistory_returnsZero', async () => {
       const count = await maintenance.deleteOldHistory(180);
       expect(count).toBe(0);

@@ -148,7 +148,7 @@
   "settings.perf.cacheDesc": "Save summaries in cache to avoid duplicate API calls",
   "settings.perf.cacheTTL": "Cache Duration (days)",
   "settings.perf.autoCleanup": "Automatic Cleanup",
-  "settings.perf.cleanupDesc": "Automatically clean expired cache and very old history",
+  "settings.perf.cleanupDesc": "Automatically clean expired cache and summaries older than 180 days. Favorites are never deleted.",
   "settings.perf.statsTitle": "Performance Statistics",
   "settings.perf.cache": "Cache",
   "settings.perf.cacheEntries": "Cache Entries",

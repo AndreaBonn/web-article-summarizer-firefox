@@ -127,7 +127,10 @@ export class AutoMaintenance {
       const history = result.summaryHistory || [];
 
       const cutoffDate = Date.now() - daysOld * 24 * 60 * 60 * 1000;
-      const filteredHistory = history.filter((entry) => entry.timestamp >= cutoffDate);
+      // Favorites are never dropped, as in the history limit and "clear history"
+      const filteredHistory = history.filter(
+        (entry) => entry.favorite === true || entry.timestamp >= cutoffDate,
+      );
 
       const deletedCount = history.length - filteredHistory.length;
 
