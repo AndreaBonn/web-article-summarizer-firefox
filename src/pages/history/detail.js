@@ -206,7 +206,7 @@ export async function copyCurrentSummary() {
     await navigator.clipboard.writeText(text);
     const btn = document.getElementById('copyModalBtn');
     const originalText = btn.textContent;
-    btn.textContent = '✓ Copiato!';
+    btn.textContent = I18n.t('feedback.copied');
     setTimeout(() => {
       btn.textContent = originalText;
     }, 2000);
