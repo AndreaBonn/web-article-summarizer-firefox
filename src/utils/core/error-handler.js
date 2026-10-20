@@ -6,6 +6,53 @@ import { I18n } from '../i18n/i18n.js';
 const MAX_ERROR_LOGS = 50;
 export const UNSUPPORTED_PAGE_MARKER = '[UNSUPPORTED_PAGE]';
 
+// Every message getErrorMessage can produce, with the error kind it stands for. The service
+// worker sends pages messages it already mapped and pages map them again: without this table
+// the second pass turned them into the generic "unexpected error" and lost their kind.
+const MAPPED_MESSAGE_KINDS = {
+  'error.noArticle': 'generic',
+  'error.tooShort': 'generic',
+  'errorMsg.missingKey': 'missing_key',
+  'error.invalidKey': 'generic',
+  'errorMsg.rateLimitProvider': 'generic',
+  'errorMsg.rateLimit': 'generic',
+  'errorMsg.forbidden': 'generic',
+  'errorMsg.serverError': 'generic',
+  'errorMsg.unavailable': 'generic',
+  'error.network': 'generic',
+  'errorMsg.timeout': 'generic',
+  'errorMsg.unsupportedPage': 'unsupported_page',
+  'errorMsg.pageUnreachable': 'page_unreachable',
+  'errorMsg.storageFull': 'generic',
+  'errorMsg.unexpected': 'generic',
+};
+
+function templateToRegExp(template) {
+  const names = [];
+  const escaped = template.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const source = escaped.replace(/\\\{(\w+)\\\}/g, (_, name) => {
+    names.push(name);
+    return '(.+?)';
+  });
+  return { regexp: new RegExp(`^${source}$`), names };
+}
+
+/** The i18n key and placeholder values of a message already mapped, in any UI language. */
+function findMappedMessage(message) {
+  for (const key of Object.keys(MAPPED_MESSAGE_KINDS)) {
+    for (const translations of Object.values(I18n.translations)) {
+      const template = translations[key];
+      if (!template) continue;
+      const { regexp, names } = templateToRegExp(template);
+      const match = message.match(regexp);
+      if (match) {
+        return { key, vars: Object.fromEntries(names.map((name, i) => [name, match[i + 1]])) };
+      }
+    }
+  }
+  return null;
+}
+
 export class ErrorHandler {
   /**
    * Mostra un errore all'utente con feedback visivo
@@ -33,6 +80,8 @@ export class ErrorHandler {
    */
   static classifyError(error) {
     const message = error?.message || String(error);
+    const mapped = findMappedMessage(message);
+    if (mapped) return MAPPED_MESSAGE_KINDS[mapped.key];
     if (message.includes('API key non configurata')) return 'missing_key';
     if (message.includes(UNSUPPORTED_PAGE_MARKER)) return 'unsupported_page';
     if (
@@ -50,6 +99,10 @@ export class ErrorHandler {
    */
   static getErrorMessage(error) {
     const message = error.message || error.toString();
+
+    // Already user-facing: render it again in the current language instead of re-mapping it
+    const mapped = findMappedMessage(message);
+    if (mapped) return I18n.tf(mapped.key, mapped.vars);
 
     // Errori di estrazione articolo
     if (message.includes('No article found')) {
