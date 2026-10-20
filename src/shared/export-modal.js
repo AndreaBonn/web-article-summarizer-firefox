@@ -17,6 +17,7 @@
  * @param {Function} [config.onCancel]      Chiamato alla chiusura senza conferma
  */
 import { Modal } from '../utils/core/modal.js';
+import { I18n } from '../utils/i18n/i18n.js';
 
 export function showExportModal({
   title,
@@ -45,7 +46,7 @@ export function showExportModal({
     const options = _collectOptions(prefix, availability);
 
     if (!_hasAnySelected(options)) {
-      await Modal.warning('Seleziona almeno una sezione da esportare', 'Nessuna Selezione');
+      await Modal.warning(I18n.t('export.noSelection'), I18n.t('export.noSelectionTitle'));
       return;
     }
 
@@ -122,7 +123,11 @@ function _collectOptions(prefix, availability) {
   return {
     includeSummary: summaryChecked ? summaryChecked.checked : false,
     includeKeypoints: keypointsChecked ? keypointsChecked.checked : false,
-    includeTranslation: !!(translationChecked && translationChecked.checked && availability.translation),
+    includeTranslation: !!(
+      translationChecked &&
+      translationChecked.checked &&
+      availability.translation
+    ),
     includeQA: !!(qaChecked && qaChecked.checked && availability.qa),
     includeCitations: !!(citationsChecked && citationsChecked.checked && availability.citations),
   };
@@ -149,10 +154,6 @@ export function computeExportAvailability({ translation, qa, citations }) {
   return {
     translation: !!translation,
     qa: !!(qa && qa.length > 0),
-    citations: !!(
-      citations &&
-      citations.citations &&
-      citations.citations.length > 0
-    ),
+    citations: !!(citations && citations.citations && citations.citations.length > 0),
   };
 }

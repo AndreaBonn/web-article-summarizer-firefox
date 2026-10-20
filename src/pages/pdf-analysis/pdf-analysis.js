@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     Logger.error('Errore inizializzazione PDF Analysis:', error);
     const errorEl = document.getElementById('errorMessage');
     if (errorEl) {
-      errorEl.textContent = 'Errore durante il caricamento. Ricarica la pagina.';
+      errorEl.textContent = I18n.t('pdf.loadError');
       errorEl.style.display = 'block';
     }
   }
@@ -176,7 +176,7 @@ function removeFile() {
 
 async function startAnalysis() {
   if (!selectedFile) {
-    Modal.error('Nessun file selezionato');
+    Modal.error(I18n.t('pdf.noFileSelected'));
     return;
   }
 

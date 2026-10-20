@@ -4,6 +4,7 @@
 import { VoiceController } from '../utils/voice/voice-controller.js';
 import { HtmlSanitizer } from '../utils/security/html-sanitizer.js';
 import { Logger } from '../utils/core/logger.js';
+import { I18n } from '../utils/i18n/i18n.js';
 
 // ============================================
 // INIZIALIZZAZIONE
@@ -78,7 +79,7 @@ export function updateTTSButtonState(buttonState, { elements = null, getButtons 
       pauseBtn.style.display = 'none';
       stopBtn.style.display = 'inline-block';
       playBtn.textContent = '▶️';
-      playBtn.title = 'Riprendi';
+      playBtn.title = I18n.t('voice.resume');
       break;
 
     case 'stopped':
@@ -86,7 +87,7 @@ export function updateTTSButtonState(buttonState, { elements = null, getButtons 
       pauseBtn.style.display = 'none';
       stopBtn.style.display = 'none';
       playBtn.textContent = 'Play';
-      playBtn.title = 'Leggi ad alta voce';
+      playBtn.title = I18n.t('reading.ttsPlayTitle');
       pauseBtn.classList.remove('active');
       break;
   }
@@ -225,7 +226,7 @@ export function createTTSToggleButton(text, lang, label, voiceController, onVoic
     } else {
       voiceController.speak(text, lang);
       button.classList.add('active');
-      button.innerHTML = `<span>Stop</span>`;
+      button.innerHTML = `<span>${I18n.t('reading.stopText')}</span>`;
     }
   });
 
@@ -239,7 +240,7 @@ export function createTTSToggleButton(text, lang, label, voiceController, onVoic
   const voiceBtn = document.createElement('button');
   voiceBtn.className = 'tts-voice-select-btn';
   voiceBtn.innerHTML = '⚙️';
-  voiceBtn.title = 'Seleziona voce';
+  voiceBtn.title = I18n.t('voice.selectVoice');
   voiceBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     onVoiceSelect(lang);
@@ -268,8 +269,8 @@ export function buildVoiceSelectorHTML(voices, currentVoice) {
   voices.forEach((voice) => {
     const isSelected = voice.voiceName === currentVoice;
     const localBadge = voice.localService
-      ? '<span class="badge-local">Locale</span>'
-      : '<span class="badge-remote">Remota</span>';
+      ? `<span class="badge-local">${I18n.t('voice.local')}</span>`
+      : `<span class="badge-remote">${I18n.t('voice.remote')}</span>`;
 
     html += `
       <div class="voice-item ${isSelected ? 'selected' : ''}" data-voice="${HtmlSanitizer.escape(voice.voiceName)}">

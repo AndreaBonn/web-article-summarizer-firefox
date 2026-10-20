@@ -586,5 +586,18 @@
   "reading.pageMarker": "📄 Pagina {page}",
   "reading.importantQuotes": "💬 Citazioni Importanti",
 
-  "reading.untitledArticle": "Articolo"
+  "reading.untitledArticle": "Articolo",
+
+  "multi.viewTitle": "Analisi Multi Articolo",
+  "multi.backToHistory": "← Cronologia",
+  "pdf.fileTooLarge": "File troppo grande. Massimo {max}MB.",
+  "pdf.loadError": "Errore durante il caricamento. Ricarica la pagina.",
+  "pdf.noFileSelected": "Nessun file selezionato",
+  "email.removeTitle": "Rimuovi",
+  "email.confirmRemove": "Vuoi rimuovere \"{email}\" dalla lista?",
+  "email.removeEmailTitle": "Rimuovi Email",
+  "voice.resume": "Riprendi",
+  "voice.selectVoice": "Seleziona voce",
+  "voice.local": "Locale",
+  "voice.remote": "Remota"
 }

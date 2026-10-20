@@ -1,5 +1,6 @@
 import { EmailManager } from '../utils/export/email-manager.js';
 import { Modal } from '../utils/core/modal.js';
+import { I18n } from '../utils/i18n/i18n.js';
 
 export function populateSavedEmails({ savedEmails, listEl, sectionEl, inputEl }) {
   let selectedEmail = null;
@@ -21,7 +22,7 @@ export function populateSavedEmails({ savedEmails, listEl, sectionEl, inputEl })
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'saved-email-delete';
       deleteBtn.textContent = '🗑️';
-      deleteBtn.title = 'Rimuovi';
+      deleteBtn.title = I18n.t('email.removeTitle');
 
       // Click per selezionare
       item.addEventListener('click', (e) => {
@@ -43,8 +44,8 @@ export function populateSavedEmails({ savedEmails, listEl, sectionEl, inputEl })
         e.stopPropagation();
 
         const confirmed = await Modal.confirm(
-          `Vuoi rimuovere "${email}" dalla lista?`,
-          'Rimuovi Email',
+          I18n.tf('email.confirmRemove', { email }),
+          I18n.t('email.removeEmailTitle'),
           '🗑️',
         );
 

@@ -6,6 +6,7 @@ import { requestCompletion } from '../../utils/ai/completion-client.js';
 import { HistoryManager } from '../../utils/storage/history-manager.js';
 import { state } from './state.js';
 import { Logger } from '../../utils/core/logger.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 export async function submitQuestion() {
   const input = document.getElementById('qaInput');
@@ -16,12 +17,12 @@ export async function submitQuestion() {
   const chatContainer = document.getElementById('qaChatContainer');
   const questionEl = document.createElement('div');
   questionEl.className = 'qa-message qa-question-msg';
-  questionEl.innerHTML = `<strong>Tu:</strong> ${HtmlSanitizer.escape(question)}`;
+  questionEl.innerHTML = `<strong>${I18n.t('multi.qaYou')}</strong> ${HtmlSanitizer.escape(question)}`;
   chatContainer.appendChild(questionEl);
 
   const loadingEl = document.createElement('div');
   loadingEl.className = 'qa-message qa-loading';
-  loadingEl.innerHTML = '⏳ Sto pensando...';
+  loadingEl.textContent = '⏳ ' + I18n.t('multi.qaThinking');
   chatContainer.appendChild(loadingEl);
   chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -36,7 +37,7 @@ export async function submitQuestion() {
 
     const answerEl = document.createElement('div');
     answerEl.className = 'qa-message qa-answer-msg';
-    answerEl.innerHTML = `<strong>Assistente:</strong> ${HtmlSanitizer.escape(answer)}`;
+    answerEl.innerHTML = `<strong>${I18n.t('multi.qaAssistant')}</strong> ${HtmlSanitizer.escape(answer)}`;
     chatContainer.appendChild(answerEl);
     chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -56,7 +57,7 @@ export async function submitQuestion() {
     loadingEl.remove();
     const errorEl = document.createElement('div');
     errorEl.className = 'qa-message qa-error-msg';
-    errorEl.innerHTML = `<strong>Errore:</strong> ${HtmlSanitizer.escape(error.message)}`;
+    errorEl.innerHTML = `<strong>${I18n.t('multi.qaError')}</strong> ${HtmlSanitizer.escape(error.message)}`;
     chatContainer.appendChild(errorEl);
   } finally {
     input.disabled = false;

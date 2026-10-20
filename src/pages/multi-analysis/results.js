@@ -7,6 +7,7 @@ import { state } from './state.js';
 import { buildReopenedAnalysis } from './analysis-model.js';
 import { exportPdf, exportMarkdown, sendEmail, copyContent } from './export.js';
 import { submitQuestion } from './qa.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 export function formatMarkdown(text) {
   // DOM-based approach: uses textContent for all user data (XSS-safe)
@@ -70,7 +71,7 @@ export function showAnalysisModal() {
     `;
   } else {
     document.getElementById('tabSummary').innerHTML =
-      '<p class="multi-empty-message">Riassunto non generato</p>';
+      `<p class="multi-empty-message">${I18n.t('multi.summaryNotGenerated')}</p>`;
   }
 
   if (state.currentAnalysis.comparison) {
@@ -81,7 +82,7 @@ export function showAnalysisModal() {
     `;
   } else {
     document.getElementById('tabComparison').innerHTML =
-      '<p class="multi-empty-message">Confronto non generato</p>';
+      `<p class="multi-empty-message">${I18n.t('multi.comparisonNotGenerated')}</p>`;
   }
 
   Logger.debug('Verifica Q&A - interactive:', state.currentAnalysis.qa?.interactive);
@@ -91,13 +92,13 @@ export function showAnalysisModal() {
       <div class="qa-interactive">
         <div class="qa-chat-container" id="qaChatContainer">
           <div class="qa-welcome">
-            <p><strong>Q&A Interattivo</strong></p>
-            <p>Fai domande sui ${state.currentAnalysis.qa.articles?.length || state.selectedArticles.length} articoli selezionati. Il sistema risponderà basandosi esclusivamente sui loro contenuti.</p>
+            <p><strong>${I18n.t('multi.qaInteractiveTitle')}</strong></p>
+            <p>${I18n.tf('multi.qaInteractiveDesc', { count: state.currentAnalysis.qa.articles?.length || state.selectedArticles.length })}</p>
           </div>
         </div>
         <div class="qa-input-container">
-          <input type="text" id="qaInput" placeholder="Scrivi la tua domanda..." />
-          <button id="qaSubmitBtn" class="btn-primary">Invia</button>
+          <input type="text" id="qaInput" placeholder="${HtmlSanitizer.escape(I18n.t('multi.qaPlaceholder'))}" />
+          <button id="qaSubmitBtn" class="btn-primary">${I18n.t('multi.qaSubmit')}</button>
         </div>
       </div>
     `;
@@ -109,12 +110,12 @@ export function showAnalysisModal() {
       state.currentAnalysis.qa.questions.forEach((qa) => {
         const questionEl = document.createElement('div');
         questionEl.className = 'qa-message qa-question-msg';
-        questionEl.innerHTML = `<strong>Tu:</strong> ${HtmlSanitizer.escape(qa.question)}`;
+        questionEl.innerHTML = `<strong>${I18n.t('multi.qaYou')}</strong> ${HtmlSanitizer.escape(qa.question)}`;
         chatContainer.appendChild(questionEl);
 
         const answerEl = document.createElement('div');
         answerEl.className = 'qa-message qa-answer-msg';
-        answerEl.innerHTML = `<strong>Assistente:</strong> ${HtmlSanitizer.escape(qa.answer)}`;
+        answerEl.innerHTML = `<strong>${I18n.t('multi.qaAssistant')}</strong> ${HtmlSanitizer.escape(qa.answer)}`;
         chatContainer.appendChild(answerEl);
       });
 
@@ -127,7 +128,7 @@ export function showAnalysisModal() {
     });
   } else {
     document.getElementById('tabQA').innerHTML =
-      '<p class="multi-empty-message">Q&A non abilitato</p>';
+      `<p class="multi-empty-message">${I18n.t('multi.qaNotEnabled')}</p>`;
   }
 
   document.getElementById('analysisModal').classList.remove('hidden');
@@ -179,8 +180,8 @@ export async function reopenSavedAnalysis(data) {
 
   const header = document.querySelector('header');
   header.innerHTML = `
-    <h1>Analisi Multi Articolo</h1>
-    <button id="backBtn" class="btn-back">← Cronologia</button>
+    <h1>${I18n.t('multi.viewTitle')}</h1>
+    <button id="backBtn" class="btn-back">${I18n.t('multi.backToHistory')}</button>
   `;
 
   document.getElementById('backBtn').addEventListener('click', () => {

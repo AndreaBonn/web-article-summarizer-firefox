@@ -1,3 +1,5 @@
+import { I18n } from '../../utils/i18n/i18n.js';
+
 // PDF Analysis - validazione file e costruzione dei record (senza pdfjs-dist)
 
 const MAX_PDF_SIZE_BYTES = 20 * 1024 * 1024; // 20MB
@@ -10,10 +12,10 @@ const MAX_PDF_SIZE_BYTES = 20 * 1024 * 1024; // 20MB
  */
 export function validatePdfFile(file) {
   if (file.type !== 'application/pdf') {
-    return 'File non valido. Carica un file PDF.';
+    return I18n.t('pdf.invalidFile');
   }
   if (file.size > MAX_PDF_SIZE_BYTES) {
-    return 'File troppo grande. Massimo 20MB.';
+    return I18n.tf('pdf.fileTooLarge', { max: MAX_PDF_SIZE_BYTES / (1024 * 1024) });
   }
   return null;
 }

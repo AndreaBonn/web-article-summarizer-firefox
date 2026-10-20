@@ -97,7 +97,7 @@ export async function copyContent() {
     await navigator.clipboard.writeText(text);
     const btn = document.getElementById('copyBtn');
     const originalText = btn.textContent;
-    btn.textContent = '✓ Copiato!';
+    btn.textContent = I18n.t('feedback.copied');
     setTimeout(() => {
       btn.textContent = originalText;
     }, 2000);
@@ -116,7 +116,7 @@ export function showExportOptionsModal(type) {
     const cancelBtn = document.getElementById('exportCancelBtn');
     const confirmBtn = document.getElementById('exportConfirmBtn');
 
-    title.textContent = `Esporta ${type}`;
+    title.textContent = I18n.tf('multi.exportTitle', { type });
 
     summaryOption.style.display = state.currentAnalysis.globalSummary ? 'flex' : 'none';
     comparisonOption.style.display = state.currentAnalysis.comparison ? 'flex' : 'none';

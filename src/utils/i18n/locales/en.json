@@ -586,5 +586,18 @@
   "reading.pageMarker": "📄 Page {page}",
   "reading.importantQuotes": "💬 Key Quotes",
 
-  "reading.untitledArticle": "Article"
+  "reading.untitledArticle": "Article",
+
+  "multi.viewTitle": "Multi-Article Analysis",
+  "multi.backToHistory": "← History",
+  "pdf.fileTooLarge": "File too large. Maximum {max}MB.",
+  "pdf.loadError": "Loading failed. Reload the page.",
+  "pdf.noFileSelected": "No file selected",
+  "email.removeTitle": "Remove",
+  "email.confirmRemove": "Remove \"{email}\" from the list?",
+  "email.removeEmailTitle": "Remove Email",
+  "voice.resume": "Resume",
+  "voice.selectVoice": "Choose voice",
+  "voice.local": "Local",
+  "voice.remote": "Remote"
 }
