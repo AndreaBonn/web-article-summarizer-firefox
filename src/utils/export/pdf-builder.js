@@ -1,5 +1,6 @@
 // PDF Builder — helper per costruire PDF con page break automatici e sezioni riutilizzabili
 import { jsPDF } from 'jspdf';
+import { docHeading, docLabel } from './doc-labels.js';
 
 const MARGIN = 20;
 const PAGE_BOTTOM = 270;
@@ -71,7 +72,7 @@ export class PDFBuilder {
   renderKeyPoints(keyPoints) {
     if (!keyPoints || keyPoints.length === 0) return;
 
-    this.writeSectionTitle('PUNTI CHIAVE');
+    this.writeSectionTitle(docHeading('keyPoints'));
 
     keyPoints.forEach((point, index) => {
       this.checkPageBreak(260);
@@ -110,7 +111,7 @@ export class PDFBuilder {
     if (!qaList || qaList.length === 0) return;
 
     this.addSpacing();
-    this.writeSectionTitle('DOMANDE E RISPOSTE');
+    this.writeSectionTitle(docHeading('qa'));
 
     qaList.forEach((qa, index) => {
       this.checkPageBreak(250);
@@ -125,7 +126,7 @@ export class PDFBuilder {
       this.y += questionLines.length * 6 + 3;
 
       // Answer
-      this.writeTextBlock(`R${index + 1}: ${qa.answer}`, { indent: 5 });
+      this.writeTextBlock(`${docLabel('answerShort')}${index + 1}: ${qa.answer}`, { indent: 5 });
       this.y += 8;
     });
   }
@@ -137,7 +138,7 @@ export class PDFBuilder {
       this.doc.setFontSize(8);
       this.doc.setTextColor(150);
       this.doc.text(
-        `Pagina ${i} di ${pageCount}`,
+        docLabel('pageOf', { page: i, total: pageCount }),
         this.pageWidth / 2,
         this.doc.internal.pageSize.getHeight() - 10,
         { align: 'center' },

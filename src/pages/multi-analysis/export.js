@@ -64,7 +64,7 @@ export async function sendEmail() {
       selectedIds: state.selectedArticles,
       allArticles: state.allArticles,
       options,
-      dateLocale: 'it-IT',
+      dateLocale: I18n.currentLanguage,
     });
 
     EmailManager.openEmailDraft(I18n.t('multi.emailTitle'), content);

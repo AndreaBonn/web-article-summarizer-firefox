@@ -1,5 +1,6 @@
 // PDFCacheManager - Gestione cache e cronologia PDF
 import { Logger } from '../core/logger.js';
+import { I18n } from '../i18n/i18n.js';
 
 export class PDFCacheManager {
   constructor() {
@@ -21,7 +22,7 @@ export class PDFCacheManager {
       return hashHex;
     } catch (error) {
       Logger.error('Errore calcolo hash:', error);
-      throw new Error('Impossibile calcolare hash del file', { cause: error });
+      throw new Error(I18n.t('pdf.err.hash'), { cause: error });
     }
   }
 

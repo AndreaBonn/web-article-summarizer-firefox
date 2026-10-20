@@ -10,6 +10,7 @@ import {
   formatTranslationText,
   formatSummaryWithKeyPointsText,
 } from '../../shared/export-formatters.js';
+import { docHeading } from '../../utils/export/doc-labels.js';
 
 export const MAX_CONTENT_LENGTH = 50000;
 
@@ -19,7 +20,7 @@ export function toExtractionError(msgError) {
     msgError.message?.includes('Could not establish connection') ||
     msgError.message?.includes('Receiving end does not exist')
   ) {
-    return new Error('Impossibile comunicare con la pagina. Ricarica la pagina (F5) e riprova.', {
+    return new Error(I18n.t('errorMsg.pageUnreachable'), {
       cause: msgError,
     });
   }
@@ -112,7 +113,7 @@ export function buildCopyText({ results, translation, qa, citations, article, ci
   // Aggiungi citazioni se presenti
   if (citations && citations.citations && citations.citations.length > 0) {
     text += `\n${'='.repeat(50)}\n\n`;
-    text += `CITAZIONI E BIBLIOGRAFIA:\n\n`;
+    text += `${docHeading('citationsBibliography')}:\n\n`;
     text += CitationExtractor.generateBibliography(
       article,
       citations.citations,

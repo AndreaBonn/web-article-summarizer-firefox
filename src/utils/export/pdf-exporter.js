@@ -2,6 +2,7 @@
 import { CitationExtractor } from '../ai/citation-extractor.js';
 import { CitationFormatter } from '../ai/citation-formatter.js';
 import { PDFBuilder } from './pdf-builder.js';
+import { docLabel, docHeading, docDate } from './doc-labels.js';
 
 export class PDFExporter {
   static async exportToPDF(
@@ -20,17 +21,17 @@ export class PDFExporter {
     pdf.addSpacing(3);
 
     // Metadata
-    const date = new Date().toLocaleDateString('it-IT');
-    pdf.writeText(`Generato il: ${date}`, { fontSize: 10, color: [100, 100, 100] });
+    const date = docDate(new Date());
+    pdf.writeText(`${docLabel('generatedOn')}: ${date}`, { fontSize: 10, color: [100, 100, 100] });
     pdf.writeText(`Provider: ${metadata.provider || 'N/A'}`, {
       fontSize: 10,
       color: [100, 100, 100],
     });
-    pdf.writeText(`Lingua: ${metadata.language || 'N/A'}`, {
+    pdf.writeText(`${docLabel('language')}: ${metadata.language || 'N/A'}`, {
       fontSize: 10,
       color: [100, 100, 100],
     });
-    pdf.writeText(`Tipo: ${metadata.contentType || 'N/A'}`, {
+    pdf.writeText(`${docLabel('type')}: ${metadata.contentType || 'N/A'}`, {
       fontSize: 10,
       color: [100, 100, 100],
     });
@@ -42,17 +43,20 @@ export class PDFExporter {
     pdf.addSpacing(2);
 
     // Article Stats
-    pdf.writeText(`${article.wordCount} parole • ${article.readingTimeMinutes} min lettura`, {
-      fontSize: 9,
-      style: 'italic',
-      color: [100, 100, 100],
-    });
+    pdf.writeText(
+      docLabel('length', { words: article.wordCount, minutes: article.readingTimeMinutes }),
+      {
+        fontSize: 9,
+        style: 'italic',
+        color: [100, 100, 100],
+      },
+    );
     pdf.writeText(`URL: ${article.url}`, { fontSize: 9, style: 'italic', color: [100, 100, 100] });
     pdf.addSpacing(10);
 
     // Summary
     if (summary) {
-      pdf.writeSectionTitle('RIASSUNTO');
+      pdf.writeSectionTitle(docHeading('summary'));
       pdf.writeTextBlock(summary);
       pdf.addSpacing();
     }
@@ -63,7 +67,7 @@ export class PDFExporter {
     // Translation
     if (translation) {
       pdf.addSpacing();
-      pdf.writeSectionTitle('TRADUZIONE');
+      pdf.writeSectionTitle(docHeading('translation'));
       pdf.writeTextBlock(translation);
     }
 
@@ -76,13 +80,16 @@ export class PDFExporter {
     }
 
     const sanitized = PDFBuilder.sanitizeFilename(article.title);
-    pdf.save(`riassunto_${sanitized}_${Date.now()}.pdf`);
+    pdf.save(`${docLabel('fileSummary')}_${sanitized}_${Date.now()}.pdf`);
   }
 
   static async exportKeyPointsOnly(article, keyPoints, _metadata) {
     const pdf = new PDFBuilder();
 
-    pdf.writeText('Punti Chiave - Web Sites Summarizer', { fontSize: 20, style: 'bold' });
+    pdf.writeText(`${docLabel('keyPoints')} - Web Sites Summarizer`, {
+      fontSize: 20,
+      style: 'bold',
+    });
     pdf.addSpacing(8);
 
     pdf.writeText(article.title, { fontSize: 14, style: 'bold' });
@@ -91,7 +98,7 @@ export class PDFExporter {
     pdf.renderKeyPoints(keyPoints);
 
     const sanitized = PDFBuilder.sanitizeFilename(article.title);
-    pdf.save(`punti_chiave_${sanitized}_${Date.now()}.pdf`);
+    pdf.save(`${docLabel('fileKeyPoints')}_${sanitized}_${Date.now()}.pdf`);
   }
 
   static async exportMultiAnalysisToPDF(analysis, articles, options = {}) {
@@ -99,20 +106,20 @@ export class PDFExporter {
     const pdf = new PDFBuilder();
 
     // Header
-    pdf.writeText('Analisi Multi Articolo', { fontSize: 20, style: 'bold' });
+    pdf.writeText(docLabel('multiTitle'), { fontSize: 20, style: 'bold' });
     pdf.addSpacing(3);
 
     // Metadata
-    const date = new Date(analysis.timestamp).toLocaleDateString('it-IT');
-    pdf.writeText(`Generato il: ${date}`, { fontSize: 10, color: [100, 100, 100] });
-    pdf.writeText(`Numero articoli: ${articles.length}`, {
+    const date = docDate(new Date(analysis.timestamp));
+    pdf.writeText(`${docLabel('generatedOn')}: ${date}`, { fontSize: 10, color: [100, 100, 100] });
+    pdf.writeText(`${docLabel('articleCount')}: ${articles.length}`, {
       fontSize: 10,
       color: [100, 100, 100],
     });
     pdf.addSpacing(5);
 
     // Articles List
-    pdf.writeSectionTitle('ARTICOLI ANALIZZATI:');
+    pdf.writeSectionTitle(`${docHeading('analyzedArticles')}:`);
     articles.forEach((article, index) => {
       pdf.writeText(`${index + 1}. ${article.article.title}`, { fontSize: 9, indent: 5 });
       pdf.addSpacing(1);
@@ -121,14 +128,14 @@ export class PDFExporter {
 
     // Global Summary
     if (includeSummary && analysis.globalSummary) {
-      pdf.writeSectionTitle('RIASSUNTO GLOBALE');
+      pdf.writeSectionTitle(docHeading('globalSummary'));
       pdf.writeTextBlock(analysis.globalSummary);
       pdf.addSpacing(10);
     }
 
     // Comparison
     if (includeComparison && analysis.comparison) {
-      pdf.writeSectionTitle('CONFRONTO IDEE');
+      pdf.writeSectionTitle(docHeading('comparison'));
       pdf.writeTextBlock(analysis.comparison);
       pdf.addSpacing(10);
     }
@@ -138,15 +145,15 @@ export class PDFExporter {
       pdf.renderQA(analysis.qa.questions);
     }
 
-    pdf.save(`analisi_multi_articolo_${Date.now()}.pdf`);
+    pdf.save(`${docLabel('fileMulti')}_${Date.now()}.pdf`);
   }
 
   static _renderCitations(pdf, citations) {
     pdf.checkPageBreak(200);
-    pdf.writeSectionTitle('CITAZIONI E BIBLIOGRAFIA');
+    pdf.writeSectionTitle(docHeading('citationsBibliography'));
 
     // Main article citation
-    pdf.writeText('Articolo Principale:', {
+    pdf.writeText(`${docLabel('mainArticle')}:`, {
       fontSize: 11,
       style: 'bold',
       color: [102, 126, 234],
@@ -158,7 +165,7 @@ export class PDFExporter {
     // Found citations
     const totalCitations =
       citations.total_citations || citations.totalCount || citations.citations.length;
-    pdf.writeText(`Citazioni Trovate (${totalCitations}):`, {
+    pdf.writeText(`${docLabel('citationsFound')} (${totalCitations}):`, {
       fontSize: 11,
       style: 'bold',
       color: [102, 126, 234],
@@ -170,7 +177,7 @@ export class PDFExporter {
 
       // Author
       const author =
-        citation.author && citation.author !== 'N/A' ? citation.author : 'Fonte non specificata';
+        citation.author && citation.author !== 'N/A' ? citation.author : docLabel('unknownSource');
       pdf.writeText(`#${citation.id} - ${author}`, { fontSize: 10, style: 'bold' });
 
       // Source and year
@@ -203,8 +210,8 @@ export class PDFExporter {
 
       // Type and paragraph
       const typeLabel = this.getCitationTypeLabel(citation.type);
-      let metaText = `Tipo: ${typeLabel}`;
-      if (citation.paragraph) metaText += ` | Paragrafo: §${citation.paragraph}`;
+      let metaText = `${docLabel('type')}: ${typeLabel}`;
+      if (citation.paragraph) metaText += ` | ${docLabel('paragraph')}: §${citation.paragraph}`;
       pdf.writeText(metaText, { fontSize: 8, color: [100, 100, 100], indent: 5 });
       pdf.addSpacing(3);
     });

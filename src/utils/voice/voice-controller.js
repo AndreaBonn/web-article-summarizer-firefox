@@ -5,6 +5,7 @@
 import { Logger } from '../core/logger.js';
 import { TTSManager } from './tts-manager.js';
 import { STTManager } from './stt-manager.js';
+import { I18n } from '../i18n/i18n.js';
 
 export class VoiceController {
   constructor() {
@@ -69,7 +70,7 @@ export class VoiceController {
   startListening(lang = 'it-IT') {
     return new Promise((resolve, reject) => {
       if (!STTManager.isSupported()) {
-        reject(new Error('Riconoscimento vocale non supportato'));
+        reject(new Error(I18n.t('voice.sttUnsupported')));
         return;
       }
 

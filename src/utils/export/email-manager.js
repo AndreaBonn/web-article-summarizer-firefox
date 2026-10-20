@@ -1,3 +1,6 @@
+import { docLabel, docHeading, docDate } from './doc-labels.js';
+import { I18n } from '../i18n/i18n.js';
+
 // Email Manager - Gestione email salvate e invio tramite mailto
 export class EmailManager {
   // Salva una nuova email nella lista
@@ -50,22 +53,24 @@ export class EmailManager {
     let content = '';
 
     // Oggetto
-    const subject = `Riassunto: ${(article.title || '').replace(/[\r\n]/g, ' ')}`;
+    const subject = docLabel('emailSubject', {
+      title: (article.title || '').replace(/[\r\n]/g, ' '),
+    });
 
     // Corpo
-    content += `RIASSUNTO ARTICOLO\n`;
+    content += `${docHeading('articleSummary')}\n`;
     content += `${'='.repeat(60)}\n\n`;
 
-    content += `📄 Titolo: ${article.title}\n`;
+    content += `📄 ${docLabel('title')}: ${article.title}\n`;
     content += `🔗 URL: ${article.url}\n`;
-    content += `📊 Lunghezza: ${article.wordCount} parole • ${article.readingTimeMinutes} min lettura\n`;
-    content += `📅 Generato il: ${new Date().toLocaleDateString('it-IT')}\n\n`;
+    content += `📊 ${docLabel('lengthLabel')}: ${docLabel('length', { words: article.wordCount, minutes: article.readingTimeMinutes })}\n`;
+    content += `📅 ${docLabel('generatedOn')}: ${docDate(new Date())}\n\n`;
 
     content += `${'='.repeat(60)}\n\n`;
 
     // Riassunto (if included)
     if (summary) {
-      content += `📝 RIASSUNTO\n`;
+      content += `📝 ${docHeading('summary')}\n`;
       content += `${'-'.repeat(60)}\n\n`;
       content += `${summary}\n\n`;
       content += `${'='.repeat(60)}\n\n`;
@@ -73,7 +78,7 @@ export class EmailManager {
 
     // Punti chiave (if included)
     if (keyPoints && keyPoints.length > 0) {
-      content += `🔑 PUNTI CHIAVE\n`;
+      content += `🔑 ${docHeading('keyPoints')}\n`;
       content += `${'-'.repeat(60)}\n\n`;
 
       keyPoints.forEach((point, index) => {
@@ -86,7 +91,7 @@ export class EmailManager {
 
     // Traduzione (se presente)
     if (translation) {
-      content += `🌍 TRADUZIONE\n`;
+      content += `🌍 ${docHeading('translation')}\n`;
       content += `${'-'.repeat(60)}\n\n`;
       content += `${translation}\n\n`;
       content += `${'='.repeat(60)}\n\n`;
@@ -94,12 +99,12 @@ export class EmailManager {
 
     // Q&A (se presenti)
     if (qaList && qaList.length > 0) {
-      content += `💬 DOMANDE E RISPOSTE\n`;
+      content += `💬 ${docHeading('qa')}\n`;
       content += `${'-'.repeat(60)}\n\n`;
 
       qaList.forEach((qa, index) => {
         content += `Q${index + 1}: ${qa.question}\n`;
-        content += `R${index + 1}: ${qa.answer}\n\n`;
+        content += `${docLabel('answerShort')}${index + 1}: ${qa.answer}\n\n`;
       });
 
       content += `${'='.repeat(60)}\n\n`;
@@ -114,7 +119,7 @@ export class EmailManager {
     }
 
     content += `${'='.repeat(60)}\n`;
-    content += `Generato con AI Article Summarizer\n`;
+    content += `${docLabel('generatedWith')}\n`;
 
     return { subject, body: content };
   }
@@ -124,12 +129,12 @@ export class EmailManager {
     const list = citations?.citations;
     if (!list || list.length === 0) return '';
 
-    let section = `📚 CITAZIONI\n`;
+    let section = `📚 ${docHeading('citations')}\n`;
     section += `${'-'.repeat(60)}\n\n`;
 
     list.forEach((citation) => {
       const author =
-        citation.author && citation.author !== 'N/A' ? citation.author : 'Fonte non specificata';
+        citation.author && citation.author !== 'N/A' ? citation.author : docLabel('unknownSource');
       section += `#${citation.id} - ${author}\n`;
 
       const source = citation.source && citation.source !== 'N/A' ? citation.source : '';
@@ -149,7 +154,7 @@ export class EmailManager {
     // Sanitize email to prevent header injection (%0d%0a, newlines)
     const cleanEmail = recipientEmail.replace(/[\r\n\t%]/g, '').trim();
     if (!this.isValidEmail(cleanEmail)) {
-      throw new Error('Indirizzo email non valido');
+      throw new Error(I18n.t('email.invalidAddress'));
     }
 
     const encodedSubject = encodeURIComponent(subject);

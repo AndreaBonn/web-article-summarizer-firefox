@@ -1,11 +1,13 @@
+import { docHeading, docLabel } from '../utils/export/doc-labels.js';
+
 // Shared Export Formatters
 // Funzioni pure per formattare dati in testo — nessun accesso a state, DOM o chrome APIs
 
 const SEPARATOR = '='.repeat(60);
 
 export function formatSummaryWithKeyPointsText(summary, keyPoints) {
-  let text = `RIASSUNTO:\n${summary}\n\n`;
-  text += `PUNTI CHIAVE:\n`;
+  let text = `${docHeading('summary')}:\n${summary}\n\n`;
+  text += `${docHeading('keyPoints')}:\n`;
   keyPoints.forEach((point, index) => {
     text += `${index + 1}. ${point.title} (§${point.paragraphs})\n   ${point.description}\n\n`;
   });
@@ -21,7 +23,7 @@ export function formatCitationsText(citations) {
   if (!citations || citations.length === 0) return '';
 
   let text = `${SEPARATOR}\n\n`;
-  text += `CITAZIONI (${citations.length}):\n\n`;
+  text += `${docHeading('citations')} (${citations.length}):\n\n`;
 
   citations.forEach((citation, index) => {
     text += `[${index + 1}] `;
@@ -45,11 +47,11 @@ export function formatQAText(qaArray) {
   if (!qaArray || qaArray.length === 0) return '';
 
   let text = `${SEPARATOR}\n\n`;
-  text += `DOMANDE E RISPOSTE:\n\n`;
+  text += `${docHeading('qa')}:\n\n`;
 
   qaArray.forEach((qa, index) => {
     text += `Q${index + 1}: ${qa.question}\n`;
-    text += `R${index + 1}: ${qa.answer}\n\n`;
+    text += `${docLabel('answerShort')}${index + 1}: ${qa.answer}\n\n`;
   });
 
   return text;
@@ -67,7 +69,7 @@ export function formatTranslationText(translation) {
   const translationText = typeof translation === 'string' ? translation : translation.text;
   if (!translationText) return '';
 
-  return `${SEPARATOR}\n\nTRADUZIONE:\n${translationText}\n\n`;
+  return `${SEPARATOR}\n\n${docHeading('translation')}:\n${translationText}\n\n`;
 }
 
 /**
@@ -79,7 +81,7 @@ export function formatTranslationText(translation) {
 export function formatKeyPointsText(keyPoints, includeParagraphs = false) {
   if (!keyPoints || keyPoints.length === 0) return '';
 
-  let text = `PUNTI CHIAVE:\n`;
+  let text = `${docHeading('keyPoints')}:\n`;
 
   keyPoints.forEach((point, index) => {
     if (includeParagraphs && point.paragraphs) {

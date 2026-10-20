@@ -8,12 +8,13 @@ import {
 } from '../../shared/export-formatters.js';
 
 import { getTranslationText } from '../../shared/translation-text.js';
+import { docHeading, docLabel } from '../../utils/export/doc-labels.js';
 
 const SEPARATOR = '='.repeat(60);
 
 function buildNotesText(notes) {
   if (!notes) return '';
-  return `${SEPARATOR}\n\nNOTE PERSONALI:\n${notes}\n\n`;
+  return `${SEPARATOR}\n\n${docHeading('personalNotes')}:\n${notes}\n\n`;
 }
 
 /**
@@ -26,16 +27,16 @@ export function buildReadingModeCopyText(data) {
   let text;
 
   if (data.isPDF || pdf) {
-    text = `PDF: ${pdf?.name || data.filename || 'Documento'}\n`;
-    text += `Pagine: ${pdf?.pages || data.pageCount || 'N/A'}\n\n`;
+    text = `PDF: ${pdf?.name || data.filename || docLabel('document')}\n`;
+    text += `${docLabel('pages')}: ${pdf?.pages || data.pageCount || 'N/A'}\n\n`;
     text += `${SEPARATOR}\n\n`;
-    text += `RIASSUNTO:\n${summary}\n\n`;
+    text += `${docHeading('summary')}:\n${summary}\n\n`;
     text += formatKeyPointsText(keyPoints);
   } else {
-    text = `ARTICOLO: ${article.title}\n`;
+    text = `${docHeading('article')}: ${article.title}\n`;
     text += `URL: ${article.url}\n\n`;
     text += `${SEPARATOR}\n\n`;
-    text += `RIASSUNTO:\n${summary}\n\n`;
+    text += `${docHeading('summary')}:\n${summary}\n\n`;
     text += formatKeyPointsText(keyPoints, true);
   }
 
@@ -57,7 +58,7 @@ export function buildPdfExportArgs(data) {
   const articleData =
     data.isPDF || pdf
       ? {
-          title: pdf?.name || data.filename || 'Documento PDF',
+          title: pdf?.name || data.filename || docLabel('pdfDocument'),
           url: 'PDF Document',
           content: data.extractedText || pdf?.text || '',
           wordCount: 0,

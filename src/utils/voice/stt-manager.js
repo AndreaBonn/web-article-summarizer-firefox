@@ -3,6 +3,7 @@
  * @module utils/stt-manager
  */
 import { Logger } from '../core/logger.js';
+import { I18n } from '../i18n/i18n.js';
 
 export class STTManager {
   constructor() {
@@ -165,25 +166,25 @@ export class STTManager {
   handleError(error) {
     this.isListening = false;
 
-    let errorMessage = 'Errore nel riconoscimento vocale';
+    let errorMessage = I18n.t('voice.stt.generic');
 
     const errorType = error.error || error.message;
 
     switch (errorType) {
       case 'no-speech':
-        errorMessage = 'Nessun parlato rilevato. Riprova.';
+        errorMessage = I18n.t('voice.stt.noSpeech');
         break;
       case 'audio-capture':
-        errorMessage = 'Microfono non accessibile. Controlla i permessi.';
+        errorMessage = I18n.t('voice.stt.audioCapture');
         break;
       case 'not-allowed':
-        errorMessage = 'Permesso microfono negato. Abilita nelle impostazioni.';
+        errorMessage = I18n.t('voice.stt.notAllowed');
         break;
       case 'network':
-        errorMessage = 'Errore di rete. Controlla la connessione.';
+        errorMessage = I18n.t('voice.stt.network');
         break;
       case 'aborted':
-        errorMessage = 'Riconoscimento annullato.';
+        errorMessage = I18n.t('voice.stt.aborted');
         break;
     }
 

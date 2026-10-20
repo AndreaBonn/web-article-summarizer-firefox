@@ -1,3 +1,5 @@
+import { docLabel } from '../utils/export/doc-labels.js';
+
 // Testo da leggere ad alta voce (TTS) condiviso tra le pagine
 
 /**
@@ -19,5 +21,9 @@ export function formatKeyPointsForSpeech(keyPoints) {
  * @returns {string}
  */
 export function formatQAForSpeech(qa) {
-  return qa.map((item) => `Domanda: ${item.question}. Risposta: ${item.answer}`).join('. ');
+  return qa
+    .map(
+      (item) => `${docLabel('question')}: ${item.question}. ${docLabel('answer')}: ${item.answer}`,
+    )
+    .join('. ');
 }

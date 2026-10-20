@@ -5,20 +5,24 @@ import { PDFCacheManager } from './pdf-cache-manager.js';
 import { getLanguageNameForPrompt } from '../i18n/language-names.js';
 import { parseLLMJson } from '../ai/json-repair.js';
 import { requestCompletion } from '../ai/completion-client.js';
+import { I18n } from '../i18n/i18n.js';
 
 export class PDFAnalyzer {
   constructor() {
     this.cacheManager = new PDFCacheManager();
-    this.ERROR_MESSAGES = {
-      FILE_TOO_LARGE: 'File troppo grande. Massimo 20MB.',
-      INVALID_FILE_TYPE: 'File non valido. Carica un file PDF.',
-      PASSWORD_PROTECTED: 'PDF protetto da password. Rimuovi la protezione e riprova.',
-      EXTRACTION_FAILED:
-        'Impossibile estrarre testo. Il PDF potrebbe essere scansionato o corrotto.',
-      INSUFFICIENT_TEXT: 'Testo estratto insufficiente. Il PDF potrebbe essere scansionato.',
-      API_ERROR: "Errore durante l'analisi. Riprova più tardi.",
-      STORAGE_FULL: 'Storage pieno. Elimina alcune analisi dalla cronologia.',
-      NETWORK_ERROR: 'Errore di rete. Controlla la connessione.',
+  }
+
+  // A getter, so each message is read in the language active when the error happens
+  get ERROR_MESSAGES() {
+    return {
+      FILE_TOO_LARGE: I18n.t('pdf.err.fileTooLarge'),
+      INVALID_FILE_TYPE: I18n.t('pdf.invalidFile'),
+      PASSWORD_PROTECTED: I18n.t('pdf.err.passwordProtected'),
+      EXTRACTION_FAILED: I18n.t('pdf.err.extractionFailed'),
+      INSUFFICIENT_TEXT: I18n.t('pdf.err.insufficientText'),
+      API_ERROR: I18n.t('pdf.err.analysis'),
+      STORAGE_FULL: I18n.t('pdf.err.storageFull'),
+      NETWORK_ERROR: I18n.t('pdf.err.network'),
     };
   }
 
@@ -35,13 +39,13 @@ export class PDFAnalyzer {
       // Validazione file
       this.validateFile(file);
 
-      if (progressCallback) progressCallback('📄 Verifica cache...', 10);
+      if (progressCallback) progressCallback(I18n.t('pdf.progress.cache'), 10);
 
       // Check cache
       const cacheResult = await this.cacheManager.checkCache(file);
 
       if (cacheResult.found) {
-        if (progressCallback) progressCallback('✓ Caricato da cache', 100);
+        if (progressCallback) progressCallback(I18n.t('pdf.progress.fromCache'), 100);
 
         // Ritorna dati dalla cache (senza pdfFile - non serializzabile)
         return {
@@ -56,7 +60,7 @@ export class PDFAnalyzer {
       }
 
       // Estrazione testo
-      if (progressCallback) progressCallback('📄 Estrazione testo PDF...', 20);
+      if (progressCallback) progressCallback(I18n.t('pdf.progress.extracting'), 20);
       const { text: extractedText, pageCount, textLength } = await this.extractTextFromPDF(file);
 
       // Verifica testo sufficiente
@@ -65,7 +69,7 @@ export class PDFAnalyzer {
       }
 
       // Analisi con API
-      if (progressCallback) progressCallback('🤖 Analisi con AI...', 40);
+      if (progressCallback) progressCallback(I18n.t('pdf.progress.analyzing'), 40);
       const analysis = await this.callAnalysisAPI(
         extractedText,
         apiProvider,
@@ -75,7 +79,7 @@ export class PDFAnalyzer {
       analysis.pageCount = pageCount;
 
       // Salva in cache
-      if (progressCallback) progressCallback('💾 Salvataggio...', 90);
+      if (progressCallback) progressCallback(I18n.t('pdf.progress.saving'), 90);
       await this.cacheManager.saveAnalysis(
         file,
         extractedText,
@@ -84,7 +88,7 @@ export class PDFAnalyzer {
         cacheResult.fileHash,
       );
 
-      if (progressCallback) progressCallback('✅ Completato!', 100);
+      if (progressCallback) progressCallback(I18n.t('pdf.progress.done'), 100);
 
       return {
         ...analysis,
@@ -177,7 +181,7 @@ export class PDFAnalyzer {
       const systemPrompt = this.buildSystemPrompt(settings);
       const userPrompt = this.buildUserPrompt(text, settings);
 
-      if (progressCallback) progressCallback('🤖 Generazione riassunto...', 50);
+      if (progressCallback) progressCallback(I18n.t('pdf.progress.summary'), 50);
 
       // Chiama API
       const response = await requestCompletion(provider, systemPrompt, userPrompt, {
@@ -185,7 +189,7 @@ export class PDFAnalyzer {
         maxTokens: 4000,
       });
 
-      if (progressCallback) progressCallback('🔑 Estrazione punti chiave...', 70);
+      if (progressCallback) progressCallback(I18n.t('pdf.progress.keyPoints'), 70);
 
       // Parse risposta
       const analysis = this.parseAnalysisResponse(response);
@@ -275,7 +279,7 @@ Rispondi in formato JSON come specificato.`;
       const entry = history.find((e) => e.id === entryId);
 
       if (!entry) {
-        throw new Error('Analisi non trovata');
+        throw new Error(I18n.t('common.analysisNotFound'));
       }
 
       return {

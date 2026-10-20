@@ -166,7 +166,7 @@ describe('VoiceController', () => {
       global.window.webkitSpeechRecognition = undefined;
       global.window.SpeechRecognition = undefined;
 
-      await expect(vc.startListening()).rejects.toThrow('non supportato');
+      await expect(vc.startListening()).rejects.toThrow('non è disponibile');
 
       global.window.webkitSpeechRecognition = backup;
     });

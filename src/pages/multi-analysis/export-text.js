@@ -1,3 +1,6 @@
+import { I18n } from '../../utils/i18n/i18n.js';
+import { docHeading } from '../../utils/export/doc-labels.js';
+
 /** Build an email with the selected articles and enabled analysis sections.
  * @param {object} data
  * @returns {string}
@@ -9,12 +12,12 @@ export function buildMultiAnalysisEmailContent({
   options,
   dateLocale,
 }) {
-  let content = '# Analisi Multi Articolo\n\n';
-  content += `**Data:** ${new Date(analysis.timestamp).toLocaleDateString(dateLocale)}\n\n`;
-  content += `**Articoli analizzati:** ${selectedIds.length}\n\n`;
+  let content = `# ${I18n.t('multi.emailTitle')}\n\n`;
+  content += `${I18n.t('multi.emailDate')} ${new Date(analysis.timestamp).toLocaleDateString(dateLocale)}\n\n`;
+  content += `${I18n.t('multi.emailArticlesCount')} ${selectedIds.length}\n\n`;
   content += '---\n\n';
 
-  content += '## Articoli\n\n';
+  content += `${I18n.t('multi.emailArticlesSection')}\n\n`;
   selectedIds.forEach((id, index) => {
     const article = allArticles.find((a) => a.id === id);
     if (article) {
@@ -35,12 +38,12 @@ export function buildMultiAnalysisEmailContent({
  */
 function appendAnalysisSections(content, analysis, options) {
   if (options.includeSummary && analysis.globalSummary) {
-    content += '## Riassunto Globale\n\n';
+    content += `${I18n.t('multi.emailSummarySection')}\n\n`;
     content += analysis.globalSummary + '\n\n---\n\n';
   }
 
   if (options.includeComparison && analysis.comparison) {
-    content += '## Confronto Idee\n\n';
+    content += `${I18n.t('multi.emailComparisonSection')}\n\n`;
     content += analysis.comparison + '\n\n---\n\n';
   }
 
@@ -60,10 +63,10 @@ function appendEmailQuestions(content, analysis, options) {
     analysis.qa.questions &&
     analysis.qa.questions.length > 0
   ) {
-    content += '## Domande e Risposte\n\n';
+    content += `${I18n.t('multi.emailQASection')}\n\n`;
     analysis.qa.questions.forEach((qa, index) => {
-      content += `**Q${index + 1}:** ${qa.question}\n\n`;
-      content += `**R${index + 1}:** ${qa.answer}\n\n`;
+      content += `${I18n.tf('multi.emailQuestion', { index: index + 1 })} ${qa.question}\n\n`;
+      content += `${I18n.tf('multi.emailAnswer', { index: index + 1 })} ${qa.answer}\n\n`;
     });
     content += '---\n\n';
   }
@@ -79,16 +82,16 @@ export function buildMultiAnalysisCopyText(analysis, qaMessageTexts) {
   let text = '';
 
   if (analysis.globalSummary) {
-    text += 'RIASSUNTO GLOBALE:\n\n' + analysis.globalSummary + '\n\n';
+    text += `${docHeading('globalSummary')}:\n\n` + analysis.globalSummary + '\n\n';
   }
 
   if (analysis.comparison) {
-    text += '='.repeat(50) + '\n\nCONFRONTO IDEE:\n\n' + analysis.comparison + '\n\n';
+    text += '='.repeat(50) + `\n\n${docHeading('comparison')}:\n\n` + analysis.comparison + '\n\n';
   }
 
   if (analysis.qa && analysis.qa.interactive) {
     if (qaMessageTexts.length > 0) {
-      text += '='.repeat(50) + '\n\nCONVERSAZIONE Q&A:\n\n';
+      text += '='.repeat(50) + `\n\n${docHeading('qaConversation')}:\n\n`;
       qaMessageTexts.forEach((message) => {
         text += message + '\n\n';
       });
