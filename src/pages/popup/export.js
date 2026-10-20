@@ -2,7 +2,8 @@ import { populateSavedEmails, bindEmailModal } from '../../shared/email-modal.js
 // Popup Export Module - Estratto da popup.js
 // Gestisce: exportToPDF, showExportOptionsModal, exportToMarkdown, showMarkdownExportModal, openEmailModal
 
-import { buildExportMetadata, mergeEmailOptions, hasAnySelected } from './export-options.js';
+import { buildExportMetadata } from './export-options.js';
+import { mergeEmailOptions, hasAnySelected } from '../../shared/email-options.js';
 import { state, elements, showError } from './state.js';
 import { translationState, citationsState } from './features.js';
 import { I18n } from '../../utils/i18n/i18n.js';

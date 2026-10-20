@@ -5,6 +5,17 @@ import { state } from './state.js';
 import { EmailManager } from '@utils/export/email-manager.js';
 import { Modal } from '@utils/core/modal.js';
 import { getTranslationText } from '../../shared/translation-text.js';
+import { computeExportAvailability } from '../../shared/export-modal.js';
+import { mergeEmailOptions, hasAnySelected } from '../../shared/email-options.js';
+
+// History emails never carry citations, so they are always reported as unavailable.
+function getEmailAvailability(entry) {
+  return computeExportAvailability({
+    translation: entry.translation,
+    qa: entry.qa,
+    citations: null,
+  });
+}
 
 export async function sendCurrentEmail() {
   if (!state.currentEntry) return;
@@ -31,8 +42,10 @@ export async function sendCurrentEmail() {
   const translationCheckbox = document.getElementById('emailIncludeTranslation');
   const qaCheckbox = document.getElementById('emailIncludeQA');
 
+  const availability = getEmailAvailability(state.currentEntry);
+
   // Gestisci disponibilità traduzione
-  if (state.currentEntry.translation) {
+  if (availability.translation) {
     translationOption.classList.remove('disabled');
     translationCheckbox.disabled = false;
     translationCheckbox.checked = true;
@@ -43,7 +56,7 @@ export async function sendCurrentEmail() {
   }
 
   // Gestisci disponibilità Q&A
-  if (state.currentEntry.qa && state.currentEntry.qa.length > 0) {
+  if (availability.qa) {
     qaOption.classList.remove('disabled');
     qaCheckbox.disabled = false;
     qaCheckbox.checked = true;
@@ -80,25 +93,18 @@ export async function sendCurrentEmail() {
       }
 
       // Raccogli opzioni selezionate
-      const options = {
-        includeSummary: document.getElementById('emailIncludeSummary').checked,
-        includeKeypoints: document.getElementById('emailIncludeKeypoints').checked,
-        includeTranslation:
-          document.getElementById('emailIncludeTranslation').checked &&
-          state.currentEntry.translation,
-        includeQA:
-          document.getElementById('emailIncludeQA').checked &&
-          state.currentEntry.qa &&
-          state.currentEntry.qa.length > 0,
-      };
+      const options = mergeEmailOptions(
+        {
+          includeSummary: document.getElementById('emailIncludeSummary').checked,
+          includeKeypoints: document.getElementById('emailIncludeKeypoints').checked,
+          includeTranslation: document.getElementById('emailIncludeTranslation').checked,
+          includeQA: document.getElementById('emailIncludeQA').checked,
+        },
+        availability,
+      );
 
       // Verifica che almeno una opzione sia selezionata
-      if (
-        !options.includeSummary &&
-        !options.includeKeypoints &&
-        !options.includeTranslation &&
-        !options.includeQA
-      ) {
+      if (!hasAnySelected(options)) {
         await Modal.alert('Seleziona almeno una sezione da includere', 'Nessuna Selezione', '⚠️');
         return;
       }
