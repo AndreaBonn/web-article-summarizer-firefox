@@ -46,6 +46,7 @@ function buildDom() {
     <button id="emailSendBtn"></button><button id="emailCancelBtn"></button>
     <label id="emailTranslationOption"><input type="checkbox" id="emailIncludeTranslation" /></label>
     <label id="emailQAOption"><input type="checkbox" id="emailIncludeQA" /></label>
+    <label id="emailCitationsOption"><input type="checkbox" id="emailIncludeCitations" /></label>
     <input type="checkbox" id="emailIncludeSummary" />
     <input type="checkbox" id="emailIncludeKeypoints" />`;
 }
@@ -68,30 +69,33 @@ describe('history email sending', () => {
     buildDom();
   });
 
-  it('enables and pre-checks translation and Q&A when the entry has them', async () => {
+  it('enables and pre-checks translation, Q&A and citations when the entry has them', async () => {
     await open(ENTRY);
-    expect(el('emailIncludeTranslation').disabled).toBe(false);
-    expect(el('emailIncludeTranslation').checked).toBe(true);
-    expect(el('emailIncludeQA').disabled).toBe(false);
-    expect(el('emailIncludeQA').checked).toBe(true);
-    expect(el('emailTranslationOption').classList.contains('disabled')).toBe(false);
-    expect(el('emailQAOption').classList.contains('disabled')).toBe(false);
+    for (const id of ['emailIncludeTranslation', 'emailIncludeQA', 'emailIncludeCitations']) {
+      expect(el(id).disabled).toBe(false);
+      expect(el(id).checked).toBe(true);
+    }
+    for (const id of ['emailTranslationOption', 'emailQAOption', 'emailCitationsOption']) {
+      expect(el(id).classList.contains('disabled')).toBe(false);
+    }
   });
 
-  it('disables translation and Q&A when the entry lacks them (empty qa array included)', async () => {
-    await open({ ...ENTRY, translation: null, qa: [] });
-    for (const id of ['emailIncludeTranslation', 'emailIncludeQA']) {
+  it('disables the optional sections the entry lacks (empty arrays included)', async () => {
+    await open({ ...ENTRY, translation: null, qa: [], citations: { citations: [] } });
+    for (const id of ['emailIncludeTranslation', 'emailIncludeQA', 'emailIncludeCitations']) {
       expect(el(id).disabled).toBe(true);
       expect(el(id).checked).toBe(false);
     }
-    expect(el('emailTranslationOption').classList.contains('disabled')).toBe(true);
-    expect(el('emailQAOption').classList.contains('disabled')).toBe(true);
+    for (const id of ['emailTranslationOption', 'emailQAOption', 'emailCitationsOption']) {
+      expect(el(id).classList.contains('disabled')).toBe(true);
+    }
   });
 
   it('alerts and sends nothing when no section is selected', async () => {
     await open(ENTRY);
     el('emailIncludeTranslation').checked = false;
     el('emailIncludeQA').checked = false;
+    el('emailIncludeCitations').checked = false;
     await send();
     expect(mocks.alert).toHaveBeenCalledWith(
       'Seleziona almeno una sezione da includere',
@@ -102,10 +106,11 @@ describe('history email sending', () => {
     expect(mocks.saveEmail).not.toHaveBeenCalled();
   });
 
-  it('includes only the checked sections and never the citations', async () => {
+  it('includes only the checked sections', async () => {
     await open(ENTRY);
     el('emailIncludeSummary').checked = true;
     el('emailIncludeKeypoints').checked = false;
+    el('emailIncludeCitations').checked = false;
     await send();
     expect(mocks.formatEmailContent).toHaveBeenCalledWith(
       ENTRY.article,
@@ -113,11 +118,12 @@ describe('history email sending', () => {
       null,
       'TRANS',
       ENTRY.qa,
+      null,
     );
     expect(mocks.openEmailClient).toHaveBeenCalledWith('a@b.it', 's', 'b');
   });
 
-  it('passes all four sections when all are checked, still without citations', async () => {
+  it('passes every section, citations included, when all are checked', async () => {
     await open(ENTRY);
     el('emailIncludeSummary').checked = true;
     el('emailIncludeKeypoints').checked = true;
@@ -128,13 +134,15 @@ describe('history email sending', () => {
       ENTRY.keyPoints,
       'TRANS',
       ENTRY.qa,
+      ENTRY.citations,
     );
   });
 
   it('a section unavailable on the entry is not sent even if its box is force-checked', async () => {
-    await open({ ...ENTRY, translation: null, qa: [] });
+    await open({ ...ENTRY, translation: null, qa: [], citations: null });
     el('emailIncludeTranslation').checked = true;
     el('emailIncludeQA').checked = true;
+    el('emailIncludeCitations').checked = true;
     await send();
     expect(mocks.alert).toHaveBeenCalledWith(
       'Seleziona almeno una sezione da includere',

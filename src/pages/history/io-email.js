@@ -8,13 +8,29 @@ import { getTranslationText } from '../../shared/translation-text.js';
 import { computeExportAvailability } from '../../shared/export-modal.js';
 import { mergeEmailOptions, hasAnySelected } from '../../shared/email-options.js';
 
-// History emails never carry citations, so they are always reported as unavailable.
 function getEmailAvailability(entry) {
   return computeExportAvailability({
     translation: entry.translation,
     qa: entry.qa,
-    citations: null,
+    citations: entry.citations,
   });
+}
+
+const OPTIONAL_SECTIONS = [
+  { option: 'emailTranslationOption', checkbox: 'emailIncludeTranslation', key: 'translation' },
+  { option: 'emailQAOption', checkbox: 'emailIncludeQA', key: 'qa' },
+  { option: 'emailCitationsOption', checkbox: 'emailIncludeCitations', key: 'citations' },
+];
+
+// Optional sections the entry lacks are disabled and unchecked; the available ones start checked
+function configureOptionalSections(availability) {
+  for (const { option, checkbox, key } of OPTIONAL_SECTIONS) {
+    const available = !!availability[key];
+    document.getElementById(option).classList.toggle('disabled', !available);
+    const box = document.getElementById(checkbox);
+    box.disabled = !available;
+    box.checked = available;
+  }
 }
 
 export async function sendCurrentEmail() {
@@ -36,35 +52,8 @@ export async function sendCurrentEmail() {
     inputEl: emailInput,
   });
 
-  // Gestisci disponibilità opzioni
-  const translationOption = document.getElementById('emailTranslationOption');
-  const qaOption = document.getElementById('emailQAOption');
-  const translationCheckbox = document.getElementById('emailIncludeTranslation');
-  const qaCheckbox = document.getElementById('emailIncludeQA');
-
   const availability = getEmailAvailability(state.currentEntry);
-
-  // Gestisci disponibilità traduzione
-  if (availability.translation) {
-    translationOption.classList.remove('disabled');
-    translationCheckbox.disabled = false;
-    translationCheckbox.checked = true;
-  } else {
-    translationOption.classList.add('disabled');
-    translationCheckbox.disabled = true;
-    translationCheckbox.checked = false;
-  }
-
-  // Gestisci disponibilità Q&A
-  if (availability.qa) {
-    qaOption.classList.remove('disabled');
-    qaCheckbox.disabled = false;
-    qaCheckbox.checked = true;
-  } else {
-    qaOption.classList.add('disabled');
-    qaCheckbox.disabled = true;
-    qaCheckbox.checked = false;
-  }
+  configureOptionalSections(availability);
 
   // Reset input
   emailInput.value = '';
@@ -99,6 +88,7 @@ export async function sendCurrentEmail() {
           includeKeypoints: document.getElementById('emailIncludeKeypoints').checked,
           includeTranslation: document.getElementById('emailIncludeTranslation').checked,
           includeQA: document.getElementById('emailIncludeQA').checked,
+          includeCitations: document.getElementById('emailIncludeCitations').checked,
         },
         availability,
       );
@@ -121,6 +111,7 @@ export async function sendCurrentEmail() {
           ? getTranslationText(state.currentEntry.translation)
           : null,
         options.includeQA ? state.currentEntry.qa : null,
+        options.includeCitations ? state.currentEntry.citations : null,
       );
 
       // Apri client email
