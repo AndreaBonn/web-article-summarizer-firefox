@@ -44,13 +44,6 @@ vi.mock('@utils/pdf/pdf-cache-manager.js', () => ({
   },
 }));
 
-// Mock StorageManager
-vi.mock('@utils/storage/storage-manager.js', () => ({
-  StorageManager: {
-    getApiKey: vi.fn(),
-  },
-}));
-
 // Mock language names
 vi.mock('@utils/i18n/language-names.js', () => ({
   getLanguageNameForPrompt: vi.fn((lang) => {
@@ -64,11 +57,9 @@ vi.mock('@utils/ai/json-repair.js', () => ({
   parseLLMJson: vi.fn((text) => JSON.parse(text)),
 }));
 
-// Mock API Orchestrator
-vi.mock('@utils/ai/api-orchestrator.js', () => ({
-  APIOrchestrator: {
-    generateCompletion: vi.fn(),
-  },
+// Mock the service worker completion client
+vi.mock('@utils/ai/completion-client.js', () => ({
+  requestCompletion: vi.fn(),
 }));
 
 // Mock pdfjs-dist
@@ -77,8 +68,7 @@ vi.mock('pdfjs-dist', () => ({
 }));
 
 import { PDFAnalyzer } from '@utils/pdf/pdf-analyzer.js';
-import { StorageManager } from '@utils/storage/storage-manager.js';
-import { APIOrchestrator as APIClient } from '@utils/ai/api-orchestrator.js';
+import { requestCompletion } from '@utils/ai/completion-client.js';
 import { parseLLMJson } from '@utils/ai/json-repair.js';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -262,8 +252,7 @@ describe('PDFAnalyzer', () => {
 
   describe('callAnalysisAPI', () => {
     it('chiama API con prompt corretto e ritorna analisi', async () => {
-      StorageManager.getApiKey.mockResolvedValue('test-key');
-      APIClient.generateCompletion.mockResolvedValue(
+      requestCompletion.mockResolvedValue(
         JSON.stringify({
           summary: 'Test summary',
           keyPoints: [],
@@ -278,19 +267,18 @@ describe('PDFAnalyzer', () => {
 
       const result = await analyzer.callAnalysisAPI('testo pdf', 'claude', {});
       expect(result.summary).toBe('Test summary');
-      expect(StorageManager.getApiKey).toHaveBeenCalledWith('claude');
+      expect(requestCompletion.mock.calls[0][0]).toBe('claude');
     });
 
-    it('lancia errore se API key non configurata', async () => {
-      StorageManager.getApiKey.mockResolvedValue(null);
+    it("riporta l'errore del service worker, ad esempio la chiave mancante", async () => {
+      requestCompletion.mockRejectedValue(new Error('Manca la chiave API'));
       await expect(analyzer.callAnalysisAPI('text', 'claude')).rejects.toThrow(
-        'API key non configurata',
+        'Manca la chiave API',
       );
     });
 
     it('lancia errore se API fallisce', async () => {
-      StorageManager.getApiKey.mockResolvedValue('key');
-      APIClient.generateCompletion.mockRejectedValue(new Error('network error'));
+      requestCompletion.mockRejectedValue(new Error('network error'));
 
       await expect(analyzer.callAnalysisAPI('text', 'claude')).rejects.toThrow(
         "Errore durante l'analisi",
@@ -298,8 +286,7 @@ describe('PDFAnalyzer', () => {
     });
 
     it('invoca progressCallback durante analisi', async () => {
-      StorageManager.getApiKey.mockResolvedValue('key');
-      APIClient.generateCompletion.mockResolvedValue('{}');
+      requestCompletion.mockResolvedValue('{}');
       parseLLMJson.mockReturnValue({});
 
       const progress = vi.fn();

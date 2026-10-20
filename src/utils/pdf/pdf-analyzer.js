@@ -2,10 +2,9 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import { Logger } from '../core/logger.js';
 import { PDFCacheManager } from './pdf-cache-manager.js';
-import { StorageManager } from '../storage/storage-manager.js';
 import { getLanguageNameForPrompt } from '../i18n/language-names.js';
 import { parseLLMJson } from '../ai/json-repair.js';
-import { APIOrchestrator as APIClient } from '../ai/api-orchestrator.js';
+import { requestCompletion } from '../ai/completion-client.js';
 
 export class PDFAnalyzer {
   constructor() {
@@ -174,11 +173,6 @@ export class PDFAnalyzer {
    */
   async callAnalysisAPI(text, provider, settings = {}, progressCallback = null) {
     try {
-      const apiKey = await StorageManager.getApiKey(provider);
-      if (!apiKey) {
-        throw new Error('API key non configurata per ' + provider);
-      }
-
       // Prepara prompt per PDF
       const systemPrompt = this.buildSystemPrompt(settings);
       const userPrompt = this.buildUserPrompt(text, settings);
@@ -186,16 +180,10 @@ export class PDFAnalyzer {
       if (progressCallback) progressCallback('🤖 Generazione riassunto...', 50);
 
       // Chiama API
-      const response = await APIClient.generateCompletion(
-        provider,
-        apiKey,
-        systemPrompt,
-        userPrompt,
-        {
-          temperature: 0.3,
-          maxTokens: 4000,
-        },
-      );
+      const response = await requestCompletion(provider, systemPrompt, userPrompt, {
+        temperature: 0.3,
+        maxTokens: 4000,
+      });
 
       if (progressCallback) progressCallback('🔑 Estrazione punti chiave...', 70);
 

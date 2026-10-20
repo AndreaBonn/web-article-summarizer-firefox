@@ -242,6 +242,40 @@ export async function handleAskPDFQuestion(request) {
   }
 }
 
+const COMPLETION_OPTION_KEYS = ['temperature', 'maxTokens'];
+
+/**
+ * Runs one LLM completion for an extension page, so the page never handles the decrypted key.
+ * Only sampling options and the JSON response format are forwarded: the model stays the default.
+ */
+export async function handleGenerateCompletion(request) {
+  const provider = validateProvider(request.provider);
+  if (typeof request.systemPrompt !== 'string' || typeof request.userPrompt !== 'string') {
+    throw new Error('Prompt non valido');
+  }
+  const apiKey = await getApiKeyOrThrow(provider);
+  const requested = request.options && typeof request.options === 'object' ? request.options : {};
+  const options = Object.fromEntries(
+    COMPLETION_OPTION_KEYS.filter((key) => Number.isFinite(requested[key])).map((key) => [
+      key,
+      requested[key],
+    ]),
+  );
+  if (requested.responseFormat === 'json') options.responseFormat = 'json';
+
+  try {
+    return await APIClient.generateCompletion(
+      provider,
+      apiKey,
+      request.systemPrompt,
+      request.userPrompt,
+      options,
+    );
+  } catch (error) {
+    await toUserFacingError(error, 'handleGenerateCompletion');
+  }
+}
+
 async function getApiKeyOrThrow(provider) {
   const apiKey = await StorageManager.getApiKey(provider);
   if (!apiKey) {

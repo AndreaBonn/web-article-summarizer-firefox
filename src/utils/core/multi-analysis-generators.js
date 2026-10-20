@@ -1,7 +1,7 @@
 // Multi-Analysis Generators — AI generation functions for multi-article analysis
 // Pure static functions: receive data, return results (no internal state)
 
-import { APIOrchestrator as APIClient } from '../ai/api-orchestrator.js';
+import { requestCompletion } from '../ai/completion-client.js';
 import { parseLLMJson } from '../ai/json-repair.js';
 import { Logger } from './logger.js';
 import { getTranslationText } from '../../shared/translation-text.js';
@@ -11,7 +11,7 @@ import {
   getQAPrompt,
 } from '../ai/prompts/multi-analysis-prompts.js';
 
-export async function generateGlobalSummary(articles, provider, apiKey) {
+export async function generateGlobalSummary(articles, provider) {
   const articlesContent = articles
     .map((a, index) => {
       const content = getTranslationText(a.translation) || a.summary;
@@ -51,10 +51,10 @@ Genera un riassunto globale che integri tutti questi contenuti in una narrazione
     maxTokens: provider === 'gemini' ? 8192 : 4000,
   };
 
-  return await APIClient.generateCompletion(provider, apiKey, systemPrompt, userPrompt, options);
+  return await requestCompletion(provider, systemPrompt, userPrompt, options);
 }
 
-export async function generateComparison(articles, provider, apiKey) {
+export async function generateComparison(articles, provider) {
   const articlesContent = articles
     .map((a, index) => {
       const content = getTranslationText(a.translation) || a.summary;
@@ -84,13 +84,12 @@ Genera un'analisi comparativa dettagliata che evidenzi idee comuni, conflitti, p
   // Gemini supporta output più lunghi e contesti più ampi
   if (provider === 'gemini') {
     options.maxTokens = 8000;
-    options.model = 'gemini-2.5-pro';
   }
 
-  return await APIClient.generateCompletion(provider, apiKey, systemPrompt, userPrompt, options);
+  return await requestCompletion(provider, systemPrompt, userPrompt, options);
 }
 
-export async function generateQA(articles, provider, apiKey) {
+export async function generateQA(articles, provider) {
   const articlesContent = articles
     .map((a, index) => {
       const content = getTranslationText(a.translation) || a.summary;
@@ -123,13 +122,7 @@ IMPORTANTE: Rispondi SOLO con il JSON nel formato specificato, senza markup mark
     maxTokens: provider === 'gemini' ? 4096 : 3000,
   };
 
-  const response = await APIClient.generateCompletion(
-    provider,
-    apiKey,
-    systemPrompt,
-    userPrompt,
-    options,
-  );
+  const response = await requestCompletion(provider, systemPrompt, userPrompt, options);
 
   try {
     const cleanedResponse = response

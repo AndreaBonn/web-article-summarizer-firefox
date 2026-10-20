@@ -138,3 +138,47 @@ describe('message router', () => {
     },
   );
 });
+
+describe('generateCompletion routing', () => {
+  const EXTENSION_ROOT = 'moz-extension://uuid/';
+  const request = { action: 'generateCompletion', provider: 'groq', systemPrompt: 's' };
+
+  beforeEach(() =>
+    vi.stubGlobal('browser', {
+      runtime: { id: sender.id, getURL: (path) => EXTENSION_ROOT + path },
+    }),
+  );
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  function setupCompletion() {
+    const handlers = { handleGenerateCompletion: vi.fn().mockResolvedValue('Completion') };
+    return { handlers, listener: createMessageListener(handlers), sendResponse: vi.fn() };
+  }
+
+  it('answers a message sent by an extension page', async () => {
+    const { listener, handlers, sendResponse } = setupCompletion();
+    const pageSender = { ...sender, url: `${EXTENSION_ROOT}src/pages/multi-analysis/x.html` };
+
+    expect(listener(request, pageSender, sendResponse)).toBe(true);
+
+    expect(handlers.handleGenerateCompletion).toHaveBeenCalledWith(request);
+    await vi.waitFor(() =>
+      expect(sendResponse).toHaveBeenCalledWith({ success: true, result: 'Completion' }),
+    );
+  });
+
+  it.each([
+    ['a content script on a web page', { url: 'https://evil.example/page', tab: { id: 1 } }],
+    ['a sender without url', {}],
+  ])('ignores %s', (_label, extra) => {
+    const { listener, handlers, sendResponse } = setupCompletion();
+
+    expect(listener(request, { ...sender, ...extra }, sendResponse)).toBe(false);
+
+    expect(handlers.handleGenerateCompletion).not.toHaveBeenCalled();
+    expect(sendResponse).not.toHaveBeenCalled();
+  });
+});

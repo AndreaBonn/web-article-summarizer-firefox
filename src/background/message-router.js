@@ -13,7 +13,11 @@ const ASYNC_ACTIONS = {
   translatePDF: 'handleTranslatePDF',
   extractPDFCitations: 'handleExtractPDFCitations',
   askPDFQuestion: 'handleAskPDFQuestion',
+  generateCompletion: 'handleGenerateCompletion',
 };
+// Raw prompt-in, completion-out: content scripts share the extension id, so the sender URL
+// is what keeps a web page from driving the user's API keys through them
+const EXTENSION_PAGE_ONLY_ACTIONS = new Set(['generateCompletion']);
 const LOG_LABELS = {
   generateSummary: 'Errore generazione:',
   extractCitations: 'Errore estrazione citazioni:',
@@ -23,7 +27,12 @@ const LOG_LABELS = {
   translatePDF: 'Errore traduzione PDF:',
   extractPDFCitations: 'Errore citazioni PDF:',
   askPDFQuestion: 'Errore Q&A PDF:',
+  generateCompletion: 'Errore completamento:',
 };
+
+function isExtensionPage(sender) {
+  return typeof sender.url === 'string' && sender.url.startsWith(browser.runtime.getURL(''));
+}
 
 export function createMessageListener(handlers) {
   return (request, sender, sendResponse) => {
@@ -46,6 +55,7 @@ export function createMessageListener(handlers) {
       respond(pending, action, sendResponse);
       return true;
     }
+    if (EXTENSION_PAGE_ONLY_ACTIONS.has(action) && !isExtensionPage(sender)) return false;
     if (Object.hasOwn(ASYNC_ACTIONS, action)) {
       respond(handlers[ASYNC_ACTIONS[action]](request), action, sendResponse);
       return true;

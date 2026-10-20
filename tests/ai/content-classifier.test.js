@@ -10,7 +10,7 @@ beforeEach(() => {
         set: vi.fn(),
       },
     },
-    runtime: { id: 'test-id' },
+    runtime: { id: 'test-id', sendMessage: vi.fn() },
   };
 });
 
@@ -102,7 +102,7 @@ describe('ContentClassifier.classifyArticle() — selezione manuale', () => {
     // Non mocchiamo StorageManager direttamente: lo importiamo e mocchiamo qui
     const { StorageManager } = await import('@utils/storage/storage-manager.js');
     vi.spyOn(StorageManager, 'getSettings').mockResolvedValue({ selectedProvider: 'groq' });
-    vi.spyOn(StorageManager, 'getApiKey').mockResolvedValue(null);
+    browser.runtime.sendMessage.mockResolvedValue({ success: false, error: 'Manca la chiave API' });
 
     const article = { title: 'Test', content: 'parola '.repeat(10) };
 
@@ -122,20 +122,27 @@ describe('ContentClassifier.classifyArticle() — selezione manuale', () => {
 
 describe('ContentClassifier.classifyArticle() — AI classification', () => {
   let StorageManager;
-  let APIClient;
 
   beforeEach(async () => {
     const storageModule = await import('@utils/storage/storage-manager.js');
     StorageManager = storageModule.StorageManager;
     vi.spyOn(StorageManager, 'getSettings').mockResolvedValue({ selectedProvider: 'groq' });
-    vi.spyOn(StorageManager, 'getApiKey').mockResolvedValue('test-api-key');
+  });
 
-    const apiModule = await import('@utils/ai/api-orchestrator.js');
-    APIClient = apiModule.APIOrchestrator;
+  it('test_classifyArticle_asksTheServiceWorker_neverReadsTheApiKey', async () => {
+    const getApiKey = vi.spyOn(StorageManager, 'getApiKey');
+    browser.runtime.sendMessage.mockResolvedValue({ success: true, result: 'news' });
+
+    await ContentClassifier.classifyArticle({ title: 'T', content: 'word '.repeat(20) }, 'auto');
+
+    expect(getApiKey).not.toHaveBeenCalled();
+    expect(browser.runtime.sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'generateCompletion', provider: 'groq' }),
+    );
   });
 
   it('test_classifyArticle_withValidAIResponse_returnsAIMethod', async () => {
-    vi.spyOn(APIClient, 'generateCompletion').mockResolvedValue('scientific');
+    browser.runtime.sendMessage.mockResolvedValue({ success: true, result: 'scientific' });
 
     const article = { title: 'Research Paper', content: 'methodology results p-value '.repeat(20) };
     const result = await ContentClassifier.classifyArticle(article, 'auto');
@@ -145,7 +152,10 @@ describe('ContentClassifier.classifyArticle() — AI classification', () => {
   });
 
   it('test_classifyArticle_withInvalidAICategory_returnsFallback', async () => {
-    vi.spyOn(APIClient, 'generateCompletion').mockResolvedValue('invalid-category-xyz');
+    browser.runtime.sendMessage.mockResolvedValue({
+      success: true,
+      result: 'invalid-category-xyz',
+    });
 
     const article = { title: 'Article', content: 'some content '.repeat(10) };
     const result = await ContentClassifier.classifyArticle(article, 'auto');
@@ -156,9 +166,10 @@ describe('ContentClassifier.classifyArticle() — AI classification', () => {
   });
 
   it('test_classifyArticle_withNetworkError_returnsFallbackWithError', async () => {
-    vi.spyOn(APIClient, 'generateCompletion').mockRejectedValue(
-      new Error('fetch failed: Network error'),
-    );
+    browser.runtime.sendMessage.mockResolvedValue({
+      success: false,
+      error: 'fetch failed: Network error',
+    });
 
     const article = { title: 'Net Fail', content: 'content '.repeat(10) };
     const result = await ContentClassifier.classifyArticle(article, 'auto');
@@ -169,7 +180,7 @@ describe('ContentClassifier.classifyArticle() — AI classification', () => {
   });
 
   it('test_classifyArticle_withAPIError401_returnsFallback', async () => {
-    vi.spyOn(APIClient, 'generateCompletion').mockRejectedValue(new Error('401 Unauthorized'));
+    browser.runtime.sendMessage.mockResolvedValue({ success: false, error: '401 Unauthorized' });
 
     const article = { title: 'Auth Fail', content: 'content '.repeat(10) };
     const result = await ContentClassifier.classifyArticle(article, 'auto');
@@ -179,9 +190,10 @@ describe('ContentClassifier.classifyArticle() — AI classification', () => {
   });
 
   it('test_classifyArticle_withRateLimitError429_returnsFallback', async () => {
-    vi.spyOn(APIClient, 'generateCompletion').mockRejectedValue(
-      new Error('429 rate limit exceeded'),
-    );
+    browser.runtime.sendMessage.mockResolvedValue({
+      success: false,
+      error: '429 rate limit exceeded',
+    });
 
     const article = { title: 'Rate Limit', content: 'content '.repeat(10) };
     const result = await ContentClassifier.classifyArticle(article, 'auto');
@@ -191,9 +203,10 @@ describe('ContentClassifier.classifyArticle() — AI classification', () => {
   });
 
   it('test_classifyArticle_withTimeoutError_returnsFallback', async () => {
-    vi.spyOn(APIClient, 'generateCompletion').mockRejectedValue(
-      new Error('Request timeout after 60 seconds'),
-    );
+    browser.runtime.sendMessage.mockResolvedValue({
+      success: false,
+      error: 'Request timeout after 60 seconds',
+    });
 
     const article = { title: 'Timeout', content: 'content '.repeat(10) };
     const result = await ContentClassifier.classifyArticle(article, 'auto');
@@ -203,9 +216,10 @@ describe('ContentClassifier.classifyArticle() — AI classification', () => {
   });
 
   it('test_classifyArticle_withInternalError_returnsFallback', async () => {
-    vi.spyOn(APIClient, 'generateCompletion').mockRejectedValue(
-      new Error('TypeError: cannot read property of undefined'),
-    );
+    browser.runtime.sendMessage.mockResolvedValue({
+      success: false,
+      error: 'TypeError: cannot read property of undefined',
+    });
 
     const article = { title: 'Internal', content: 'content '.repeat(10) };
     const result = await ContentClassifier.classifyArticle(article, 'auto');
@@ -222,7 +236,7 @@ describe('ContentClassifier.classifyArticle() — AI classification', () => {
       return 'mocked-user-prompt';
     });
     vi.spyOn(PromptRegistry, 'getClassificationSystemPrompt').mockReturnValue('mocked-sys');
-    vi.spyOn(APIClient, 'generateCompletion').mockResolvedValue('news');
+    browser.runtime.sendMessage.mockResolvedValue({ success: true, result: 'news' });
 
     // Create article with more than 500 words
     const words = Array.from({ length: 600 }, (_, i) => `word${i}`);

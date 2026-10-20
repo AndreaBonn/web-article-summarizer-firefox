@@ -3,7 +3,7 @@
 // Generazione AI delegata a multi-analysis-generators.js.
 
 import { StorageManager } from '../storage/storage-manager.js';
-import { APIOrchestrator as APIClient } from '../ai/api-orchestrator.js';
+import { requestCompletion } from '../ai/completion-client.js';
 import { Logger } from './logger.js';
 import { getTranslationText } from '../../shared/translation-text.js';
 import {
@@ -17,22 +17,16 @@ export class MultiAnalysisManager {
     // Usa l'AI per analisi semantica intelligente
     const settings = await StorageManager.getSettings();
     const provider = settings.selectedProvider || 'groq';
-    const apiKey = await StorageManager.getApiKey(provider);
-
-    if (!apiKey) {
-      Logger.warn('API key non disponibile: verifica correlazione saltata');
-      return { related: true, reason: 'Verifica saltata: API key non configurata', skipped: true };
-    }
 
     try {
-      return await this.checkCorrelationWithAI(articles, provider, apiKey);
+      return await this.checkCorrelationWithAI(articles, provider);
     } catch (error) {
       Logger.error('Errore verifica correlazione:', error);
       return { related: true, reason: `Verifica saltata: ${error.message}`, skipped: true };
     }
   }
 
-  static async checkCorrelationWithAI(articles, provider, apiKey) {
+  static async checkCorrelationWithAI(articles, provider) {
     // Prepara sintesi degli articoli per l'analisi
     const articlesInfo = articles
       .map((a, index) => {
@@ -73,17 +67,11 @@ ${articlesInfo}
 Rispondi SOLO con il JSON.`;
 
     try {
-      const response = await APIClient.generateCompletion(
-        provider,
-        apiKey,
-        systemPrompt,
-        userPrompt,
-        {
-          temperature: 0.1,
-          maxTokens: 500,
-          responseFormat: 'json',
-        },
-      );
+      const response = await requestCompletion(provider, systemPrompt, userPrompt, {
+        temperature: 0.1,
+        maxTokens: 500,
+        responseFormat: 'json',
+      });
 
       const cleanedResponse = response
         .replace(/```json\n?/g, '')
@@ -117,27 +105,22 @@ Rispondi SOLO con il JSON.`;
 
     const settings = await StorageManager.getSettings();
     const provider = settings.selectedProvider || 'groq';
-    const apiKey = await StorageManager.getApiKey(provider);
-
-    if (!apiKey) {
-      throw new Error('API key non configurata. Vai nelle impostazioni.');
-    }
 
     result.metadata = { provider };
 
     if (options.globalSummary) {
       progressCallback('Generazione riassunto globale...', 30);
-      result.globalSummary = await generateGlobalSummary(articles, provider, apiKey);
+      result.globalSummary = await generateGlobalSummary(articles, provider);
     }
 
     if (options.comparison) {
       progressCallback('Confronto idee tra articoli...', 55);
-      result.comparison = await generateComparison(articles, provider, apiKey);
+      result.comparison = await generateComparison(articles, provider);
     }
 
     if (options.qa) {
       progressCallback('Generazione Q&A...', 75);
-      const qaResult = await generateQA(articles, provider, apiKey);
+      const qaResult = await generateQA(articles, provider);
       result.qa = {
         interactive: true,
         articles: articles.map((a) => ({

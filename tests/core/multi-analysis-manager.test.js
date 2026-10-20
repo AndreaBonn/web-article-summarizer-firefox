@@ -4,14 +4,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('@utils/storage/storage-manager.js', () => ({
   StorageManager: {
     getSettings: vi.fn(),
-    getApiKey: vi.fn(),
   },
 }));
 
-vi.mock('@utils/ai/api-orchestrator.js', () => ({
-  APIOrchestrator: {
-    generateCompletion: vi.fn(),
-  },
+vi.mock('@utils/ai/completion-client.js', () => ({
+  requestCompletion: vi.fn(),
 }));
 
 vi.mock('@utils/core/logger.js', () => ({
@@ -36,7 +33,7 @@ global.browser = {
 
 import { MultiAnalysisManager } from '@utils/core/multi-analysis-manager.js';
 import { StorageManager } from '@utils/storage/storage-manager.js';
-import { APIOrchestrator as APIClient } from '@utils/ai/api-orchestrator.js';
+import { requestCompletion } from '@utils/ai/completion-client.js';
 import {
   generateGlobalSummary,
   generateComparison,
@@ -69,39 +66,27 @@ describe('MultiAnalysisManager', () => {
   // ---------------------------------------------------------------------------
 
   describe('checkArticlesRelation', () => {
-    it('restituisce related=true con skipped=true se API key mancante', async () => {
-      StorageManager.getSettings.mockResolvedValue({ selectedProvider: 'groq' });
-      StorageManager.getApiKey.mockResolvedValue(null);
-
-      const result = await MultiAnalysisManager.checkArticlesRelation(articles);
-
-      expect(result.related).toBe(true);
-      expect(result.skipped).toBe(true);
-      expect(result.reason).toContain('API key non configurata');
-    });
-
-    it('usa provider da settings per recuperare API key', async () => {
+    it('chiede la correlazione al provider scelto nelle impostazioni', async () => {
       StorageManager.getSettings.mockResolvedValue({ selectedProvider: 'openai' });
-      StorageManager.getApiKey.mockResolvedValue(null);
+      requestCompletion.mockResolvedValue('{"related": true}');
 
       await MultiAnalysisManager.checkArticlesRelation(articles);
 
-      expect(StorageManager.getApiKey).toHaveBeenCalledWith('openai');
+      expect(requestCompletion.mock.calls[0][0]).toBe('openai');
     });
 
     it('fallback a "groq" se selectedProvider non impostato', async () => {
       StorageManager.getSettings.mockResolvedValue({});
-      StorageManager.getApiKey.mockResolvedValue(null);
+      requestCompletion.mockResolvedValue('{"related": true}');
 
       await MultiAnalysisManager.checkArticlesRelation(articles);
 
-      expect(StorageManager.getApiKey).toHaveBeenCalledWith('groq');
+      expect(requestCompletion.mock.calls[0][0]).toBe('groq');
     });
 
-    it('chiama checkCorrelationWithAI quando API key disponibile', async () => {
+    it('restituisce la correlazione calcolata dal provider', async () => {
       StorageManager.getSettings.mockResolvedValue({ selectedProvider: 'groq' });
-      StorageManager.getApiKey.mockResolvedValue('test-key');
-      APIClient.generateCompletion.mockResolvedValue(
+      requestCompletion.mockResolvedValue(
         '{"related": true, "confidence": 0.9, "reason": "Stesso tema"}',
       );
 
@@ -114,8 +99,7 @@ describe('MultiAnalysisManager', () => {
 
     it('restituisce related=true se generateCompletion fallisce (catch interno a checkCorrelationWithAI)', async () => {
       StorageManager.getSettings.mockResolvedValue({ selectedProvider: 'groq' });
-      StorageManager.getApiKey.mockResolvedValue('test-key');
-      APIClient.generateCompletion.mockRejectedValue(new Error('Network error'));
+      requestCompletion.mockRejectedValue(new Error('Network error'));
 
       const result = await MultiAnalysisManager.checkArticlesRelation(articles);
 
@@ -130,11 +114,11 @@ describe('MultiAnalysisManager', () => {
 
   describe('checkCorrelationWithAI', () => {
     it('parsa risposta JSON valida con related=true', async () => {
-      APIClient.generateCompletion.mockResolvedValue(
+      requestCompletion.mockResolvedValue(
         '{"related": true, "confidence": 0.85, "reason": "Temi comuni"}',
       );
 
-      const result = await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq', 'key');
+      const result = await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq');
 
       expect(result.related).toBe(true);
       expect(result.confidence).toBe(0.85);
@@ -142,41 +126,41 @@ describe('MultiAnalysisManager', () => {
     });
 
     it('parsa risposta JSON con related=false', async () => {
-      APIClient.generateCompletion.mockResolvedValue(
+      requestCompletion.mockResolvedValue(
         '{"related": false, "confidence": 0.2, "reason": "Nessun tema comune"}',
       );
 
-      const result = await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq', 'key');
+      const result = await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq');
 
       expect(result.related).toBe(false);
       expect(result.reason).toBe('Nessun tema comune');
     });
 
     it('gestisce risposta JSON avvolta in markdown code block', async () => {
-      APIClient.generateCompletion.mockResolvedValue(
+      requestCompletion.mockResolvedValue(
         '```json\n{"related": true, "confidence": 0.7, "reason": "Correlati"}\n```',
       );
 
-      const result = await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq', 'key');
+      const result = await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq');
 
       expect(result.related).toBe(true);
       expect(result.confidence).toBe(0.7);
     });
 
     it('mantiene confidence 0 senza rimpiazzarla col default', async () => {
-      APIClient.generateCompletion.mockResolvedValue(
+      requestCompletion.mockResolvedValue(
         '{"related": false, "confidence": 0, "reason": "Nessuna relazione"}',
       );
 
-      const result = await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq', 'key');
+      const result = await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq');
 
       expect(result.confidence).toBe(0);
     });
 
     it('fallback related=true se reason mancante nella risposta', async () => {
-      APIClient.generateCompletion.mockResolvedValue('{"related": true}');
+      requestCompletion.mockResolvedValue('{"related": true}');
 
-      const result = await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq', 'key');
+      const result = await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq');
 
       expect(result.related).toBe(true);
       expect(result.reason).toBeNull();
@@ -184,9 +168,9 @@ describe('MultiAnalysisManager', () => {
     });
 
     it('restituisce related=true su errore di parsing JSON', async () => {
-      APIClient.generateCompletion.mockResolvedValue('risposta non JSON invalida');
+      requestCompletion.mockResolvedValue('risposta non JSON invalida');
 
-      const result = await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq', 'key');
+      const result = await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq');
 
       expect(result.related).toBe(true);
       expect(result.reason).toBeNull();
@@ -200,13 +184,11 @@ describe('MultiAnalysisManager', () => {
         },
         articles[1],
       ];
-      APIClient.generateCompletion.mockResolvedValue(
-        '{"related": true, "confidence": 0.9, "reason": "OK"}',
-      );
+      requestCompletion.mockResolvedValue('{"related": true, "confidence": 0.9, "reason": "OK"}');
 
-      await MultiAnalysisManager.checkCorrelationWithAI(articlesWithTranslation, 'groq', 'key');
+      await MultiAnalysisManager.checkCorrelationWithAI(articlesWithTranslation, 'groq');
 
-      const userPrompt = APIClient.generateCompletion.mock.calls[0][3];
+      const userPrompt = requestCompletion.mock.calls[0][2];
       expect(userPrompt).toContain('Translated content');
     });
 
@@ -215,7 +197,7 @@ describe('MultiAnalysisManager', () => {
         { ...articles[0], translation: 'Traduzione come stringa del primo articolo.' },
         articles[1],
       ];
-      APIClient.generateCompletion.mockResolvedValue('{"related": true}');
+      requestCompletion.mockResolvedValue('{"related": true}');
 
       await MultiAnalysisManager.checkCorrelationWithAI(
         articlesWithStringTranslation,
@@ -223,16 +205,16 @@ describe('MultiAnalysisManager', () => {
         'key',
       );
 
-      const userPrompt = APIClient.generateCompletion.mock.calls[0][3];
+      const userPrompt = requestCompletion.mock.calls[0][2];
       expect(userPrompt).toContain('Traduzione come stringa');
     });
 
     it('passa temperature 0.1 e maxTokens 500 nelle opzioni', async () => {
-      APIClient.generateCompletion.mockResolvedValue('{"related": true}');
+      requestCompletion.mockResolvedValue('{"related": true}');
 
-      await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq', 'key');
+      await MultiAnalysisManager.checkCorrelationWithAI(articles, 'groq');
 
-      const options = APIClient.generateCompletion.mock.calls[0][4];
+      const options = requestCompletion.mock.calls[0][3];
       expect(options.temperature).toBe(0.1);
       expect(options.maxTokens).toBe(500);
       expect(options.responseFormat).toBe('json');
@@ -240,11 +222,11 @@ describe('MultiAnalysisManager', () => {
 
     it('tronca contenuto articolo a 300 caratteri nel prompt', async () => {
       const longArticle = makeArticle(3, 'Lungo', 'A'.repeat(500));
-      APIClient.generateCompletion.mockResolvedValue('{"related": true}');
+      requestCompletion.mockResolvedValue('{"related": true}');
 
       await MultiAnalysisManager.checkCorrelationWithAI([longArticle], 'groq', 'key');
 
-      const userPrompt = APIClient.generateCompletion.mock.calls[0][3];
+      const userPrompt = requestCompletion.mock.calls[0][2];
       // Il contenuto troncato dovrebbe essere 300 caratteri + "..."
       expect(userPrompt).not.toContain('A'.repeat(400));
     });
@@ -259,18 +241,17 @@ describe('MultiAnalysisManager', () => {
 
     beforeEach(() => {
       StorageManager.getSettings.mockResolvedValue({ selectedProvider: 'groq' });
-      StorageManager.getApiKey.mockResolvedValue('test-key');
       generateGlobalSummary.mockResolvedValue('Riassunto globale generato');
       generateComparison.mockResolvedValue('Confronto generato');
       generateQA.mockResolvedValue([{ question: 'Q1?', answer: 'A1' }]);
     });
 
-    it('lancia errore se API key non configurata', async () => {
-      StorageManager.getApiKey.mockResolvedValue(null);
+    it("propaga l'errore del service worker, ad esempio la chiave mancante", async () => {
+      generateGlobalSummary.mockRejectedValue(new Error('Manca la chiave API'));
 
       await expect(
-        MultiAnalysisManager.analyzeArticles(articles, {}, progressCallback),
-      ).rejects.toThrow('API key non configurata');
+        MultiAnalysisManager.analyzeArticles(articles, { globalSummary: true }, progressCallback),
+      ).rejects.toThrow('Manca la chiave API');
     });
 
     it('genera solo globalSummary se richiesto', async () => {
@@ -283,7 +264,7 @@ describe('MultiAnalysisManager', () => {
       expect(result.globalSummary).toBe('Riassunto globale generato');
       expect(result.comparison).toBeNull();
       expect(result.qa).toBeNull();
-      expect(generateGlobalSummary).toHaveBeenCalledWith(articles, 'groq', 'test-key');
+      expect(generateGlobalSummary).toHaveBeenCalledWith(articles, 'groq');
     });
 
     it('genera solo comparison se richiesto', async () => {
@@ -295,7 +276,7 @@ describe('MultiAnalysisManager', () => {
 
       expect(result.comparison).toBe('Confronto generato');
       expect(result.globalSummary).toBeNull();
-      expect(generateComparison).toHaveBeenCalledWith(articles, 'groq', 'test-key');
+      expect(generateComparison).toHaveBeenCalledWith(articles, 'groq');
     });
 
     it('genera Q&A con struttura corretta', async () => {

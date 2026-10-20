@@ -476,5 +476,7 @@
   "history.filter.byLanguage": "Filtra per lingua",
   "history.filter.byType": "Filtra per tipo",
   "history.filter.byStatus": "Filtra preferiti e note",
-  "multi.filterByProvider": "Filtra per servizio AI"
+  "multi.filterByProvider": "Filtra per servizio AI",
+
+  "error.serviceUnavailable": "Il servizio non risponde. Ricarica la pagina e riprova."
 }

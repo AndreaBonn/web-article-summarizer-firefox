@@ -2,7 +2,7 @@ import { buildMultiArticleQAPrompts } from '../../utils/ai/prompts/multi-qa-prom
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { InputSanitizer } from '../../utils/security/input-sanitizer.js';
 import { StorageManager } from '../../utils/storage/storage-manager.js';
-import { APIOrchestrator as APIClient } from '../../utils/ai/api-orchestrator.js';
+import { requestCompletion } from '../../utils/ai/completion-client.js';
 import { HistoryManager } from '../../utils/storage/history-manager.js';
 import { state } from './state.js';
 import { Logger } from '../../utils/core/logger.js';
@@ -73,18 +73,13 @@ async function askQuestionToArticles(rawQuestion) {
 
   const settings = await StorageManager.getSettings();
   const provider = settings.selectedProvider || 'groq';
-  const apiKey = await StorageManager.getApiKey(provider);
-
-  if (!apiKey) {
-    throw new Error('API key non configurata');
-  }
 
   const { systemPrompt, userPrompt } = buildMultiArticleQAPrompts(
     state.currentAnalysis.qa.articles,
     question,
   );
 
-  return await APIClient.generateCompletion(provider, apiKey, systemPrompt, userPrompt, {
+  return await requestCompletion(provider, systemPrompt, userPrompt, {
     temperature: 0.1,
     maxTokens: 1000,
   });

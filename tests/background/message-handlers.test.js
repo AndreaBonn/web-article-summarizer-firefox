@@ -26,7 +26,7 @@ vi.mock('../../src/utils/storage/cache-manager.js', () => ({
   ),
 }));
 vi.mock('../../src/utils/ai/api-orchestrator.js', () => ({
-  APIOrchestrator: { callAPI: vi.fn(), parseResponse: vi.fn() },
+  APIOrchestrator: { callAPI: vi.fn(), parseResponse: vi.fn(), generateCompletion: vi.fn() },
 }));
 vi.mock('../../src/utils/ai/citation-extractor.js', () => ({
   CitationExtractor: { extractCitations: vi.fn() },
@@ -296,5 +296,57 @@ describe('message handlers', () => {
       message: 'Test fallito: Unauthorized',
       cause: error,
     });
+  });
+  it('test_handleGenerateCompletion_decryptsKeyInWorker_forwardsOnlyKnownOptions', async () => {
+    APIOrchestrator.generateCompletion.mockResolvedValue('answer');
+
+    const result = await handlers.handleGenerateCompletion({
+      provider: 'openai',
+      systemPrompt: 'sys',
+      userPrompt: 'user',
+      options: { temperature: 0.1, maxTokens: 500, responseFormat: 'json', model: 'x' },
+    });
+
+    expect(result).toBe('answer');
+    expect(StorageManager.getApiKey).toHaveBeenCalledWith('openai');
+    expect(APIOrchestrator.generateCompletion).toHaveBeenCalledWith(
+      'openai',
+      'secret',
+      'sys',
+      'user',
+      {
+        temperature: 0.1,
+        maxTokens: 500,
+        responseFormat: 'json',
+      },
+    );
+  });
+  it('test_handleGenerateCompletion_noOptions_usesProviderDefaults', async () => {
+    await handlers.handleGenerateCompletion({
+      provider: 'groq',
+      systemPrompt: 's',
+      userPrompt: 'u',
+    });
+    expect(APIOrchestrator.generateCompletion).toHaveBeenCalledWith('groq', 'secret', 's', 'u', {});
+  });
+  it('test_handleGenerateCompletion_missingKey_rejectsWithoutCalling', async () => {
+    StorageManager.getApiKey.mockResolvedValue(null);
+    await expect(
+      handlers.handleGenerateCompletion({ provider: 'groq', systemPrompt: 's', userPrompt: 'u' }),
+    ).rejects.toThrow('API key non configurata');
+    expect(APIOrchestrator.generateCompletion).not.toHaveBeenCalled();
+  });
+  it.each([
+    [{ provider: 'evil', systemPrompt: 's', userPrompt: 'u' }, 'Provider non valido'],
+    [{ provider: 'groq', systemPrompt: 's', userPrompt: 42 }, 'Prompt non valido'],
+  ])('test_handleGenerateCompletion_invalidRequest_rejects %#', async (request, message) => {
+    await expect(handlers.handleGenerateCompletion(request)).rejects.toThrow(message);
+    expect(StorageManager.getApiKey).not.toHaveBeenCalled();
+  });
+  it('test_handleGenerateCompletion_providerError_isUserFacing', async () => {
+    APIOrchestrator.generateCompletion.mockRejectedValue(new Error('HTTP 500'));
+    await expect(
+      handlers.handleGenerateCompletion({ provider: 'groq', systemPrompt: 's', userPrompt: 'u' }),
+    ).rejects.toThrow('User-facing error');
   });
 });

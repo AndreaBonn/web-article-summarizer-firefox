@@ -1,6 +1,6 @@
 // Content Classifier - Sistema di riconoscimento automatico del tipo di articolo tramite AI
 import { StorageManager } from '../storage/storage-manager.js';
-import { APIOrchestrator as APIClient } from './api-orchestrator.js';
+import { requestCompletion } from './completion-client.js';
 import { PromptRegistry } from './prompt-registry.js';
 import { Logger } from '../core/logger.js';
 
@@ -41,11 +41,6 @@ export class ContentClassifier {
     Logger.debug('Inizio classificazione AI...');
     const settings = await StorageManager.getSettings();
     const provider = settings.selectedProvider || 'groq';
-    const apiKey = await StorageManager.getApiKey(provider);
-
-    if (!apiKey) {
-      throw new Error('API key non configurata');
-    }
 
     // Sample first 500 words for classification
     const words = article.content.split(/\s+/);
@@ -62,16 +57,10 @@ export class ContentClassifier {
     const userPrompt = PromptRegistry.getClassificationUserPrompt(article, contentSample);
 
     Logger.debug('Invio richiesta a', provider);
-    const response = await APIClient.generateCompletion(
-      provider,
-      apiKey,
-      systemPrompt,
-      userPrompt,
-      {
-        temperature: 0.1, // Bassa temperatura per risposte più deterministiche
-        maxTokens: 20,
-      },
-    );
+    const response = await requestCompletion(provider, systemPrompt, userPrompt, {
+      temperature: 0.1, // Bassa temperatura per risposte più deterministiche
+      maxTokens: 20,
+    });
 
     Logger.debug('Risposta ricevuta:', response);
     const category = response.trim().toLowerCase();
