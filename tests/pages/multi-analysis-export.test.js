@@ -10,7 +10,7 @@ vi.mock('@utils/export/pdf-exporter.js', () => ({
 }));
 vi.mock('@utils/core/modal.js', () => ({ Modal: { alert: alertMock } }));
 
-import { exportPdf, showExportOptionsModal } from '@pages/multi-analysis/export.js';
+import { exportPdf, sendEmail, showExportOptionsModal } from '@pages/multi-analysis/export.js';
 import { state } from '@pages/multi-analysis/state.js';
 import { I18n } from '@utils/i18n/i18n.js';
 
@@ -54,5 +54,22 @@ describe('multi-analysis export', () => {
     const message = alertMock.mock.calls[0][0];
     expect(message).toBe("Errore durante l'esportazione PDF:boom");
     expect(message).not.toContain('{type}');
+  });
+
+  it('test_sendEmail_opensAMailDraftWithTheSelectedSections', async () => {
+    const create = vi.fn();
+    vi.stubGlobal('browser', { tabs: { create } });
+    state.currentAnalysis = { timestamp: 0, globalSummary: 'Sintesi globale' };
+
+    const pending = sendEmail();
+    document.getElementById('exportConfirmBtn').click();
+    await pending;
+
+    expect(alertMock).not.toHaveBeenCalled();
+    expect(create).toHaveBeenCalledTimes(1);
+    const url = decodeURIComponent(create.mock.calls[0][0].url);
+    expect(url.startsWith('mailto:?subject=Analisi Multi Articolo&body=')).toBe(true);
+    expect(url).toContain('Sintesi globale');
+    vi.unstubAllGlobals();
   });
 });

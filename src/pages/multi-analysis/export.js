@@ -67,7 +67,7 @@ export async function sendEmail() {
       dateLocale: 'it-IT',
     });
 
-    await EmailManager.showEmailModal(content, 'Analisi Multi Articolo');
+    EmailManager.openEmailDraft(I18n.t('multi.emailTitle'), content);
   } catch (error) {
     Logger.error('Errore email:', error);
     await Modal.alert(

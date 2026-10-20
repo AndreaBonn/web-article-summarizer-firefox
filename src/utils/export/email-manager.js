@@ -158,4 +158,10 @@ export class EmailManager {
 
     browser.tabs.create({ url: mailtoLink, active: false });
   }
+
+  // Draft without a recipient: the user picks one in the mail client
+  static openEmailDraft(subject, body) {
+    const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    browser.tabs.create({ url: mailtoLink, active: false });
+  }
 }

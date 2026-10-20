@@ -274,6 +274,22 @@ describe('EmailManager.formatEmailContent()', () => {
 // ---------------------------------------------------------------------------
 // openEmailClient()
 // ---------------------------------------------------------------------------
+describe('EmailManager.openEmailDraft()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('opens a mailto draft with no recipient and the encoded subject and body', () => {
+    EmailManager.openEmailDraft('Oggetto & co', 'Riga 1\nRiga 2');
+
+    const { url, active } = browser.tabs.create.mock.calls[0][0];
+    expect(url).toBe(
+      `mailto:?subject=${encodeURIComponent('Oggetto & co')}&body=${encodeURIComponent('Riga 1\nRiga 2')}`,
+    );
+    expect(active).toBe(false);
+  });
+});
+
 describe('EmailManager.openEmailClient()', () => {
   beforeEach(() => {
     vi.clearAllMocks();
