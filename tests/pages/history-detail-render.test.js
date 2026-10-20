@@ -89,6 +89,23 @@ describe('detail rendering', () => {
     );
   });
 
+  it('escapes the article citation so a hostile title creates no elements', () => {
+    const hostile = {
+      title: '<img src=x onerror=1>',
+      author: "L'Autore & co",
+      url: 'https://example.com',
+      date: '2026-01-01',
+    };
+    document.body.innerHTML = renderCitationsHtml({
+      article: hostile,
+      citations: { citations: [{ type: 'source', id: 1 }] },
+    });
+    const box = document.querySelector('.article-citation-monospace');
+    expect(box.querySelector('img')).toBeNull();
+    expect(box.textContent).toContain('<img src=x onerror=1>');
+    expect(box.textContent).toContain("L'Autore & co");
+  });
+
   it.each([undefined, {}, { citations: [] }])('renders empty citations for %s', (citations) => {
     document.body.innerHTML = renderCitationsHtml({ citations });
     expect(document.querySelector('.modal-empty-state').textContent.trim()).toBe(

@@ -229,19 +229,30 @@ describe('CitationFormatter.formatCitation() — campi mancanti', () => {
   });
 });
 
-describe('CitationFormatter.formatCitation() — HtmlSanitizer', () => {
-  it('test_formatCitation_htmlFields_returnsEscapedCitation', () => {
+describe('CitationFormatter.formatCitation() — plain text output', () => {
+  it('test_formatCitation_apostropheAmpersandQuote_returnsFieldsUnescaped', () => {
     const article = {
-      title: '<script>alert(1)</script>',
-      author: '<img src=x onerror=alert(2)>',
-      url: 'https://example.com/?source=<img>&page=1',
+      title: 'L\'Italia & co "oggi"',
+      author: "Dall'Oglio",
+      url: 'https://example.com/?a=1&b=2',
       publishedDate: '2024-03-15',
     };
 
     expect(CitationFormatter.formatCitation(article, 'apa')).toBe(
-      '&lt;img src=x onerror=alert(2)&gt;. (2024). &lt;script&gt;alert(1)&lt;/script&gt;. ' +
-        'example.com. https://example.com/?source=&lt;img&gt;&amp;page=1',
+      'Dall\'Oglio. (2024). L\'Italia & co "oggi". example.com. https://example.com/?a=1&b=2',
     );
+  });
+
+  it('test_generateBibliography_apostropheTitle_keepsTitleUnescaped', () => {
+    const bibliography = CitationFormatter.generateBibliography(
+      { title: "L'Italia & co", url: 'https://example.com', publishedDate: '2024-03-15' },
+      [],
+      'apa',
+    );
+
+    expect(bibliography).toContain("L'Italia & co");
+    expect(bibliography).not.toContain('&#39;');
+    expect(bibliography).not.toContain('&amp;');
   });
 });
 

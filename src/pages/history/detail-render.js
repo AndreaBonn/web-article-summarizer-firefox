@@ -75,7 +75,7 @@ export function renderCitationsHtml(entry) {
       <div class="article-citation-box-detail">
         <h4>Citazione Articolo Principale (APA)</h4>
         <div class="article-citation-monospace">
-          ${CitationExtractor.formatCitation(entry.article, 'apa')}
+          ${HtmlSanitizer.escape(CitationExtractor.formatCitation(entry.article, 'apa'))}
         </div>
       </div>
 

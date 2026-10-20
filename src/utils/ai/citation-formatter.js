@@ -1,5 +1,4 @@
 // Citation Formatter - Formattazione citazioni in stili bibliografici
-import { HtmlSanitizer } from '../security/html-sanitizer.js';
 
 export const CitationFormatter = {
   /**
@@ -11,10 +10,11 @@ export const CitationFormatter = {
       return 'Articolo non disponibile';
     }
 
-    // Escape all fields from external articles to prevent XSS when inserted in innerHTML
-    const author = HtmlSanitizer.escape(article.author || article.byline || 'Autore Sconosciuto');
-    const title = HtmlSanitizer.escape(article.title || 'Titolo non disponibile');
-    const url = HtmlSanitizer.escape(article.url || '');
+    // Plain text on purpose: most consumers use textContent, PDF, Markdown or the clipboard.
+    // HTML sinks (history detail) must escape the result themselves.
+    const author = article.author || article.byline || 'Autore Sconosciuto';
+    const title = article.title || 'Titolo non disponibile';
+    const url = article.url || '';
     const date = article.publishedDate || article.date || new Date().toISOString().split('T')[0];
     const accessDate = article.accessDate || new Date().toISOString().split('T')[0];
 
