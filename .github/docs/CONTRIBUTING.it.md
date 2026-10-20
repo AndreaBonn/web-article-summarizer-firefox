@@ -46,7 +46,7 @@ Questo progetto segue un semplice codice di condotta:
 - **Node.js**: Versione 22 o superiore
 - **npm**: Viene fornito con Node.js
 - **Git**: Per il controllo versione
-- **Browser Chrome**: Per testare l'estensione
+- **Firefox**: 126 o successivo, per testare l'estensione
 - **Editor di Codice**: VS Code consigliato
 
 ### Fork e Clone
@@ -80,16 +80,18 @@ npm run dev
 
 Questo avvia Vite con hot module replacement (HMR).
 
-### Carica Estensione in Chrome
+### Carica Estensione in Firefox
 
-1. Apri Chrome e vai su `chrome://extensions/`
-2. Abilita **Modalità sviluppatore** (toggle in alto a destra)
-3. Clicca **Carica estensione non pacchettizzata**
-4. Seleziona la cartella `dist/` dal progetto
+1. Esegui `npm run build`
+2. Apri Firefox e vai su `about:debugging#/runtime/this-firefox`
+3. Clicca **Carica componente aggiuntivo temporaneo**
+4. Seleziona `dist/manifest.json` dal progetto
+
+In alternativa, `npm run start:firefox` avvia Firefox con l'estensione caricata da `dist/` (tramite web-ext).
 
 ### Configura API Keys
 
-1. Clicca l'icona dell'estensione nella toolbar Chrome
+1. Clicca l'icona dell'estensione nella toolbar di Firefox
 2. Vai su **Impostazioni** (icona ingranaggio)
 3. Inserisci almeno una API key per i test
 
@@ -441,7 +443,7 @@ git commit -m "feat(export): aggiungi formato export CSV
    npm run build
    ```
 
-3. **Testa manualmente** in Chrome
+3. **Testa manualmente** in Firefox
 
 ### Titolo PR
 
@@ -520,7 +522,7 @@ Cerca issue etichettate `good first issue` su GitHub. Questi sono task adatti ai
 - Browser sync per storico
 - Template prompt personalizzati
 - Dashboard analytics avanzata
-- Supporto Firefox ed Edge
+- Supporto per i browser Chromium (Chrome, Edge)
 
 ### Bug Fix
 

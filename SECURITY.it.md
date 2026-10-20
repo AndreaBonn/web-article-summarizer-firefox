@@ -35,11 +35,11 @@ L'estensione segue una strategia di **difesa in profondità** con layer di prote
 
 | Principio | Implementazione |
 |---|---|
-| **Privilegio Minimo** | Permessi Chrome minimali; nessun `<all_urls>` |
+| **Privilegio Minimo** | Permessi minimali; nessun `<all_urls>` |
 | **Validazione ai Confini** | Tutti i dati esterni sanitizzati prima dell'uso |
 | **Separazione delle Responsabilità** | Il content script non ha accesso alle API key; tutte le chiamate LLM passano dal service worker |
 | **Fallimento Sicuro** | Gli errori producono messaggi user-friendly; nessun dato sensibile viene esposto |
-| **Nessun Segreto nel Codice** | Le API key sono in `chrome.storage.local` sandboxato, mai nel codice sorgente |
+| **Nessun Segreto nel Codice** | Le API key sono in `browser.storage.local` sandboxato, mai nel codice sorgente |
 
 ---
 
@@ -202,7 +202,7 @@ Tutta la comunicazione tra componenti (popup, content script, service worker) vi
 Ogni messaggio in ingresso viene controllato rispetto all'ID dell'estensione:
 
 ```javascript
-if (sender.id !== chrome.runtime.id) {
+if (sender.id !== browser.runtime.id) {
   return false;
 }
 ```
@@ -228,24 +228,28 @@ Tutte le risposte di errore inviate attraverso il canale di comunicazione passan
 **Modulo:** `src/utils/storage/storage-manager.js`
 
 ### Storage
-Le API key sono salvate in `chrome.storage.local`, che è automaticamente sandboxato da Chrome — ogni estensione ha la propria area di storage isolata a cui altre estensioni e pagine web non possono accedere.
+Le API key sono salvate in `browser.storage.local`, che è automaticamente sandboxato da Firefox: ogni estensione ha la propria area di storage isolata a cui altre estensioni e pagine web non possono accedere.
 
 ### Perché Non Crittografato?
+Le chiavi sono salvate in chiaro in `storage.local`: non esiste un livello di crittografia.
+
 L'estensione deliberatamente **non** applica crittografia custom alle chiavi memorizzate. Il ragionamento:
 
-> In una Chrome Extension, il codice sorgente è sempre leggibile (le estensioni sono distribuite come JavaScript in chiaro). Qualsiasi chiave di crittografia o algoritmo incorporato nel codice non offre protezione significativa — un attaccante con accesso allo storage dell'estensione ha anche accesso alla logica di decrittazione. Il sandboxing di `chrome.storage.local` è il vero confine di sicurezza.
+> In un'estensione del browser, il codice sorgente è sempre leggibile (le estensioni sono distribuite come JavaScript in chiaro). Qualsiasi chiave di crittografia o algoritmo incorporato nel codice non offre protezione significativa: un attaccante con accesso allo storage dell'estensione ha anche accesso alla logica di decrittazione. Il sandboxing di `browser.storage.local` è il vero confine di sicurezza.
 
 ### Isolamento
 - Le API key non sono **mai** accessibili dal content script
 - Tutte le chiamate LLM passano dal **service worker**, che recupera le chiavi direttamente dallo storage
-- Le chiavi non vengono **mai** trasmesse nei messaggi Chrome (tranne durante il flusso di test iniziale, che legge dal campo di input appena inserito)
+- Le chiavi non vengono **mai** trasmesse nei messaggi runtime (tranne durante il flusso di test iniziale, che legge dal campo di input appena inserito)
+- Le pagine dell'estensione (analisi multi-articolo, analisi PDF, classificazione del contenuto nel popup) non leggono mai la chiave: chiamano `requestCompletion()` (`src/utils/ai/completion-client.js`), che invia l'azione `generateCompletion` al service worker. L'handler (`handleGenerateCompletion` in `src/background/message-handlers.js`) legge la chiave dentro il worker, inoltra solo `temperature`, `maxTokens` e `responseFormat: 'json'`, e chiama `APIOrchestrator.generateCompletion`
+- Il router dei messaggi (`src/background/message-router.js`) accetta `generateCompletion` solo se `sender.url` inizia con l'URL dell'estensione (`browser.runtime.getURL('')`), quindi i content script, che condividono l'ID dell'estensione, non possono usare le chiavi dell'utente
 - Le chiavi sono **mascherate** nell'interfaccia Opzioni (mostrando solo gli ultimi 4 caratteri)
 
 ---
 
 ## Sicurezza di Rete
 
-**Moduli:** `src/utils/ai/provider-caller.js`, `retry-strategy.js`, `rate-limiter.js`
+**Modulo:** `src/utils/ai/provider-caller.js`
 
 ### Timeout Forzato
 Ogni chiamata API ha un **timeout di 60 secondi** imposto tramite `AbortController`:
@@ -257,29 +261,8 @@ const timeoutId = setTimeout(() => controller.abort(), 60000);
 
 Il timeout viene sempre cancellato in un blocco `finally` per prevenire perdite di risorse.
 
-### Strategia di Retry
-I fallimenti temporanei vengono ritentati con **backoff esponenziale**:
-
-| Tentativo | Ritardo |
-|---|---|
-| 1° retry | 1 secondo |
-| 2° retry | 2 secondi |
-| 3° retry | 4 secondi |
-| Massimo | 8 secondi (limite) |
-
-Solo gli errori temporanei (429, 500, 502, 503, 504) attivano i retry. Gli errori permanenti (400, 401, 403, 404) falliscono immediatamente.
-
-### Rate Limiting
-Un **rate limiter a token bucket** rispetta i limiti di ciascun provider:
-
-| Provider | Limite |
-|---|---|
-| Groq | 30 richieste/minuto |
-| OpenAI | 60 richieste/minuto |
-| Anthropic | 50 richieste/minuto |
-| Gemini | 60 richieste/minuto |
-
-Le richieste che superano il limite vengono messe in coda, non scartate.
+### Errori dei Provider e Rate Limit
+Non esistono retry automatico, fallback fra provider né rate limiter lato client: una chiamata fallita viene riportata all'utente così com'è. La risposta HTTP 429 di un provider diventa `[RATE_LIMIT:Provider]` e `ErrorHandler` la mappa in un messaggio che suggerisce di cambiare chiave API o provider nelle impostazioni.
 
 ---
 
@@ -338,12 +321,14 @@ I messaggi di errore tecnici non vengono **mai** mostrati direttamente agli uten
 
 | Errore Tecnico | Messaggio Utente |
 |---|---|
-| HTTP 401/Unauthorized | "API key non valida. Verifica la configurazione." |
-| HTTP 429/Too Many Requests | "Rate limit raggiunto. Cambia provider o attendi." |
-| Errori Network/fetch | "Errore di connessione. Verifica la tua connessione." |
-| URL `chrome://` | "Impossibile analizzare pagine interne di Chrome." |
-| QUOTA_BYTES | "Spazio di archiviazione esaurito." |
+| HTTP 401/Unauthorized | "API key non valida. Verifica la configurazione nelle impostazioni." |
+| HTTP 429/Too Many Requests | "Rate limit raggiunto. La tua chiave API ha esaurito le richieste disponibili. [...]" |
+| Errori Network/fetch | "Errore di connessione. Verifica la tua connessione internet." |
+| Pagine non supportate (pagine `about:`, siti `http:`; si legge solo `https:`) | "Questa pagina non si può riassumere: l'estensione legge gli articoli dei siti https. [...]" |
+| QUOTA_BYTES | "Spazio di archiviazione esaurito. Pulisci la cache nelle impostazioni." |
 | Errori non riconosciuti | "Si è verificato un errore imprevisto. Riprova." |
+
+I messaggi sono mostrati nella lingua corrente dell'interfaccia (italiano o inglese; sopra il testo italiano). `getErrorMessage()` è idempotente: un messaggio già mappato, in qualunque lingua, viene riconosciuto e ri-renderizzato nella lingua corrente, ed è ciò che permette al service worker di inviare alle pagine messaggi già mappati.
 
 ### Privacy dei Log di Errore
 I log degli errori memorizzati per la diagnostica seguono regole di privacy rigide:
@@ -357,18 +342,18 @@ I log degli errori memorizzati per la diagnostica seguono regole di privacy rigi
 
 ## Sicurezza dello Storage
 
-**Moduli:** `src/utils/storage/compression-manager.js`, `cache-store.js`, `base-history-repository.js`
+**Moduli:** `src/utils/storage/cache-store.js`, `base-history-repository.js`, `compressed-data-recovery.js`
 
-### Compressione Dati
-I dati degli articoli vengono compressi con LZ-string prima dello storage, riducendo l'uso della quota e minimizzando la superficie di dati memorizzati in `chrome.storage.local`.
+### Dati Compressi Precedenti
+Cronologia e cache sono salvate come JSON semplice in `browser.storage.local`; IndexedDB non è usato. I riassunti compressi da versioni precedenti vengono decodificati con LZ-string e le voci di cache compresse da versioni precedenti vengono scartate da `restoreCompressedData()`, eseguita a ogni avvio del service worker.
 
 ### Protezione Quota
 - `_safeStorageSet()` cattura gli errori `QUOTA_BYTES` e fornisce un messaggio azionabile all'utente
-- La manutenzione automatica della cache viene eseguita periodicamente tramite Chrome Alarms
+- La manutenzione automatica viene eseguita ogni 24 ore tramite `browser.alarms` quando la pulizia automatica è attiva: rimozione delle cache scadute, cache limitata a 100 voci (LRU) ed eliminazione dei riassunti più vecchi di 180 giorni, preferiti esclusi
 - Le voci della cache hanno TTL configurabile (time-to-live) con eviction automatica
 
 ### Isolamento dello Storage
-Tutti i dati risiedono in `chrome.storage.local`, che è:
+Tutti i dati risiedono in `browser.storage.local`, che è:
 - Sandboxato per estensione (nessun accesso cross-extension)
 - Inaccessibile dalle pagine web
 - Cancellato quando l'estensione viene disinstallata
@@ -400,14 +385,14 @@ L'importazione di dati di backup da file JSON passa attraverso una pipeline di v
 | Controllo | Dettaglio |
 |---|---|
 | **Tipo file** | Deve essere JSON (tipo MIME o estensione `.json`) |
-| **Dimensione file** | Massimo 10 MB per prevenire denial-of-service |
+| **Dimensione file** | Massimo 50 MB per prevenire denial-of-service (i backup possono contenere il testo completo dei PDF) |
 | **Parsing JSON** | Wrappato in try-catch con errore descrittivo |
 | **Validazione struttura** | Deve contenere `version` (stringa) e `data` (oggetto) |
-| **Validazione contenuto** | Deve includere array `singleArticles` o `multiAnalysis` |
+| **Validazione contenuto** | Deve includere array `singleArticles`, `multiAnalysis` o `pdfAnalysis` |
 | **Sanitizzazione metadati** | Provider e tipo contenuto da whitelist; lingua validata con `/^[a-z]{2}(-[A-Z]{2})?$/` |
-| **Sanitizzazione campi** | Lunghezze massime: titolo (500 char), contenuto (100 KB), estratto (1 KB) |
-| **Rigenerazione UUID** | Tutte le voci importate ricevono nuovi ID `crypto.randomUUID()` |
-| **Prevenzione duplicati** | Gli ID esistenti vengono controllati prima dell'import |
+| **Sanitizzazione campi** | Lunghezze massime: titolo (500 char), contenuto (100 KB), estratto (1 KB); vengono sanificati anche nome e testo del PDF, note e riassunti |
+| **Gestione ID** | Le voci mantengono `id` e timestamp; una voce senza `id` valido riceve un nuovo `crypto.randomUUID()` |
+| **Prevenzione duplicati** | Gli ID esistenti vengono controllati prima dell'import, quindi reimportare lo stesso file non aggiunge nulla |
 | **Conferma utente** | Finestra modale mostra i metadati del backup prima di procedere |
 
 ---
@@ -422,7 +407,7 @@ L'estensione utilizza un set minimale di dipendenze ben note e attivamente mante
 |---|---|---|
 | `@mozilla/readability` | Estrazione contenuto articoli | Mantenuto da Mozilla, ampiamente testato |
 | `jspdf` | Generazione PDF | Solo lato client, nessuna chiamata di rete |
-| `lz-string` | Compressione dati | JavaScript puro, nessuna dipendenza |
+| `lz-string` | Decodifica della cronologia compressa da versioni precedenti | JavaScript puro, nessuna dipendenza |
 | `pdfjs-dist` | Parsing PDF | Mantenuto da Mozilla, sandboxato via worker |
 
 ### Override delle Vulnerabilità

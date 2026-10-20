@@ -21,15 +21,15 @@
 
 ## Panoramica
 
-Web Article Summarizer è un'estensione Chrome (Manifest V3) che sfrutta più provider AI per analizzare articoli web e PDF. L'architettura segue un design modulare a livelli con chiara separazione delle responsabilità.
+Web Article Summarizer è un'estensione Firefox (Manifest V3) che sfrutta più provider AI per analizzare articoli web e PDF. L'architettura segue un design modulare a livelli con chiara separazione delle responsabilità.
 
 ### Principi Architetturali Chiave
 
 - **Modularità**: Ogni funzionalità è isolata nel proprio modulo con interfacce ben definite
 - **Agnosticismo del Provider**: La logica dei provider AI è astratta attraverso livelli di orchestrazione
-- **Resilienza**: Meccanismi integrati di retry, fallback e rate limiting
+- **Errori prevedibili**: timeout di 60 secondi sulle richieste e messaggi di errore chiari e localizzati (nessun retry automatico, nessun fallback fra provider)
 - **Security-First**: Prevenzione XSS multi-livello e difesa da prompt injection
-- **Performance**: Caching intelligente, compressione e lazy loading
+- **Performance**: Caching intelligente e lazy loading
 
 ---
 
@@ -39,7 +39,7 @@ Web Article Summarizer è un'estensione Chrome (Manifest V3) che sfrutta più pr
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  Estensione Chrome                           │
+│                  Estensione Firefox                          │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
@@ -65,7 +65,7 @@ Web Article Summarizer è un'estensione Chrome (Manifest V3) che sfrutta più pr
           │                  │
           │                  │
      ┌────▼────┐      ┌──────▼──────┐
-     │   AI    │      │   Chrome    │
+     │   AI    │      │   Browser   │
      │ Provider│      │   Storage   │
      └─────────┘      └─────────────┘
 ```
@@ -74,8 +74,8 @@ Web Article Summarizer è un'estensione Chrome (Manifest V3) che sfrutta più pr
 
 1. **Livello Presentazione**: Componenti UI (popup, reading mode, history, options)
 2. **Livello Business Logic**: Utility core, orchestrazione AI, elaborazione contenuti
-3. **Livello Dati**: Gestione storage, caching, compressione
-4. **Livello Integrazione**: Client provider AI, API Chrome
+3. **Livello Dati**: Gestione storage, caching, storico
+4. **Livello Integrazione**: Client provider AI, API WebExtensions (`browser.*`)
 
 ---
 
@@ -91,6 +91,8 @@ Il service worker è il centro nevralgico per tutte le comunicazioni API e task 
 - Gestire messaggi da content script e pagine UI
 - Coordinare chiamate API AI attraverso l'orchestratore
 - Gestire manutenzione automatica cache via alarms
+- Eseguire completamenti LLM singoli per le pagine dell'estensione (`generateCompletion`)
+- Seguire la lingua dell'interfaccia salvata in `storage.local.uiLanguage` (`ui-language.js`)
 - Validare e sanitizzare tutte le richieste in ingresso
 
 **Caratteristiche Chiave**:
@@ -98,6 +100,7 @@ Il service worker è il centro nevralgico per tutte le comunicazioni API e task 
 - Validazione provider prima dell'elaborazione
 - Gestione errori centralizzata
 - Schedulazione manutenzione automatica
+- Controllo "solo pagine dell'estensione" su `generateCompletion` (`message-router.js`)
 
 ### 2. Content Script
 
@@ -151,7 +154,21 @@ Client HTTP di basso livello per ogni provider AI.
 - Protezione timeout fetch (60s)
 - Validazione risposta JSON
 - Gestione errori specifica per provider
-- Rilevamento rate limit
+- Rilevamento rate limit (le risposte HTTP 429 diventano `[RATE_LIMIT:Provider]`, mappato in un messaggio chiaro)
+
+#### Completion client (`completion-client.js`)
+
+Punto di ingresso usato dalle pagine dell'estensione per le chiamate LLM dirette.
+
+```javascript
+const text = await requestCompletion(provider, systemPrompt, userPrompt, { temperature, maxTokens, responseFormat: 'json' })
+```
+
+**Funzionalità**:
+- Usato da multi-analisi (riassunto globale, confronto, Q&A, correlazione), classificazione del contenuto nel popup, analisi PDF e Q&A multi-articolo
+- Invia l'azione `generateCompletion` al service worker, quindi le pagine non leggono mai la API key
+- `handleGenerateCompletion` (`src/background/message-handlers.js`) legge la chiave, inoltra solo `temperature`, `maxTokens` e `responseFormat: 'json'` e chiama `APIOrchestrator.generateCompletion`
+- Il router (`message-router.js`) accetta l'azione solo se `sender.url` inizia con `browser.runtime.getURL('')` (pagine dell'estensione, non content script)
 
 #### PromptBuilder (`prompt-builder.js`)
 
@@ -179,79 +196,28 @@ Analizza il contenuto dell'articolo per determinare tipo e lingua.
 - `opinion`: Editoriali, pezzi di opinione
 - `general`: Fallback predefinito
 
-### 4. Sistema di Resilienza
+### 4. Gestione Errori
 
-**Posizione**: `src/utils/ai/`
+**Posizione**: `src/utils/core/error-handler.js`
 
-Architettura di resilienza a tre livelli per affidabilità API.
+Il sistema non ritenta le richieste fallite e non cambia provider in caso di errore. Ogni chiamata ha un timeout di 60 secondi (`AbortController` in `provider-caller.js`) e il fallimento viene comunicato all'utente con un messaggio utile.
 
-#### APIResilience (`api-resilience.js`)
-
-Facade che combina strategie di retry e fallback.
-
-```javascript
-await APIResilience.callWithRetryAndFallback({
-  primaryProvider: 'groq',
-  apiKeys: { groq: 'key1', openai: 'key2' },
-  article,
-  settings,
-  enableFallback: true
-})
-```
-
-#### RetryStrategy (`retry-strategy.js`)
-
-Logica di retry con exponential backoff.
-
-**Configurazione**:
-- Max retry: 3
-- Delay iniziale: 1000ms
-- Delay massimo: 8000ms
-- Moltiplicatore backoff: 2x
-
-**Classificazione Errori**:
-- **Temporanei** (retry): 429, 500, 502, 503, 504
-- **Permanenti** (fail fast): 400, 401, 403, 404
-
-#### FallbackStrategy (`fallback-strategy.js`)
-
-Cambio automatico provider in caso di fallimento.
-
-**Ordine Fallback** (ottimizzato per qualità):
-- Primario: `groq` → Fallback: `openai` → `anthropic` → `gemini`
-- Primario: `openai` → Fallback: `anthropic` → `groq` → `gemini`
-- Primario: `anthropic` → Fallback: `openai` → `groq` → `gemini`
-- Primario: `gemini` → Fallback: `openai` → `anthropic` → `groq`
+#### ErrorHandler (`error-handler.js`)
 
 **Funzionalità**:
-- Usa solo provider con API key configurate
-- Tentativi di retry ridotti per provider di fallback (2 vs 3)
-- Logging telemetria per eventi di fallback
-
-#### RateLimiter (`rate-limiter.js`)
-
-Algoritmo token bucket per rate limiting.
-
-**Limiti** (richieste al minuto):
-- Groq: 30 RPM
-- OpenAI: 60 RPM
-- Anthropic: 50 RPM
-- Gemini: 60 RPM
-
-**Funzionalità**:
-- Accodamento richieste
-- Reset automatico token ogni 60 secondi
-- Callback posizione coda per aggiornamenti UI
+- `getErrorMessage` è idempotente: un messaggio già mappato (in qualunque lingua) viene riconosciuto e ri-renderizzato nella lingua corrente. Serve perché il service worker invia alle pagine messaggi già mappati
+- `classifyError` conserva il tipo di errore (`missing_key`, `unsupported_page`, `page_unreachable`, `generic`), che decide l'azione di recupero proposta dalla UI
+- Le risposte HTTP 429 emergono come `[RATE_LIMIT:Provider]` e diventano un messaggio chiaro
 
 ### 5. Sistema di Storage
 
 **Posizione**: `src/utils/storage/`
 
-Gestione storage completa con caching e compressione.
+Gestione storage con caching e storico. I dati sono salvati in `browser.storage.local`, non compressi.
 
 #### StorageManager (`storage-manager.js`)
 
-Interfaccia principale per operazioni Chrome storage.
+Interfaccia principale per le operazioni di storage del browser.
 
 **Dati Memorizzati**:
 - API key (per provider)
@@ -259,7 +225,7 @@ Interfaccia principale per operazioni Chrome storage.
 - Preferenza lingua UI
 - Statistiche utilizzo
 
-**Nota Sicurezza**: Le API key sono memorizzate in `chrome.storage.local` che è sandboxed per estensione. Non viene usata cifratura custom perché il codice sorgente dell'estensione è sempre leggibile in Chrome.
+**Nota Sicurezza**: Le API key sono memorizzate in `storage.local` in chiaro, area sandboxed per estensione. Non viene usata cifratura custom perché il codice sorgente dell'estensione è sempre leggibile. Le pagine dell'estensione non leggono la chiave: le chiamate LLM passano dal service worker (`generateCompletion`).
 
 #### CacheManager (`cache-manager.js`)
 
@@ -277,26 +243,24 @@ Caching risposte con TTL e statistiche.
 - Età entry
 - Log operazioni
 
-#### CompressionManager (`compression-manager.js`)
+#### Ripristino dati compressi (`compressed-data-recovery.js`)
 
-Compressione LZ-String per dati testuali grandi.
+Le versioni precedenti comprimevano riassunti dello storico e voci di cache (LZ-String). La compressione non esiste più; questo modulo ripara i dati che ha lasciato.
 
-**Target Compressione**:
-- Riassunti articoli
-- Punti chiave
-- Traduzioni
-- Testo estratto PDF
+**Comportamento**:
+- `restoreCompressedData` viene eseguito da `AutoMaintenance.initialize()` a ogni avvio del service worker, indipendentemente da `autoCleanup`
+- Decodifica i riassunti compressi dello storico e rimuove i marcatori di compressione; le voci non decodificabili restano intatte
+- Scarta le voci di cache compresse (la cache si ricostruisce alla richiesta successiva)
+- `lz-string` resta dipendenza solo per questo scopo
 
-**Benefici**:
-- Riduzione dimensione 60-70%
-- Operazioni storage più veloci
-- Più entry nella quota Chrome storage (10MB)
+#### AutoMaintenance (`src/utils/core/auto-maintenance.js`)
 
-**Manutenzione Automatica**:
-- Schedulata via Chrome alarms
-- Comprime vecchie entry non compresse
-- Rimuove entry cache scadute
-- Esegue ogni 24 ore
+**Manutenzione Automatica** (ogni 24 ore via browser alarms, se `autoCleanup` è attivo):
+- Rimuove le voci di cache scadute
+- Mantiene la cache a 100 voci (LRU)
+- Elimina i riassunti più vecchi di 180 giorni, **esclusi i preferiti**
+
+Il pulsante "Esegui Cleanup Ora" in Opzioni > Avanzate esegue la stessa eliminazione a 180 giorni (preferiti esclusi) e il taglio LRU.
 
 #### HistoryManager (`history-manager.js`)
 
@@ -307,11 +271,15 @@ Facade per tre repository storici specializzati.
 2. **PDFHistory**: Analisi documenti PDF
 3. **MultiAnalysisHistory**: Confronti multi-articolo
 
+`HistoryManager.importPDFAnalysis` (che delega a `PDFHistory.importPDFAnalysis`) ripristina un'analisi PDF da un backup mantenendo id e timestamp, quindi reimportare lo stesso file non crea duplicati.
+
 **Funzionalità**:
 - Ricerca e filtraggio
 - Sistema preferiti
 - Note e annotazioni
-- Export/import (backup JSON)
+- Export/import (backup JSON, incluse le analisi PDF)
+
+**Formato backup** (`src/pages/history/io-backup.js`, `backup-rules.js`): il file JSON contiene `data.singleArticles`, `data.multiAnalysis`, `data.pdfAnalysis`, `settings` e `stats`, più `metadata.totalPDFAnalysis`. L'import sanifica i campi di testo e accetta file fino a 50 MB.
 
 ### 6. Sistema di Sicurezza
 
@@ -392,6 +360,10 @@ Genera documenti PDF formattati usando jsPDF.
 - Q&A (se disponibile)
 - Citazioni (formato APA)
 
+#### Etichette dei documenti (`doc-labels.js`)
+
+I documenti esportati (Markdown, PDF, email, bibliografia, testo copiato, lettura vocale) sono scritti nella lingua dell'interfaccia. `docLabel`, `docHeading`, `docDate` e `citationTypeLabel` ricavano titoli, intestazioni di sezione, date e tipi di citazione dai file di locale.
+
 #### MarkdownExporter (`markdown-exporter.js`)
 
 Export in formato Markdown.
@@ -410,6 +382,8 @@ Apre client email predefinito con contenuto pre-compilato.
 - Oggetto: Titolo articolo
 - Corpo: Analisi formattata
 - Allegati: Non supportati (limitazione browser)
+- Le citazioni possono essere incluse nel messaggio da popup e storico
+- `EmailManager.openEmailDraft(subject, body)` apre una bozza senza destinatario (`mailto:`); l'analisi multi-articolo la usa
 
 ### 8. Sistema PDF
 
@@ -443,24 +417,25 @@ Cache specializzata per analisi PDF.
 **Benefici**:
 - Stesso PDF analizzato una volta (anche con nome file diverso)
 - Risultati istantanei per ri-upload
-- Pulizia automatica vecchie entry
+- Le entry obsolete vengono scartate alla scadenza della cache
 
 ### 9. Internazionalizzazione (i18n)
 
 **Posizione**: `src/utils/i18n/`
 
-Sistema i18n completo con 5 lingue.
+Sistema i18n. Ogni testo visibile all'utente passa da `I18n.t` / `I18n.tf`.
 
 #### I18n (`i18n.js`)
 
 Manager i18n principale.
 
-**Lingue Supportate**:
+**Lingue d'interfaccia** (selezionabili):
 - Italiano (it) - Predefinito
 - Inglese (en)
-- Spagnolo (es)
-- Francese (fr)
-- Tedesco (de)
+
+I file di locale per spagnolo (es), francese (fr) e tedesco (de) sono parziali: una chiave mancante ricade sull'italiano.
+
+Il service worker carica la lingua da `storage.local.uiLanguage` e segue i cambi (`src/background/ui-language.js`), così i messaggi che produce coincidono con l'interfaccia.
 
 **Funzionalità**:
 - Traduzioni basate su JSON (`locales/*.json`)
@@ -505,7 +480,7 @@ Coordina manager TTS e STT.
 
 #### TTSManager (`tts-manager.js`)
 
-Wrapper API TTS Chrome.
+Wrapper della Web Speech API (`window.speechSynthesis`).
 
 **Funzionalità**:
 - Selezione voce per lingua
@@ -543,7 +518,7 @@ Wrapper Web Speech API.
 6. Se cache miss:
    a. ContentDetector analizza tipo articolo e lingua
    b. PromptBuilder costruisce prompt ottimizzato
-   c. APIResilience chiama provider con retry/fallback
+   c. ProviderCaller chiama il provider (timeout 60s, un solo tentativo)
    d. ResponseParser estrae riassunto e punti chiave
    e. CacheManager memorizza risultato
    ↓
@@ -583,7 +558,7 @@ Wrapper Web Speech API.
    ↓
 3. Prompt costruito combinando tutti i riassunti articoli
    ↓
-4. APIOrchestrator genera analisi comparativa
+4. requestCompletion invia `generateCompletion` al service worker, che genera l'analisi comparativa
    ↓
 5. Risultato visualizzato nella pagina Multi-Analysis
    ↓
@@ -647,39 +622,30 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 
 ## Strategia di Storage
 
-### Quota Chrome Storage
+### Quota Storage
 
-- **Totale**: 10MB per estensione
-- **Strategia**: Compressione + caching + pulizia automatica
+- **Area**: `browser.storage.local` (l'estensione non richiede `unlimitedStorage`)
+- **Strategia**: Caching + pulizia automatica
 
 ### Allocazione Storage
 
 ```
 ├── apiKeys (< 1KB)
 ├── settings (< 1KB)
-├── summaryHistory (2-4MB, compresso)
+├── summaryHistory (2-4MB)
 ├── summaryCache (1-2MB, TTL 24h)
-├── pdfHistory (1-2MB, compresso)
+├── pdfHistory (1-2MB)
 ├── pdfCache (1-2MB, TTL 24h)
 ├── multiAnalysisHistory (1-2MB)
 └── stats (< 1KB)
 ```
 
-### Strategia Compressione
+### Manutenzione Automatica
 
-**Quando Comprimere**:
-- Testo riassunto > 500 caratteri
-- Punti chiave > 5 elementi
-- Testo traduzione > 500 caratteri
-- Testo estratto PDF > 1000 caratteri
-
-**Rapporto Compressione**: Riduzione dimensione 60-70%
-
-**Manutenzione Automatica**:
-- Esegue ogni 24 ore via Chrome alarms
-- Comprime vecchie entry non compresse
-- Rimuove entry cache scadute
-- Logga operazioni per debugging
+- Esegue ogni 24 ore via browser alarms se `autoCleanup` è attivo
+- Rimuove le voci di cache scadute e riduce la cache a 100 voci (LRU)
+- Elimina i riassunti più vecchi di 180 giorni; i preferiti vengono sempre conservati
+- `restoreCompressedData` gira a ogni avvio del service worker, indipendentemente da `autoCleanup`
 
 ---
 
@@ -691,7 +657,7 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 2. **Sanitizzazione Output**: Tutte le risposte AI sanitizzate prima dell'inserimento DOM
 3. **CSP**: Content Security Policy stretta previene script inline
 4. **Difesa Prompt Injection**: Rilevamento e escaping multi-lingua
-5. **Protezione API Key**: Memorizzate in Chrome storage sandboxed
+5. **Protezione API Key**: Memorizzate in `browser.storage.local`, sandboxed per estensione (in chiaro, senza cifratura)
 6. **Solo HTTPS**: Tutte le chiamate API su HTTPS
 7. **Validazione Origine**: Messaggi validati per ID mittente
 
@@ -706,7 +672,7 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 
 **Minacce Non Mitigate**:
 - Utente installa estensione malevola
-- Profilo Chrome utente compromesso
+- Profilo Firefox utente compromesso
 - Provider API compromesso
 
 ---
@@ -720,12 +686,6 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 - **Eviction**: LRU quando storage è pieno
 - **Hit Rate**: ~40-60% per utilizzo tipico
 
-### Compressione
-
-- **Algoritmo**: LZ-String (ottimizzato per testo)
-- **Rapporto Compressione**: 60-70%
-- **Performance**: < 50ms per riassunti tipici
-
 ### Lazy Loading
 
 - **Pagina Storico**: Carica entry in batch di 20
@@ -734,15 +694,12 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 
 ### Debouncing
 
-- **Ricerca**: 300ms debounce
-- **Auto-save**: 1000ms debounce
-- **Resize**: 150ms debounce
+- **Ricerca**: debounce di 300ms sul campo di ricerca della cronologia
 
 ### Ottimizzazione Richieste
 
-- **Batching**: Richieste multiple accodate ed elaborate sequenzialmente
-- **Rate Limiting**: Algoritmo token bucket previene throttling API
-- **Timeout**: Timeout 60s previene richieste bloccate
+- **Timeout**: Timeout 60s (`AbortController`) previene richieste bloccate
+- **Rate limit**: nessun limiter lato client; un HTTP 429 del provider viene mappato in un messaggio chiaro
 
 ---
 
@@ -752,10 +709,8 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 
 1. Aggiungi provider a `DEFAULT_MODELS` in `api-orchestrator.js`
 2. Implementa metodo caller in `provider-caller.js`
-3. Aggiungi config rate limit in `rate-limiter.js`
-4. Aggiungi ordine fallback in `fallback-strategy.js`
-5. Aggiorna `host_permissions` nel manifest
-6. Aggiungi opzione UI nelle impostazioni
+3. Aggiorna `host_permissions` nel manifest
+4. Aggiungi opzione UI nelle impostazioni
 
 ### Aggiungere una Nuova Lingua
 
@@ -783,7 +738,7 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 
 **Copertura**:
 - Utility AI (costruzione prompt, parsing, rilevamento)
-- Manager storage (cache, compressione, storico)
+- Manager storage (cache, ripristino dati compressi, storico)
 - Sicurezza (sanitizer, validator)
 - Formatter export
 
@@ -804,8 +759,8 @@ npm run test:watch  # Modalità watch
 6. Controlli vocali (TTS/STT)
 7. Ricerca e filtraggio storico
 8. Persistenza impostazioni
-9. Gestione errori e fallback
-10. Cache e compressione
+9. Gestione errori e messaggi di errore
+10. Cache e manutenzione automatica
 
 ---
 
@@ -823,13 +778,13 @@ npm run build
 - Asset copiati
 - Manifest aggiornato
 
-### Chrome Web Store
+### Pacchettizzazione e Distribuzione (Firefox)
 
-1. Costruisci versione produzione
-2. Comprimi cartella `dist/`
-3. Carica su Chrome Web Store Developer Dashboard
-4. Compila listing store (descrizione, screenshot, privacy policy)
-5. Invia per revisione
+1. Costruisci versione produzione (`npm run build`)
+2. Genera il pacchetto con `npm run build:xpi` (esegue la build, poi `web-ext build` in `web-ext-artifacts/`)
+3. Per il test locale: `about:debugging#/runtime/this-firefox` → Carica componente aggiuntivo temporaneo → seleziona `dist/manifest.json`, oppure `npm run start:firefox` (`web-ext run`)
+4. Carica il pacchetto sul Developer Hub di addons.mozilla.org (AMO)
+5. Compila il listing (descrizione, screenshot, privacy policy) e invia per revisione
 
 ### Gestione Versioni
 
@@ -844,7 +799,7 @@ npm run build
 2. Aggiorna `CHANGELOG.md`
 3. Build e test
 4. Commit e tag
-5. Carica su Chrome Web Store
+5. Carica su addons.mozilla.org (AMO)
 
 ---
 
@@ -863,17 +818,16 @@ npm run build
 **Metriche Tracciate**:
 - Tassi successo/fallimento chiamate API
 - Rapporti hit/miss cache
-- Statistiche compressione
 - Distribuzione utilizzo provider
 - Tempo medio generazione
 
-**Storage**: `chrome.storage.local.stats`
+**Storage**: `browser.storage.local.stats`
 
 ### Debugging
 
-**Chrome DevTools**:
-- Service Worker: `chrome://extensions` → Ispeziona service worker
-- Popup: Click destro icona estensione → Ispeziona popup
+**Strumenti per sviluppatori di Firefox**:
+- Background script: `about:debugging#/runtime/this-firefox` → Ispeziona sull'estensione
+- Popup: Click destro icona estensione → Ispeziona (oppure apri la pagina del popup da `about:debugging`)
 - Content Script: Ispeziona pagina → Console → Filtra per ID estensione
 
 **Problemi Comuni**:
@@ -893,7 +847,7 @@ npm run build
 3. **Browser Sync**: Sincronizza storico tra dispositivi
 4. **Prompt Personalizzati**: Template prompt definiti dall'utente
 5. **Analytics Avanzate**: Pattern di lettura e insights
-6. **Estensione Browser**: Supporto Firefox ed Edge
+6. **Estensione Browser**: Supporto per i browser Chromium (Chrome, Edge)
 
 ### Debito Tecnico
 

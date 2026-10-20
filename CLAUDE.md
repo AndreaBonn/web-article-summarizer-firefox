@@ -113,6 +113,8 @@ Four public methods (backward-compatible):
 - 60s timeout via `AbortController` on all fetch calls
 - Response validation for all 4 providers (empty response detection)
 - Language map generation via shared `buildLanguageMap()` factory
+- No automatic retry, no provider fallback, no client-side rate limiter; a 429 surfaces as `[RATE_LIMIT:Provider]`
+- Extension pages never read the API key: they call `requestCompletion()` (`src/utils/ai/completion-client.js`), which sends the `generateCompletion` action to the service worker (accepted only from extension pages, see `message-router.js`). Keys sit unencrypted in `storage.local`
 
 ### Logging
 

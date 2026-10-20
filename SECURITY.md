@@ -35,11 +35,11 @@ The extension follows a **defense-in-depth** strategy with multiple independent 
 
 | Principle | Implementation |
 |---|---|
-| **Least Privilege** | Minimal Chrome permissions; no `<all_urls>` |
+| **Least Privilege** | Minimal permissions; no `<all_urls>` |
 | **Input Validation at Boundaries** | All external data sanitized before use |
 | **Separation of Concerns** | Content script has no API key access; all LLM calls go through the service worker |
 | **Fail Secure** | Errors produce safe user-friendly messages; no sensitive data is exposed |
-| **No Secrets in Code** | API keys stored in sandboxed `chrome.storage.local`, never in source code |
+| **No Secrets in Code** | API keys stored in sandboxed `browser.storage.local`, never in source code |
 
 ---
 
@@ -202,7 +202,7 @@ All inter-component communication (popup, content script, service worker) is val
 Every incoming message is checked against the extension's own ID:
 
 ```javascript
-if (sender.id !== chrome.runtime.id) {
+if (sender.id !== browser.runtime.id) {
   return false;
 }
 ```
@@ -228,24 +228,28 @@ All error responses sent back through the message channel pass through `ErrorHan
 **Module:** `src/utils/storage/storage-manager.js`
 
 ### Storage
-API keys are stored in `chrome.storage.local`, which is automatically sandboxed by Chrome — each extension has its own isolated storage area that other extensions and web pages cannot access.
+API keys are stored in `browser.storage.local`, which is automatically sandboxed by Firefox: each extension has its own isolated storage area that other extensions and web pages cannot access.
 
 ### Why Not Encrypted?
+Keys are stored in clear text in `storage.local`: there is no encryption layer.
+
 The extension deliberately does **not** apply custom encryption to stored keys. The reasoning:
 
-> In a Chrome Extension, the source code is always readable (extensions are distributed as plain JavaScript). Any encryption key or algorithm embedded in the code provides no meaningful protection — an attacker with access to the extension's storage also has access to the decryption logic. `chrome.storage.local` sandboxing is the real security boundary.
+> In a browser extension, the source code is always readable (extensions are distributed as plain JavaScript). Any encryption key or algorithm embedded in the code provides no meaningful protection: an attacker with access to the extension's storage also has access to the decryption logic. `browser.storage.local` sandboxing is the real security boundary.
 
 ### Isolation
 - API keys are **never** accessible from the content script
 - All LLM calls are routed through the **service worker**, which retrieves keys directly from storage
-- Keys are **never** transmitted in Chrome messages (except during the initial test flow, which reads from a just-entered input field)
+- Keys are **never** transmitted in runtime messages (except during the initial test flow, which reads from a just-entered input field)
+- Extension pages (multi-article analysis, PDF analysis, content classification in the popup) never read the key: they call `requestCompletion()` (`src/utils/ai/completion-client.js`), which sends the `generateCompletion` action to the service worker. The handler (`handleGenerateCompletion` in `src/background/message-handlers.js`) reads the key inside the worker, forwards only `temperature`, `maxTokens` and `responseFormat: 'json'`, and calls `APIOrchestrator.generateCompletion`
+- The message router (`src/background/message-router.js`) accepts `generateCompletion` only when `sender.url` starts with the extension's own URL (`browser.runtime.getURL('')`), so content scripts, which share the extension ID, cannot drive the user's keys
 - Keys are **masked** in the Options UI (showing only the last 4 characters)
 
 ---
 
 ## Network Security
 
-**Modules:** `src/utils/ai/provider-caller.js`, `retry-strategy.js`, `rate-limiter.js`
+**Module:** `src/utils/ai/provider-caller.js`
 
 ### Timeout Enforcement
 Every API call has a **60-second timeout** enforced via `AbortController`:
@@ -257,29 +261,8 @@ const timeoutId = setTimeout(() => controller.abort(), 60000);
 
 The timeout is always cleared in a `finally` block to prevent resource leaks.
 
-### Retry Strategy
-Transient failures are retried with **exponential backoff**:
-
-| Attempt | Delay |
-|---|---|
-| 1st retry | 1 second |
-| 2nd retry | 2 seconds |
-| 3rd retry | 4 seconds |
-| Max | 8 seconds (capped) |
-
-Only temporary errors (429, 500, 502, 503, 504) trigger retries. Permanent errors (400, 401, 403, 404) fail immediately.
-
-### Rate Limiting
-A **token bucket** rate limiter respects each provider's limits:
-
-| Provider | Limit |
-|---|---|
-| Groq | 30 requests/minute |
-| OpenAI | 60 requests/minute |
-| Anthropic | 50 requests/minute |
-| Gemini | 60 requests/minute |
-
-Requests exceeding the limit are queued, not dropped.
+### Provider Errors and Rate Limits
+There is no automatic retry, no fallback between providers and no client-side rate limiter: a failed call is reported to the user as is. A provider's HTTP 429 response is raised as `[RATE_LIMIT:Provider]` and mapped by `ErrorHandler` to a message that suggests changing the API key or switching provider in the settings.
 
 ---
 
@@ -338,12 +321,14 @@ Technical error messages are **never** shown directly to users. `ErrorHandler.ge
 
 | Technical Error | User Message |
 |---|---|
-| HTTP 401/Unauthorized | "API key non valida. Verifica la configurazione." |
-| HTTP 429/Too Many Requests | "Rate limit raggiunto. Cambia provider o attendi." |
-| Network/fetch errors | "Errore di connessione. Verifica la tua connessione." |
-| `chrome://` URLs | "Impossibile analizzare pagine interne di Chrome." |
-| QUOTA_BYTES | "Spazio di archiviazione esaurito." |
-| Unrecognized errors | "Si e verificato un errore imprevisto. Riprova." |
+| HTTP 401/Unauthorized | "API key non valida. Verifica la configurazione nelle impostazioni." |
+| HTTP 429/Too Many Requests | "Rate limit raggiunto. La tua chiave API ha esaurito le richieste disponibili. [...]" |
+| Network/fetch errors | "Errore di connessione. Verifica la tua connessione internet." |
+| Unsupported pages (`about:` pages, `http:` sites; only `https:` is read) | "Questa pagina non si può riassumere: l'estensione legge gli articoli dei siti https. [...]" |
+| QUOTA_BYTES | "Spazio di archiviazione esaurito. Pulisci la cache nelle impostazioni." |
+| Unrecognized errors | "Si è verificato un errore imprevisto. Riprova." |
+
+Messages are rendered in the current interface language (Italian or English; the Italian text is shown above). `getErrorMessage()` is idempotent: a message that was already mapped, in any language, is recognised and re-rendered in the current language, which is what lets the service worker send mapped messages to the pages.
 
 ### Error Log Privacy
 Error logs stored for diagnostics follow strict privacy rules:
@@ -357,18 +342,18 @@ Error logs stored for diagnostics follow strict privacy rules:
 
 ## Storage Security
 
-**Modules:** `src/utils/storage/compression-manager.js`, `cache-store.js`, `base-history-repository.js`
+**Modules:** `src/utils/storage/cache-store.js`, `base-history-repository.js`, `compressed-data-recovery.js`
 
-### Data Compression
-Article data is compressed using LZ-string before storage, reducing quota usage and minimizing the data surface stored in `chrome.storage.local`.
+### Legacy Compressed Data
+History and cache are stored as plain JSON in `browser.storage.local`; IndexedDB is not used. History summaries compressed by older versions are decoded with LZ-string and cache entries compressed by older versions are discarded by `restoreCompressedData()`, which runs at every service worker start.
 
 ### Quota Protection
 - `_safeStorageSet()` catches `QUOTA_BYTES` errors and provides an actionable user message
-- Automatic cache maintenance runs periodically via Chrome Alarms
+- Automatic maintenance runs every 24 hours via `browser.alarms` when automatic cleanup is enabled: expired cache removal, cache limited to 100 entries (LRU) and deletion of summaries older than 180 days, favorites excluded
 - Cache entries have configurable TTL (time-to-live) with automatic eviction
 
 ### Storage Isolation
-All data resides in `chrome.storage.local`, which is:
+All data resides in `browser.storage.local`, which is:
 - Sandboxed per-extension (no cross-extension access)
 - Inaccessible from web pages
 - Cleared when the extension is uninstalled
@@ -400,14 +385,14 @@ Importing backup data from JSON files goes through a comprehensive validation pi
 | Check | Detail |
 |---|---|
 | **File type** | Must be JSON (MIME type or `.json` extension) |
-| **File size** | Maximum 10 MB to prevent denial-of-service |
+| **File size** | Maximum 50 MB to prevent denial-of-service (backups can contain the full text of PDFs) |
 | **JSON parsing** | Wrapped in try-catch with descriptive error |
 | **Structure validation** | Must contain `version` (string) and `data` (object) |
-| **Content validation** | Must include `singleArticles` or `multiAnalysis` arrays |
+| **Content validation** | Must include `singleArticles`, `multiAnalysis` or `pdfAnalysis` arrays |
 | **Metadata sanitization** | Provider and content type whitelisted; language validated via `/^[a-z]{2}(-[A-Z]{2})?$/` |
-| **Field sanitization** | Title (500 chars), content (100 KB), excerpt (1 KB) max lengths enforced |
-| **UUID regeneration** | All imported entries receive new `crypto.randomUUID()` IDs |
-| **Duplicate prevention** | Existing IDs are checked before import |
+| **Field sanitization** | Title (500 chars), content (100 KB), excerpt (1 KB) max lengths enforced; PDF name and text, notes and summaries are sanitized as well |
+| **ID handling** | Entries keep their `id` and timestamp; an entry without a valid `id` receives a new `crypto.randomUUID()` |
+| **Duplicate prevention** | Existing IDs are checked before import, so importing the same file again adds nothing |
 | **User confirmation** | Modal dialog shows backup metadata before proceeding |
 
 ---
@@ -422,7 +407,7 @@ The extension uses a minimal set of well-known, actively maintained dependencies
 |---|---|---|
 | `@mozilla/readability` | Article content extraction | Mozilla-maintained, battle-tested |
 | `jspdf` | PDF generation | Client-side only, no network calls |
-| `lz-string` | Data compression | Pure JavaScript, no dependencies |
+| `lz-string` | Decoding history compressed by older versions | Pure JavaScript, no dependencies |
 | `pdfjs-dist` | PDF parsing | Mozilla-maintained, worker-sandboxed |
 
 ### Vulnerability Overrides

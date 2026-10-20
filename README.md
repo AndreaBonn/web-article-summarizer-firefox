@@ -101,13 +101,13 @@ Get it from [Firefox Add-ons (AMO)](https://addons.mozilla.org/firefox/addon/ai-
 
 - Automatic history with search, filters, and favorites
 - Export to PDF, Markdown, or Email
-- Import/export history as JSON backup
+- Import/export history as JSON backup (single articles, multi-article and PDF analyses)
+- Optional citations in email export; multi-article analysis opens a draft in your mail client
 
 **Smart Features**
 
 - Response caching for faster repeat access
-- Data compression for efficient storage
-- Automatic fallback between providers
+- Automatic cleanup: expired cache removal and deletion of summaries older than 180 days (favorites are kept)
 - Dark and light theme across all pages
 
 ---
@@ -253,7 +253,7 @@ Type a question in the Q&A section at the bottom of the popup or use the microph
 
 ### History
 
-All analyzed articles are automatically saved in a searchable history. You can filter by provider, language, content type, or article status. History supports import/export as JSON for backup and migration.
+All analyzed articles are automatically saved in a searchable history. You can filter by provider, language, content type, or article status. History supports import/export as JSON for backup and migration; the backup includes single articles, multi-article analyses and PDF analyses, and importing the same file twice does not create duplicates.
 
 <p align="center">
   <img src="./docs/assets/history-light-en.png" alt="History — Search, filters, and management" width="700" />
@@ -275,15 +275,9 @@ All analyzed articles are automatically saved in a searchable history. You can f
 
 ## Languages
 
-The extension interface is available in:
+The extension interface can be switched between Italian and English from the settings page. Exported documents (Markdown, PDF, email, bibliography, copied text) use the interface language.
 
-- English
-- Italian
-- Spanish
-- French
-- German
-
-Article analysis output can be generated in any of these languages regardless of the source article language.
+Article analysis output can be generated in English, Italian, Spanish, French or German regardless of the source article language. Spanish, French and German interface strings are partial: a missing string falls back to Italian.
 
 ---
 
@@ -296,7 +290,7 @@ Article analysis output can be generated in any of these languages regardless of
 | Content Extraction | @mozilla/readability            |
 | PDF Parsing        | pdfjs-dist                      |
 | PDF Export         | jspdf                           |
-| Compression        | lz-string                       |
+| Legacy data        | lz-string (decodes old history) |
 | Packaging          | web-ext                         |
 | Testing            | Vitest + jsdom                  |
 | Linting            | ESLint (flat config)            |
@@ -411,10 +405,10 @@ src/
 ├── shared/styles/       Shared CSS (base.css, voice-controls.css)
 └── utils/
     ├── ai/              LLM API client, prompts, citations
-    ├── storage/         Browser storage, cache, compression
+    ├── storage/         Browser storage, cache, history
     ├── export/          PDF, Markdown, email export
     ├── pdf/             PDF parsing & caching
-    ├── i18n/            Internationalization (5 locales)
+    ├── i18n/            Internationalization (it, en; es, fr, de partial)
     ├── voice/           TTS & STT controllers
     ├── security/        HTML & input sanitization
     └── core/            Theme, modal, logger, errors

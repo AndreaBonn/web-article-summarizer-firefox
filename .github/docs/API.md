@@ -213,74 +213,53 @@ Format an article for inclusion in a prompt.
 
 ## AI Integration APIs
 
-### APIResilience
+### Completion client
 
-**Location**: `src/utils/ai/api-resilience.js`
+**Location**: `src/utils/ai/completion-client.js`
 
-Provides retry and fallback mechanisms for API calls.
+Used by extension pages for raw LLM calls. Pages never read the API key: the call is delegated to the service worker.
 
-#### `callWithRetryAndFallback(params)`
+#### `requestCompletion(provider, systemPrompt, userPrompt, options?)`
 
-Call AI API with automatic retry and fallback to alternative providers.
-
-**Parameters** (object):
-- `primaryProvider` (string): Primary provider to use
-- `apiKeys` (object): Map of provider names to API keys
-- `article` (object): Article object
-- `settings` (object): Settings object
-- `enableFallback` (boolean, optional): Enable fallback to other providers (default: false)
-- `onRetry` (function, optional): Callback for retry events
-- `onFallback` (function, optional): Callback for fallback events
-
-**Returns**: `Promise<object>` with:
-- `result` (string): AI response
-- `usedProvider` (string): Provider that successfully generated the response
-
-**Example**:
-```javascript
-const { result, usedProvider } = await APIResilience.callWithRetryAndFallback({
-  primaryProvider: 'groq',
-  apiKeys: { groq: 'key1', openai: 'key2' },
-  article,
-  settings,
-  enableFallback: true,
-  onRetry: (attempt, maxAttempts, delay) => {
-    console.log(`Retry ${attempt}/${maxAttempts} in ${delay}ms`);
-  },
-  onFallback: (provider, index) => {
-    console.log(`Falling back to ${provider}`);
-  }
-});
-```
-
----
-
-### RateLimiter
-
-**Location**: `src/utils/ai/rate-limiter.js`
-
-Manages request queuing and rate limiting for AI providers.
-
-#### `enqueueRequest(provider, apiCall, onQueueUpdate?)`
-
-Enqueue an API request with rate limiting.
+Send one prompt and receive the completion text.
 
 **Parameters**:
 - `provider` (string): Provider name
-- `apiCall` (function): Async function that makes the API call
-- `onQueueUpdate` (function, optional): Callback for queue size updates
+- `systemPrompt` (string): System prompt
+- `userPrompt` (string): User prompt
+- `options` (object, optional): `temperature` (number), `maxTokens` (number), `responseFormat` (`'json'`). Other keys are ignored by the service worker
 
-**Returns**: `Promise<any>` - Result of the API call
+**Returns**: `Promise<string>` - Completion text
+
+**Throws**: `Error` with a user-facing message when the service worker reports a failure
 
 **Example**:
 ```javascript
-const rateLimiter = new RateLimiter();
-const result = await rateLimiter.enqueueRequest(
-  'groq',
-  () => APIOrchestrator.callAPI('groq', apiKey, article, settings),
-  (queueSize) => console.log(`Queue size: ${queueSize}`)
-);
+const text = await requestCompletion('groq', systemPrompt, userPrompt, {
+  temperature: 0.2,
+  responseFormat: 'json'
+});
 ```
+
+The function sends the `generateCompletion` message (see [Message Protocol](#message-protocol)). There is no automatic retry, no fallback to another provider and no client-side rate limiter: each call is a single attempt with a 60-second timeout.
+
+---
+
+### ErrorHandler
+
+**Location**: `src/utils/core/error-handler.js`
+
+#### `getErrorMessage(error)`
+
+Convert a technical error into a user-facing message in the current interface language. Idempotent: a message that is already mapped (in any language) is recognized and rendered again in the current language. This is needed because the service worker sends already-mapped messages to the pages.
+
+**Returns**: `string`
+
+#### `classifyError(error)`
+
+Return the error kind, preserved for already-mapped messages.
+
+**Returns**: `'missing_key' | 'unsupported_page' | 'page_unreachable' | 'generic'`
 
 ---
 
@@ -290,7 +269,7 @@ const result = await rateLimiter.enqueueRequest(
 
 **Location**: `src/utils/storage/storage-manager.js`
 
-Manages all Chrome storage operations.
+Manages all browser storage operations (`browser.storage.local`). API keys are stored in plain text.
 
 #### API Keys
 
@@ -598,7 +577,16 @@ Get a specific PDF entry by ID.
 
 **Returns**: `Promise<object|null>` - PDF entry or null
 
-##### `deletePDF(id)`
+##### `importPDFAnalysis(backupEntry)`
+
+Restore a PDF analysis from a backup, keeping its original `id` and `timestamp` so that importing the same file again creates no duplicates.
+
+**Parameters**:
+- `backupEntry` (object): Entry from `data.pdfAnalysis` of a backup file
+
+**Returns**: `Promise<string|null>` - Stored id, or `null` when the id was already present or the entry was cut by the history limit
+
+#### `deletePDF(id)`
 
 Delete a PDF entry.
 
@@ -645,68 +633,35 @@ Delete a multi-analysis entry.
 
 ---
 
-### CompressionManager
+### Compressed data recovery
 
-**Location**: `src/utils/storage/compression-manager.js`
+**Location**: `src/utils/storage/compressed-data-recovery.js`
 
-Manages data compression using LZ-String.
+Earlier versions compressed history summaries and cache entries. Compression no longer exists; this module repairs the data it left behind.
 
-#### `compress(text)`
+#### `restoreCompressedData(storage?)`
 
-Compress a text string.
-
-**Parameters**:
-- `text` (string): Text to compress
-
-**Returns**: `string` - Compressed text
-
-**Example**:
-```javascript
-const compressionManager = new CompressionManager();
-const compressed = compressionManager.compress(longText);
-```
-
-#### `decompress(compressed)`
-
-Decompress a compressed string.
+Decode (LZ-String) the compressed history summaries and discard the compressed cache entries, writing back only what changed. Called by `AutoMaintenance.initialize()` at every service worker start, regardless of `autoCleanup`.
 
 **Parameters**:
-- `compressed` (string): Compressed text
-
-**Returns**: `string` - Decompressed text
-
-#### `compressObject(obj)`
-
-Compress an object.
-
-**Parameters**:
-- `obj` (object): Object to compress
-
-**Returns**: `object` with:
-- `compressed` (boolean): Always true
-- `data` (string): Compressed JSON
-- `originalSize` (number): Original size in bytes
-- `compressedSize` (number): Compressed size in bytes
-
-#### `decompressObject(compressedObj)`
-
-Decompress a compressed object.
-
-**Parameters**:
-- `compressedObj` (object): Compressed object
-
-**Returns**: `object` - Decompressed object
-
-#### `getStats()`
-
-Get compression statistics.
+- `storage` (object, optional): Storage area (default `browser.storage.local`)
 
 **Returns**: `Promise<object>` with:
-- `compressedItems` (number): Number of compressed items
-- `uncompressedItems` (number): Number of uncompressed items
-- `totalItems` (number): Total items
-- `savedMB` (number): Space saved in MB
-- `compressionRatio` (number): Compression ratio percentage
+- `historyRestored` (number): Summaries restored
+- `historyUnreadable` (number): Entries that could not be decoded (left untouched)
+- `cacheDropped` (number): Cache entries discarded
+
+---
+
+### AutoMaintenance
+
+**Location**: `src/utils/core/auto-maintenance.js`
+
+Background maintenance scheduled with `browser.alarms`.
+
+#### `initialize()`
+
+Runs `restoreCompressedData`, then schedules maintenance. When `autoCleanup` is enabled, every 24 hours it removes expired cache entries, keeps the cache at 100 entries (LRU) and deletes summaries older than 180 days. Favorites are never deleted.
 
 ---
 
@@ -876,24 +831,44 @@ const markdown = MarkdownExporter.exportToMarkdown(
 
 **Location**: `src/utils/export/email-manager.js`
 
-Opens email client with pre-filled content.
+Builds email content and opens the mail client.
 
-#### `sendEmail(article, summary, keyPoints, metadata)`
+#### `formatEmailContent(article, summary, keyPoints, translation?, qaList?, citations?)`
 
-Open email client with analysis.
+Build subject and body in the interface language.
 
-**Parameters**:
-- `article` (object): Article object
-- `summary` (string): Summary text
-- `keyPoints` (array): Key points array
-- `metadata` (object): Analysis metadata
+**Returns**: `{ subject: string, body: string }`
 
-**Returns**: `void` (opens email client)
+#### `openEmailClient(recipientEmail, subject, body)`
+
+Open a `mailto:` draft addressed to a validated recipient. Throws if the address is invalid.
+
+**Returns**: `void`
+
+#### `openEmailDraft(subject, body)`
+
+Open a `mailto:` draft without a recipient; the user picks one in the mail client. Used by the multi-article analysis.
+
+**Returns**: `void`
 
 **Example**:
 ```javascript
-EmailManager.sendEmail(article, summary, keyPoints, metadata);
+const { subject, body } = EmailManager.formatEmailContent(article, summary, keyPoints);
+EmailManager.openEmailDraft(subject, body);
 ```
+
+---
+
+### Document labels
+
+**Location**: `src/utils/export/doc-labels.js`
+
+Exported documents (Markdown, PDF, email, bibliography, copied text, voice reading) are written in the interface language.
+
+- `docLabel(key, vars?)`: label for an exported document
+- `docHeading(key, vars?)`: the same label in capitals
+- `docDate(date)`: date formatted for the interface language
+- `citationTypeLabel(type)`: label of a citation type, `other` when unknown
 
 ---
 
@@ -1065,7 +1040,7 @@ Stop voice recognition.
 
 ### Service Worker Messages
 
-The extension uses Chrome's message passing API for communication between components.
+The extension uses the WebExtensions message passing API (`browser.runtime`) for communication between components.
 
 #### Message Format
 
@@ -1165,6 +1140,35 @@ Translate article.
 }
 ```
 
+##### `generateCompletion`
+
+Run one LLM completion for an extension page. The service worker reads the API key; the page never does. Accepted only from extension pages: the router checks that `sender.url` starts with `browser.runtime.getURL('')`, so content scripts are ignored.
+
+**Request**:
+```javascript
+{
+  action: 'generateCompletion',
+  provider: string,
+  systemPrompt: string,
+  userPrompt: string,
+  options?: {
+    temperature?: number,
+    maxTokens?: number,
+    responseFormat?: 'json'
+  }
+}
+```
+
+Only these three options are forwarded; any other key is dropped.
+
+**Response**:
+```javascript
+{
+  success: true,
+  result: string    // completion text
+}
+```
+
 ##### `testApiKey`
 
 Test API key validity.
@@ -1189,21 +1193,17 @@ Test API key validity.
 
 ```javascript
 // Send message from popup to service worker
-chrome.runtime.sendMessage(
-  {
-    action: 'generateSummary',
-    article: extractedArticle,
-    provider: 'groq',
-    settings: userSettings
-  },
-  (response) => {
-    if (response.success) {
-      console.log('Summary:', response.result.summary);
-    } else {
-      console.error('Error:', response.error);
-    }
-  }
-);
+const response = await browser.runtime.sendMessage({
+  action: 'generateSummary',
+  article: extractedArticle,
+  provider: 'groq',
+  settings: userSettings
+});
+if (response.success) {
+  console.log('Summary:', response.result.summary);
+} else {
+  console.error('Error:', response.error);
+}
 ```
 
 ---

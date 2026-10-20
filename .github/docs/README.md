@@ -31,12 +31,12 @@ Complete reference for all public APIs in the extension.
 
 **Topics Covered**:
 - Core APIs (APIOrchestrator, ContentDetector, PromptBuilder)
-- AI Integration APIs (APIResilience, RateLimiter)
+- AI Integration APIs (APIOrchestrator, completion client, provider caller)
 - Storage APIs (StorageManager, CacheManager, HistoryManager)
 - Security APIs (HtmlSanitizer, InputSanitizer)
 - Export APIs (PDFExporter, MarkdownExporter, EmailManager)
 - Utility APIs (I18n, Logger, VoiceController)
-- Message protocol for Chrome extension communication
+- Message protocol for extension runtime messaging
 
 ---
 

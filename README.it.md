@@ -100,13 +100,13 @@ Scaricala da [Firefox Add-ons (AMO)](https://addons.mozilla.org/firefox/addon/ai
 
 - Cronologia automatica con ricerca, filtri e preferiti
 - Esportazione in PDF, Markdown o Email
-- Import/export della cronologia come backup JSON
+- Import/export della cronologia come backup JSON (articoli singoli, analisi multi-articolo e analisi PDF)
+- Citazioni opzionali nell'esportazione email; l'analisi multi-articolo apre una bozza nel client di posta
 
 **Funzionalità Avanzate**
 
 - Cache delle risposte per accesso rapido
-- Compressione dati per storage efficiente
-- Fallback automatico tra provider
+- Pulizia automatica: rimozione delle cache scadute ed eliminazione dei riassunti più vecchi di 180 giorni (i preferiti restano)
 - Tema chiaro e scuro su tutte le pagine
 
 ---
@@ -252,7 +252,7 @@ Scrivi una domanda nella sezione Q&A in fondo al popup oppure usa il pulsante mi
 
 ### Cronologia
 
-Tutti gli articoli analizzati vengono salvati automaticamente in una cronologia ricercabile. Puoi filtrare per provider, lingua, tipo di contenuto o stato dell'articolo. La cronologia supporta import/export in formato JSON per backup e migrazione.
+Tutti gli articoli analizzati vengono salvati automaticamente in una cronologia ricercabile. Puoi filtrare per provider, lingua, tipo di contenuto o stato dell'articolo. La cronologia supporta import/export in formato JSON per backup e migrazione; il backup comprende articoli singoli, analisi multi-articolo e analisi PDF, e reimportare lo stesso file non crea duplicati.
 
 <p align="center">
   <img src="./docs/assets/history-light.png" alt="Cronologia — Ricerca, filtri e gestione" width="700" />
@@ -282,15 +282,9 @@ Tutti gli articoli analizzati vengono salvati automaticamente in una cronologia 
 
 ## Lingue
 
-L'interfaccia dell'estensione è disponibile in:
+L'interfaccia dell'estensione si cambia tra italiano e inglese dalla pagina delle impostazioni. I documenti esportati (Markdown, PDF, email, bibliografia, testo copiato) usano la lingua dell'interfaccia.
 
-- Inglese
-- Italiano
-- Spagnolo
-- Francese
-- Tedesco
-
-L'output dell'analisi può essere generato in qualsiasi di queste lingue, indipendentemente dalla lingua dell'articolo originale.
+L'output dell'analisi può essere generato in inglese, italiano, spagnolo, francese o tedesco, indipendentemente dalla lingua dell'articolo originale. Le stringhe di interfaccia in spagnolo, francese e tedesco sono parziali: una stringa mancante ricade sull'italiano.
 
 ---
 
@@ -303,7 +297,7 @@ L'output dell'analisi può essere generato in qualsiasi di queste lingue, indipe
 | Estrazione Contenuto | @mozilla/readability            |
 | Parsing PDF          | pdfjs-dist                      |
 | Export PDF           | jspdf                           |
-| Compressione         | lz-string                       |
+| Dati precedenti      | lz-string (decodifica la vecchia cronologia) |
 | Packaging            | web-ext                         |
 | Testing              | Vitest + jsdom                  |
 | Linting              | ESLint (flat config)            |
@@ -418,10 +412,10 @@ src/
 ├── shared/styles/       CSS condiviso (base.css, voice-controls.css)
 └── utils/
     ├── ai/              Client API LLM, prompt, citazioni
-    ├── storage/         Browser storage, cache, compressione
+    ├── storage/         Browser storage, cache, cronologia
     ├── export/          Export PDF, Markdown, email
     ├── pdf/             Parsing e caching PDF
-    ├── i18n/            Internazionalizzazione (5 lingue)
+    ├── i18n/            Internazionalizzazione (it, en; es, fr, de parziali)
     ├── voice/           Controller TTS e STT
     ├── security/        Sanitizzazione HTML e input
     └── core/            Tema, modal, logger, errori

@@ -99,10 +99,13 @@ The Service Worker handles these message actions via `browser.runtime.onMessage`
 | `extractPDFCitations` | Page -> Service Worker    | Extract citations from PDF            |
 | `askPDFQuestion`      | Page -> Service Worker    | Q&A on PDF content                    |
 | `testApiKey`          | Options -> Service Worker | Validate provider API key             |
+| `generateCompletion`  | Extension page -> Service Worker | Raw prompt-in, completion-out LLM call (multi-analysis, content classification, PDF analysis, multi-article Q&A) |
+
+Extension pages never read the API key. They call `requestCompletion` (`src/utils/ai/completion-client.js`), which sends `generateCompletion` to the Service Worker. `handleGenerateCompletion` reads the key there, forwards only `temperature`, `maxTokens` and `responseFormat: 'json'`, and calls `APIOrchestrator.generateCompletion`. The message router accepts this action only when `sender.url` starts with `browser.runtime.getURL('')`, so content scripts cannot use it. Keys in `storage.local` are stored as plain text, without encryption.
 
 ## AI Processing Pipeline
 
-How `APIOrchestrator.callAPI` processes a request internally. Content detection feeds into prompt building, which uses the PromptRegistry facade to select the right prompt module. The ProviderCaller dispatches to one of 4 LLM providers with retry and fallback support.
+How `APIOrchestrator.callAPI` processes a request internally. Content detection feeds into prompt building, which uses the PromptRegistry facade to select the right prompt module. The ProviderCaller dispatches to one of 4 LLM providers with a 60-second `AbortController` timeout. There is no automatic retry and no fallback between providers; an HTTP 429 is raised as `[RATE_LIMIT:Provider]` and mapped to a clear message.
 
 ```mermaid
 %%{init: {'theme': 'default'}}%%
@@ -122,17 +125,9 @@ graph LR
     p_cite["citation"]
   end
 
-  subgraph resilience["Resilience"]
-    direction TB
-    retry["RetryStrategy"]
-    fallback["FallbackStrategy"]
-    rate["RateLimiter"]
-  end
-
   input --> detect --> build
   build --> registry --> prompts
   build --> caller
-  resilience --> caller
   caller --> parser
 
   classDef core fill:#2563eb,stroke:#1d4ed8,color:#fff
@@ -143,7 +138,6 @@ graph LR
   class input,detect,build core
   class registry,p_sum,p_key,p_trans,p_cite data
   class caller,parser engine
-  class retry,fallback,rate ext
 ```
 
 ### Default Models
@@ -157,7 +151,7 @@ graph LR
 
 ## Storage Architecture
 
-All persistent data flows through CompressionManager (lz-string) before reaching Browser Storage. CacheManager handles response caching with content hash validation and TTL. HistoryManager delegates to specialized repositories per content type.
+All persistent data is written to Browser Storage (`storage.local`) uncompressed. At every Service Worker start `AutoMaintenance` runs `restoreCompressedData` (`compressed-data-recovery.js`), which decodes (lz-string) summaries compressed by earlier versions and discards compressed cache entries. CacheManager handles response caching with content hash validation and TTL. HistoryManager delegates to specialized repositories per content type.
 
 ```mermaid
 %%{init: {'theme': 'default'}}%%
@@ -181,7 +175,8 @@ graph TD
   end
 
   storage_mgr["StorageManager<br/>settings + API keys"]
-  compress["CompressionManager<br/>lz-string"]
+  maint["AutoMaintenance"]
+  recovery["compressed-data-recovery<br/>restoreCompressedData"]
   browser_store[("Browser Storage API")]
 
   cache_mgr --> cache_store
@@ -192,11 +187,12 @@ graph TD
   base_repo --> pdf_hist
   base_repo --> multi_hist
 
-  storage_mgr --> compress
-  cache_layer --> compress
-  history_layer --> compress
-  trans_cache --> compress
-  compress --> browser_store
+  storage_mgr --> browser_store
+  cache_layer --> browser_store
+  history_layer --> browser_store
+  trans_cache --> browser_store
+  maint --> recovery
+  recovery --> browser_store
 
   classDef core fill:#2563eb,stroke:#1d4ed8,color:#fff
   classDef data fill:#d97706,stroke:#b45309,color:#fff
@@ -205,7 +201,7 @@ graph TD
 
   class storage_mgr,cache_mgr,hist_mgr core
   class cache_store,cache_stats,cache_inv,trans_cache,art_hist,pdf_hist,multi_hist data
-  class compress engine
+  class maint,recovery engine
   class browser_store ext
   class base_repo data
 ```

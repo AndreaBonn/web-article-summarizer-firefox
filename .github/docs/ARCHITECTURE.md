@@ -21,15 +21,15 @@
 
 ## Overview
 
-Web Article Summarizer is a Chrome Extension (Manifest V3) that leverages multiple AI providers to analyze web articles and PDFs. The architecture follows a modular, layered design with clear separation of concerns.
+Web Article Summarizer is a Firefox extension (Manifest V3) that leverages multiple AI providers to analyze web articles and PDFs. The architecture follows a modular, layered design with clear separation of concerns.
 
 ### Key Architectural Principles
 
 - **Modularity**: Each feature is isolated in its own module with well-defined interfaces
 - **Provider Agnosticism**: AI provider logic is abstracted through orchestration layers
-- **Resilience**: Built-in retry, fallback, and rate limiting mechanisms
+- **Predictable failures**: 60-second request timeout and clear, localized error messages (no automatic retry, no provider fallback)
 - **Security-First**: Multi-layered XSS prevention and prompt injection defense
-- **Performance**: Intelligent caching, compression, and lazy loading
+- **Performance**: Intelligent caching and lazy loading
 
 ---
 
@@ -39,7 +39,7 @@ Web Article Summarizer is a Chrome Extension (Manifest V3) that leverages multip
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Chrome Extension                         │
+│                     Firefox Extension                        │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
@@ -65,7 +65,7 @@ Web Article Summarizer is a Chrome Extension (Manifest V3) that leverages multip
           │                  │
           │                  │
      ┌────▼────┐      ┌──────▼──────┐
-     │   AI    │      │   Chrome    │
+     │   AI    │      │   Browser   │
      │ Providers│      │   Storage   │
      └─────────┘      └─────────────┘
 ```
@@ -74,8 +74,8 @@ Web Article Summarizer is a Chrome Extension (Manifest V3) that leverages multip
 
 1. **Presentation Layer**: UI components (popup, reading mode, history, options)
 2. **Business Logic Layer**: Core utilities, AI orchestration, content processing
-3. **Data Layer**: Storage management, caching, compression
-4. **Integration Layer**: AI provider clients, Chrome APIs
+3. **Data Layer**: Storage management, caching, history
+4. **Integration Layer**: AI provider clients, WebExtensions APIs (`browser.*`)
 
 ---
 
@@ -91,6 +91,8 @@ The service worker is the central hub for all API communications and background 
 - Handle messages from content scripts and UI pages
 - Coordinate AI API calls through the orchestrator
 - Manage automatic cache maintenance via alarms
+- Run one-shot LLM completions for extension pages (`generateCompletion`)
+- Follow the interface language stored in `storage.local.uiLanguage` (`ui-language.js`)
 - Validate and sanitize all incoming requests
 
 **Key Features**:
@@ -98,6 +100,7 @@ The service worker is the central hub for all API communications and background 
 - Provider validation before processing
 - Centralized error handling
 - Automatic maintenance scheduling
+- Extension-page-only check on `generateCompletion` (`message-router.js`)
 
 ### 2. Content Script
 
@@ -151,7 +154,21 @@ Low-level HTTP client for each AI provider.
 - Fetch timeout protection (60s)
 - JSON response validation
 - Provider-specific error handling
-- Rate limit detection
+- Rate limit detection (HTTP 429 raised as `[RATE_LIMIT:Provider]`, mapped to a clear message)
+
+#### Completion client (`completion-client.js`)
+
+Entry point used by extension pages for raw LLM calls.
+
+```javascript
+const text = await requestCompletion(provider, systemPrompt, userPrompt, { temperature, maxTokens, responseFormat: 'json' })
+```
+
+**Features**:
+- Used by multi-analysis (global summary, comparison, Q&A, correlation), content classification in the popup, PDF analysis and multi-article Q&A
+- Sends the `generateCompletion` action to the service worker, so pages never read the API key
+- `handleGenerateCompletion` (`src/background/message-handlers.js`) reads the key, forwards only `temperature`, `maxTokens` and `responseFormat: 'json'`, and calls `APIOrchestrator.generateCompletion`
+- The router (`message-router.js`) accepts the action only when `sender.url` starts with `browser.runtime.getURL('')` (extension pages, not content scripts)
 
 #### PromptBuilder (`prompt-builder.js`)
 
@@ -179,79 +196,28 @@ Analyzes article content to determine type and language.
 - `opinion`: Editorials, opinion pieces
 - `general`: Default fallback
 
-### 4. Resilience System
+### 4. Error Handling
 
-**Location**: `src/utils/ai/`
+**Location**: `src/utils/core/error-handler.js`
 
-Three-layer resilience architecture for API reliability.
+The system does not retry failed requests and does not switch provider on failure. Each call has a 60-second timeout (`AbortController` in `provider-caller.js`), and a failure is reported to the user with an actionable message.
 
-#### APIResilience (`api-resilience.js`)
-
-Facade combining retry and fallback strategies.
-
-```javascript
-await APIResilience.callWithRetryAndFallback({
-  primaryProvider: 'groq',
-  apiKeys: { groq: 'key1', openai: 'key2' },
-  article,
-  settings,
-  enableFallback: true
-})
-```
-
-#### RetryStrategy (`retry-strategy.js`)
-
-Exponential backoff retry logic.
-
-**Configuration**:
-- Max retries: 3
-- Initial delay: 1000ms
-- Max delay: 8000ms
-- Backoff multiplier: 2x
-
-**Error Classification**:
-- **Temporary** (retry): 429, 500, 502, 503, 504
-- **Permanent** (fail fast): 400, 401, 403, 404
-
-#### FallbackStrategy (`fallback-strategy.js`)
-
-Automatic provider switching on failure.
-
-**Fallback Order** (optimized for quality):
-- Primary: `groq` → Fallback: `openai` → `anthropic` → `gemini`
-- Primary: `openai` → Fallback: `anthropic` → `groq` → `gemini`
-- Primary: `anthropic` → Fallback: `openai` → `groq` → `gemini`
-- Primary: `gemini` → Fallback: `openai` → `anthropic` → `groq`
+#### ErrorHandler (`error-handler.js`)
 
 **Features**:
-- Only uses providers with configured API keys
-- Reduced retry attempts for fallback providers (2 vs 3)
-- Telemetry logging for fallback events
-
-#### RateLimiter (`rate-limiter.js`)
-
-Token bucket algorithm for rate limiting.
-
-**Limits** (requests per minute):
-- Groq: 30 RPM
-- OpenAI: 60 RPM
-- Anthropic: 50 RPM
-- Gemini: 60 RPM
-
-**Features**:
-- Request queuing
-- Automatic token reset every 60 seconds
-- Queue position callbacks for UI updates
+- `getErrorMessage` is idempotent: a message that is already mapped (in any language) is recognized and rendered again in the current interface language. This matters because the service worker sends already-mapped messages to the pages
+- `classifyError` keeps the error kind (`missing_key`, `unsupported_page`, `page_unreachable`, `generic`), which decides the recovery action the UI offers
+- HTTP 429 responses surface as `[RATE_LIMIT:Provider]` and become a clear message
 
 ### 5. Storage System
 
 **Location**: `src/utils/storage/`
 
-Comprehensive storage management with caching and compression.
+Storage management with caching and history. Data is stored in `browser.storage.local`, uncompressed.
 
 #### StorageManager (`storage-manager.js`)
 
-Main interface for Chrome storage operations.
+Main interface for browser storage operations.
 
 **Stored Data**:
 - API keys (per provider)
@@ -259,7 +225,7 @@ Main interface for Chrome storage operations.
 - UI language preference
 - Usage statistics
 
-**Security Note**: API keys are stored in `chrome.storage.local` which is sandboxed per extension. No custom encryption is used because extension source code is always readable in Chrome.
+**Security Note**: API keys are stored in `storage.local` in plain text, which is sandboxed per extension. No custom encryption is used because extension source code is always readable. Extension pages do not read the key: LLM calls go through the service worker (`generateCompletion`).
 
 #### CacheManager (`cache-manager.js`)
 
@@ -277,26 +243,24 @@ Response caching with TTL and statistics.
 - Entry age
 - Operation logs
 
-#### CompressionManager (`compression-manager.js`)
+#### Compressed data recovery (`compressed-data-recovery.js`)
 
-LZ-String compression for large text data.
+Earlier versions compressed history summaries and cache entries (LZ-String). Compression no longer exists; this module repairs data it left behind.
 
-**Compression Targets**:
-- Article summaries
-- Key points
-- Translations
-- PDF extracted text
+**Behavior**:
+- `restoreCompressedData` runs from `AutoMaintenance.initialize()` at every service worker start, regardless of `autoCleanup`
+- Decodes compressed history summaries and removes the compression markers; entries that cannot be decoded are left untouched
+- Discards compressed cache entries (the cache is rebuilt on the next request)
+- `lz-string` remains a dependency only for this purpose
 
-**Benefits**:
-- 60-70% size reduction
-- Faster storage operations
-- More entries fit in Chrome storage quota (10MB)
+#### AutoMaintenance (`src/utils/core/auto-maintenance.js`)
 
-**Automatic Maintenance**:
-- Scheduled via Chrome alarms
-- Compresses old uncompressed entries
+**Automatic Maintenance** (every 24 hours via browser alarms, when `autoCleanup` is enabled):
 - Removes expired cache entries
-- Runs every 24 hours
+- Keeps the cache at 100 entries (LRU)
+- Deletes summaries older than 180 days, **favorites excluded**
+
+The "Run Cleanup Now" button in Options > Advanced runs the same 180-day deletion (favorites excluded) and the LRU trimming.
 
 #### HistoryManager (`history-manager.js`)
 
@@ -307,11 +271,15 @@ Facade for three specialized history repositories.
 2. **PDFHistory**: PDF document analyses
 3. **MultiAnalysisHistory**: Multi-article comparisons
 
+`HistoryManager.importPDFAnalysis` (delegating to `PDFHistory.importPDFAnalysis`) restores a PDF analysis from a backup keeping its id and timestamp, so importing the same file twice creates no duplicates.
+
 **Features**:
 - Search and filtering
 - Favorites system
 - Notes and annotations
-- Export/import (JSON backup)
+- Export/import (JSON backup, including PDF analyses)
+
+**Backup format** (`src/pages/history/io-backup.js`, `backup-rules.js`): the JSON file holds `data.singleArticles`, `data.multiAnalysis`, `data.pdfAnalysis`, `settings` and `stats`, plus `metadata.totalPDFAnalysis`. Import sanitizes text fields and accepts files up to 50 MB.
 
 ### 6. Security System
 
@@ -392,6 +360,10 @@ Generates formatted PDF documents using jsPDF.
 - Q&A (if available)
 - Citations (APA format)
 
+#### Document labels (`doc-labels.js`)
+
+Exported documents (Markdown, PDF, email, bibliography, copied text, voice reading) are written in the interface language. `docLabel`, `docHeading`, `docDate` and `citationTypeLabel` resolve titles, section headings, dates and citation types from the locale files.
+
 #### MarkdownExporter (`markdown-exporter.js`)
 
 Exports to Markdown format.
@@ -410,6 +382,8 @@ Opens default email client with pre-filled content.
 - Subject: Article title
 - Body: Formatted analysis
 - Attachments: Not supported (browser limitation)
+- Citations can be included in the message from the popup and the history
+- `EmailManager.openEmailDraft(subject, body)` opens a draft without a recipient (`mailto:`); multi-article analysis uses it
 
 ### 8. PDF System
 
@@ -443,24 +417,25 @@ Specialized cache for PDF analyses.
 **Benefits**:
 - Same PDF analyzed once (even with different filename)
 - Instant results for re-uploads
-- Automatic cleanup of old entries
+- Stale entries are dropped by cache expiry
 
 ### 9. Internationalization (i18n)
 
 **Location**: `src/utils/i18n/`
 
-Complete i18n system with 5 languages.
+i18n system. Every user-visible text goes through `I18n.t` / `I18n.tf`.
 
 #### I18n (`i18n.js`)
 
 Main i18n manager.
 
-**Supported Languages**:
+**Interface languages** (selectable):
 - Italian (it) - Default
 - English (en)
-- Spanish (es)
-- French (fr)
-- German (de)
+
+Spanish (es), French (fr) and German (de) locale files are partial: a missing key falls back to Italian.
+
+The service worker loads the language from `storage.local.uiLanguage` and follows changes (`src/background/ui-language.js`), so messages it produces match the interface.
 
 **Features**:
 - JSON-based translations (`locales/*.json`)
@@ -505,7 +480,7 @@ Coordinates TTS and STT managers.
 
 #### TTSManager (`tts-manager.js`)
 
-Chrome TTS API wrapper.
+Web Speech API wrapper (`window.speechSynthesis`).
 
 **Features**:
 - Voice selection by language
@@ -543,7 +518,7 @@ Web Speech API wrapper.
 6. If cache miss:
    a. ContentDetector analyzes article type and language
    b. PromptBuilder constructs optimized prompt
-   c. APIResilience calls provider with retry/fallback
+   c. ProviderCaller calls the provider (60s timeout, single attempt)
    d. ResponseParser extracts summary and key points
    e. CacheManager stores result
    ↓
@@ -583,7 +558,7 @@ Web Speech API wrapper.
    ↓
 3. Prompt is built combining all article summaries
    ↓
-4. APIOrchestrator generates comparative analysis
+4. requestCompletion sends `generateCompletion` to the service worker, which generates the comparative analysis
    ↓
 5. Result displayed in Multi-Analysis page
    ↓
@@ -647,39 +622,30 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 
 ## Storage Strategy
 
-### Chrome Storage Quota
+### Storage Quota
 
-- **Total**: 10MB per extension
-- **Strategy**: Compression + caching + automatic cleanup
+- **Area**: `browser.storage.local` (the extension does not request `unlimitedStorage`)
+- **Strategy**: Caching + automatic cleanup
 
 ### Storage Allocation
 
 ```
 ├── apiKeys (< 1KB)
 ├── settings (< 1KB)
-├── summaryHistory (2-4MB, compressed)
+├── summaryHistory (2-4MB)
 ├── summaryCache (1-2MB, TTL 24h)
-├── pdfHistory (1-2MB, compressed)
+├── pdfHistory (1-2MB)
 ├── pdfCache (1-2MB, TTL 24h)
 ├── multiAnalysisHistory (1-2MB)
 └── stats (< 1KB)
 ```
 
-### Compression Strategy
+### Automatic Maintenance
 
-**When to Compress**:
-- Summary text > 500 chars
-- Key points > 5 items
-- Translation text > 500 chars
-- PDF extracted text > 1000 chars
-
-**Compression Ratio**: 60-70% size reduction
-
-**Automatic Maintenance**:
-- Runs every 24 hours via Chrome alarms
-- Compresses old uncompressed entries
-- Removes expired cache entries
-- Logs operations for debugging
+- Runs every 24 hours via browser alarms when `autoCleanup` is enabled
+- Removes expired cache entries and trims the cache to 100 entries (LRU)
+- Deletes summaries older than 180 days; favorites are always kept
+- `restoreCompressedData` runs at every service worker start, independently of `autoCleanup`
 
 ---
 
@@ -691,7 +657,7 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 2. **Output Sanitization**: All AI responses sanitized before DOM insertion
 3. **CSP**: Strict Content Security Policy prevents inline scripts
 4. **Prompt Injection Defense**: Multi-language detection and escaping
-5. **API Key Protection**: Stored in sandboxed Chrome storage
+5. **API Key Protection**: Stored in `browser.storage.local`, sandboxed per extension (plain text, no encryption)
 6. **HTTPS Only**: All API calls over HTTPS
 7. **Origin Validation**: Messages validated by sender ID
 
@@ -706,7 +672,7 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 
 **Threats Not Mitigated**:
 - User installs malicious extension
-- User's Chrome profile is compromised
+- User's Firefox profile is compromised
 - API provider is compromised
 
 ---
@@ -720,12 +686,6 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 - **Eviction**: LRU when storage is full
 - **Hit Rate**: ~40-60% for typical usage
 
-### Compression
-
-- **Algorithm**: LZ-String (optimized for text)
-- **Compression Ratio**: 60-70%
-- **Performance**: < 50ms for typical summaries
-
 ### Lazy Loading
 
 - **History Page**: Loads entries in batches of 20
@@ -734,15 +694,12 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 
 ### Debouncing
 
-- **Search**: 300ms debounce
-- **Auto-save**: 1000ms debounce
-- **Resize**: 150ms debounce
+- **Search**: 300ms debounce on the history search field
 
 ### Request Optimization
 
-- **Batching**: Multiple requests queued and processed sequentially
-- **Rate Limiting**: Token bucket algorithm prevents API throttling
-- **Timeout**: 60s timeout prevents hanging requests
+- **Timeout**: 60s timeout (`AbortController`) prevents hanging requests
+- **Rate limits**: no client-side limiter; an HTTP 429 from the provider is mapped to a clear message
 
 ---
 
@@ -752,10 +709,8 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 
 1. Add provider to `DEFAULT_MODELS` in `api-orchestrator.js`
 2. Implement caller method in `provider-caller.js`
-3. Add rate limit config in `rate-limiter.js`
-4. Add fallback order in `fallback-strategy.js`
-5. Update manifest `host_permissions`
-6. Add UI option in settings
+3. Update manifest `host_permissions`
+4. Add UI option in settings
 
 ### Adding a New Language
 
@@ -783,7 +738,7 @@ callGeminiCompletion(apiKey, systemPrompt, userPrompt, options)
 
 **Coverage**:
 - AI utilities (prompt building, parsing, detection)
-- Storage managers (cache, compression, history)
+- Storage managers (cache, compressed-data recovery, history)
 - Security (sanitizers, validators)
 - Export formatters
 
@@ -804,8 +759,8 @@ npm run test:watch  # Watch mode
 6. Voice controls (TTS/STT)
 7. History search and filtering
 8. Settings persistence
-9. Error handling and fallback
-10. Cache and compression
+9. Error handling and error messages
+10. Cache and automatic maintenance
 
 ---
 
@@ -823,13 +778,13 @@ npm run build
 - Copied assets
 - Updated manifest
 
-### Chrome Web Store
+### Packaging and Distribution (Firefox)
 
-1. Build production version
-2. Zip `dist/` folder
-3. Upload to Chrome Web Store Developer Dashboard
-4. Fill in store listing (description, screenshots, privacy policy)
-5. Submit for review
+1. Build production version (`npm run build`)
+2. Generate the package with `npm run build:xpi` (runs the build, then `web-ext build` into `web-ext-artifacts/`)
+3. For local testing: `about:debugging#/runtime/this-firefox` → Load Temporary Add-on → select `dist/manifest.json`, or `npm run start:firefox` (`web-ext run`)
+4. Upload the package to addons.mozilla.org (AMO) Developer Hub
+5. Fill in the listing (description, screenshots, privacy policy) and submit for review
 
 ### Version Management
 
@@ -844,7 +799,7 @@ npm run build
 2. Update `CHANGELOG.md`
 3. Build and test
 4. Commit and tag
-5. Upload to Chrome Web Store
+5. Upload to addons.mozilla.org (AMO)
 
 ---
 
@@ -863,17 +818,16 @@ npm run build
 **Tracked Metrics**:
 - API call success/failure rates
 - Cache hit/miss ratios
-- Compression statistics
 - Provider usage distribution
 - Average generation time
 
-**Storage**: `chrome.storage.local.stats`
+**Storage**: `browser.storage.local.stats`
 
 ### Debugging
 
-**Chrome DevTools**:
-- Service Worker: `chrome://extensions` → Inspect service worker
-- Popup: Right-click extension icon → Inspect popup
+**Firefox Developer Tools**:
+- Background script: `about:debugging#/runtime/this-firefox` → Inspect on the extension
+- Popup: Right-click extension icon → Inspect (or open the popup page from `about:debugging`)
 - Content Script: Inspect page → Console → Filter by extension ID
 
 **Common Issues**:
@@ -893,7 +847,7 @@ npm run build
 3. **Browser Sync**: Sync history across devices
 4. **Custom Prompts**: User-defined prompt templates
 5. **Advanced Analytics**: Reading patterns and insights
-6. **Browser Extension**: Firefox and Edge support
+6. **Browser Extension**: Chromium browsers support (Chrome, Edge)
 
 ### Technical Debt
 

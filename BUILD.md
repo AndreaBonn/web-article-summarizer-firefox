@@ -45,7 +45,7 @@ A custom Vite plugin (`firefoxExtensionPlugin` in `vite.config.js`) copies `mani
 - `@mozilla/readability` - Article content extraction (Mozilla, Apache-2.0)
 - `jspdf` - PDF export generation (MIT)
 - `pdfjs-dist` - PDF parsing, includes pre-built worker in `public/workers/pdf.worker.min.js` (Apache-2.0)
-- `lz-string` - Data compression for browser storage (MIT)
+- `lz-string` - Decodes history data compressed by older versions (MIT)
 
 ## Generating the .xpi package
 

@@ -46,7 +46,7 @@ This project follows a simple code of conduct:
 - **Node.js**: Version 22 or higher
 - **npm**: Comes with Node.js
 - **Git**: For version control
-- **Chrome Browser**: For testing the extension
+- **Firefox**: 126 or later, for testing the extension
 - **Code Editor**: VS Code recommended
 
 ### Fork and Clone
@@ -80,16 +80,18 @@ npm run dev
 
 This starts Vite with hot module replacement (HMR).
 
-### Load Extension in Chrome
+### Load Extension in Firefox
 
-1. Open Chrome and navigate to `chrome://extensions/`
-2. Enable **Developer mode** (toggle in top right)
-3. Click **Load unpacked**
-4. Select the `dist/` folder from the project
+1. Run `npm run build`
+2. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
+3. Click **Load Temporary Add-on**
+4. Select `dist/manifest.json` from the project
+
+Alternatively, `npm run start:firefox` launches Firefox with the extension loaded from `dist/` (via web-ext).
 
 ### Configure API Keys
 
-1. Click the extension icon in Chrome toolbar
+1. Click the extension icon in the Firefox toolbar
 2. Go to **Settings** (gear icon)
 3. Enter at least one API key for testing
 
@@ -441,7 +443,7 @@ git commit -m "feat(export): add CSV export format
    npm run build
    ```
 
-3. **Test manually** in Chrome
+3. **Test manually** in Firefox
 
 ### PR Title
 
@@ -520,7 +522,7 @@ Look for issues labeled `good first issue` on GitHub. These are beginner-friendl
 - Browser sync for history
 - Custom prompt templates
 - Advanced analytics dashboard
-- Firefox and Edge support
+- Chromium browsers support (Chrome, Edge)
 
 ### Bug Fixes
 
