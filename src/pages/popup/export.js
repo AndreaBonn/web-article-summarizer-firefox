@@ -33,7 +33,7 @@ function _buildMetadata() {
 // Export to PDF
 export async function exportToPDF() {
   if (!state.currentArticle || !state.currentResults) {
-    showError('Nessun riassunto da esportare');
+    showError(I18n.t('popup.noSummaryToExport'));
     return;
   }
 
@@ -59,7 +59,7 @@ export function showExportOptionsModal() {
         Toast.show(I18n.t('feedback.exported'), 'success');
       } catch (error) {
         Logger.error('Errore esportazione PDF:', error);
-        showError("Errore durante l'esportazione PDF: " + error.message);
+        showError(I18n.t('popup.exportPdfError') + ' ' + error.message);
       }
     },
   });
@@ -68,7 +68,7 @@ export function showExportOptionsModal() {
 // Export to Markdown
 export async function exportToMarkdown() {
   if (!state.currentArticle || !state.currentResults) {
-    showError('Nessun riassunto da esportare');
+    showError(I18n.t('popup.noSummaryToExport'));
     return;
   }
 
@@ -97,7 +97,7 @@ export function showMarkdownExportModal() {
         Toast.show(I18n.t('feedback.exported'), 'success');
       } catch (error) {
         Logger.error('Errore esportazione Markdown:', error);
-        showError("Errore durante l'esportazione Markdown: " + error.message);
+        showError(I18n.t('popup.exportMdError') + ' ' + error.message);
       }
     },
   });
@@ -146,7 +146,7 @@ function _collectEmailOptions() {
 // Email System
 export async function openEmailModal() {
   if (!state.currentArticle || !state.currentResults) {
-    showError('Nessun riassunto da inviare');
+    showError(I18n.t('popup.noSummaryToSend'));
     return;
   }
 

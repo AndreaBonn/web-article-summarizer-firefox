@@ -1,7 +1,6 @@
-// Pure helpers for the popup controller: no access to state, elements or browser APIs.
+import { I18n } from '../../utils/i18n/i18n.js';
 
-const QUOTA_ERROR_MESSAGE =
-  'Impossibile aprire la modalità lettura: spazio di archiviazione insufficiente.';
+// Pure helpers for the popup controller: no access to state, elements or browser APIs.
 
 export function buildReadingModeData({
   article,
@@ -31,6 +30,6 @@ export function buildReadingModeData({
 export function describeReadingModeStorageError(error) {
   const isQuotaError = error.message?.includes('QUOTA') || error.message?.includes('quota');
   return isQuotaError
-    ? QUOTA_ERROR_MESSAGE
-    : `Impossibile aprire la modalità lettura: ${error.message}`;
+    ? I18n.t('popup.readingModeQuota')
+    : I18n.tf('popup.readingModeError', { message: error.message });
 }

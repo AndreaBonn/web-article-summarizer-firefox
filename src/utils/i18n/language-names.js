@@ -22,10 +22,6 @@ export function getLanguageName(code) {
   return LANGUAGE_NAMES[code] || code;
 }
 
-export function getLanguageNameIT(code) {
-  return LANGUAGE_NAMES_IT[code] || code;
-}
-
 /**
  * Lowercase Italian name — for AI system prompts (e.g. "Rispondi in italiano")
  */

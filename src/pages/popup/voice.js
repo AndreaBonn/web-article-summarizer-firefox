@@ -90,27 +90,35 @@ export function addTTSButtons() {
 
   const summaryContent = document.getElementById('summaryContent');
   if (summaryContent && !summaryContent.querySelector('.tts-button')) {
-    const btn = createTTSButton(state.currentResults.summary, voiceLang, 'Leggi Riassunto');
+    const btn = createTTSButton(
+      state.currentResults.summary,
+      voiceLang,
+      I18n.t('voice.readSummary'),
+    );
     summaryContent.insertBefore(btn, summaryContent.firstChild);
   }
 
   const keypointsContent = document.getElementById('keypointsContent');
   if (keypointsContent && !keypointsContent.querySelector('.tts-button')) {
     const keypointsText = formatKeyPointsForSpeech(state.currentResults.keyPoints);
-    const btn = createTTSButton(keypointsText, voiceLang, 'Leggi Punti Chiave');
+    const btn = createTTSButton(keypointsText, voiceLang, I18n.t('voice.readKeypoints'));
     keypointsContent.insertBefore(btn, keypointsContent.firstChild);
   }
 
   if (translationState.value) {
     const translationText = document.querySelector('.translation-text');
     if (translationText && !translationText.parentElement.querySelector('.tts-button')) {
-      const btn = createTTSButton(translationState.value, voiceLang, 'Leggi Traduzione');
+      const btn = createTTSButton(
+        translationState.value,
+        voiceLang,
+        I18n.t('voice.readTranslation'),
+      );
       translationText.parentElement.insertBefore(btn, translationText);
     }
   }
 }
 
-export function createTTSButton(text, lang, label = 'Leggi') {
+export function createTTSButton(text, lang, label = I18n.t('voice.read')) {
   return createTTSToggleButton(text, lang, label, voiceHolder.value, showVoiceSelector);
 }
 
@@ -137,7 +145,7 @@ export async function showVoiceSelector(lang) {
   icon.textContent = '🔊';
   title.textContent = I18n.t('voice.selectTitle');
   message.innerHTML = buildVoiceSelectorHTML(voices, currentVoice);
-  confirmBtn.textContent = 'Chiudi';
+  confirmBtn.textContent = I18n.t('voice.close');
   cancelBtn.classList.add('hidden');
   modal.classList.remove('hidden');
 

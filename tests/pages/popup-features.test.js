@@ -207,7 +207,7 @@ describe('translateArticle', () => {
     mocks.confirm.mockResolvedValue(false);
     await translateArticle();
     expect(mocks.confirm).toHaveBeenCalledWith(
-      "L'articolo sembra già essere in it. Vuoi comunque tradurlo?",
+      "L'articolo sembra già essere in Italiano. Vuoi comunque tradurlo?",
       'Conferma Traduzione',
       '🌍',
     );

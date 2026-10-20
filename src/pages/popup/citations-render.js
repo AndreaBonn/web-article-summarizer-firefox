@@ -1,6 +1,7 @@
 // Popup Citations Render - pure HTML building and highlight strategy for citations
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { CitationFormatter } from '../../utils/ai/citation-formatter.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 const MAX_QUOTE_CHARS = 200;
 
@@ -16,23 +17,23 @@ export function renderCitationsHtml(citationsData) {
   let html = `
     <div class="citations-header">
       <div class="citations-info">
-        <strong>📚 ${totalCitations} citazioni trovate</strong>
+        <strong>${HtmlSanitizer.escape(I18n.tf('citations.foundCount', { count: totalCitations }))}</strong>
       </div>
       <div class="citations-actions">
-        <select id="citationStyleSelect" class="citation-style-select" title="Stile bibliografico per la citazione dell'articolo principale">
-          <option value="apa">APA (Autore. (Anno). Titolo.)</option>
-          <option value="mla">MLA (Autore. "Titolo.")</option>
-          <option value="chicago">Chicago (Autore. "Titolo.")</option>
-          <option value="ieee">IEEE (Autore, "Titolo,")</option>
-          <option value="harvard">Harvard (Autore (Anno) Titolo.)</option>
+        <select id="citationStyleSelect" class="citation-style-select" title="${HtmlSanitizer.escape(I18n.t('citations.styleTitle'))}">
+          <option value="apa">${HtmlSanitizer.escape(I18n.t('citations.styleApa'))}</option>
+          <option value="mla">${HtmlSanitizer.escape(I18n.t('citations.styleMla'))}</option>
+          <option value="chicago">${HtmlSanitizer.escape(I18n.t('citations.styleChicago'))}</option>
+          <option value="ieee">${HtmlSanitizer.escape(I18n.t('citations.styleIeee'))}</option>
+          <option value="harvard">${HtmlSanitizer.escape(I18n.t('citations.styleHarvard'))}</option>
         </select>
-        <button id="copyCitationsBtn" class="btn-icon" title="Copia Bibliografia">📋</button>
+        <button id="copyCitationsBtn" class="btn-icon" title="${HtmlSanitizer.escape(I18n.t('citations.copyTitle'))}">📋</button>
       </div>
     </div>
 
     <div class="article-citation-box">
-      <h4>📄 Citazione Articolo Principale</h4>
-      <p class="citation-style-hint">Lo stile selezionato sopra si applica a questa citazione</p>
+      <h4>${HtmlSanitizer.escape(I18n.t('citations.mainArticle'))}</h4>
+      <p class="citation-style-hint">${HtmlSanitizer.escape(I18n.t('citations.styleHint'))}</p>
       <div id="mainCitationText" class="citation-text"></div>
     </div>
 
@@ -55,7 +56,7 @@ export function renderCitationsHtml(citationsData) {
            data-citation-id="${HtmlSanitizer.escape(String(citation.id))}"
            data-citation-text="${escapedText}"
            data-paragraph="${safeParagraph}"
-           title="Clicca per evidenziare nell'articolo">
+           title="${HtmlSanitizer.escape(I18n.t('citations.highlightTitle'))}">
         <div class="citation-header">
           <span class="citation-icon">${typeIcon}</span>
           <span class="citation-number">#${HtmlSanitizer.escape(String(citation.id))}</span>

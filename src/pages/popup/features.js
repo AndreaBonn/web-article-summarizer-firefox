@@ -15,7 +15,7 @@ import { createTTSButton } from './voice.js';
 import { Logger } from '../../utils/core/logger.js';
 import { unwrapServiceResponse } from '../../utils/core/service-response.js';
 import { ErrorHandler } from '../../utils/core/error-handler.js';
-import { getLanguageNameIT } from '../../utils/i18n/language-names.js';
+import { getLanguageLabel } from '../../utils/core/display-labels.js';
 
 // Translation System — usa un oggetto wrapper per permettere la mutazione cross-modulo
 export const translationState = { value: null };
@@ -46,7 +46,7 @@ export async function askQuestion() {
   }
 
   if (!state.currentArticle || !state.currentResults) {
-    showError('Nessun articolo analizzato');
+    showError(I18n.t('popup.noArticleAnalyzed'));
     return;
   }
 
@@ -83,10 +83,7 @@ export async function askQuestion() {
       settings,
     });
 
-    const result = unwrapServiceResponse(
-      response,
-      'Il servizio non risponde. Riapri il popup e riprova.',
-    );
+    const result = unwrapServiceResponse(response, I18n.t('popup.serviceUnavailable'));
 
     const answer = result.answer;
 
@@ -101,7 +98,7 @@ export async function askQuestion() {
     answerText.textContent = answer;
 
     const voiceLang = VoiceController.mapLanguageCode(state.selectedLanguage);
-    const ttsBtn = createTTSButton(answer, voiceLang, 'Leggi Risposta');
+    const ttsBtn = createTTSButton(answer, voiceLang, I18n.t('voice.readAnswer'));
     ttsBtn.style.marginTop = '8px';
 
     answerContainer.appendChild(answerText);
@@ -149,7 +146,7 @@ export function renderTranslationEmpty() {
 
 export async function translateArticle() {
   if (!state.currentArticle) {
-    showError('Nessun articolo da tradurre');
+    showError(I18n.t('popup.noArticleToTranslate'));
     return;
   }
 
@@ -157,8 +154,7 @@ export async function translateArticle() {
   elements.translateBtn.textContent = I18n.t('feedback.translating');
 
   // Mostra loading
-  elements.translationContent.innerHTML =
-    '<div class="translation-loading">Traduzione in corso... Questo potrebbe richiedere 10-30 secondi.</div>';
+  elements.translationContent.innerHTML = `<div class="translation-loading">${HtmlSanitizer.escape(I18n.t('translation.loading'))}</div>`;
 
   try {
     const provider = elements.providerSelect.value;
@@ -185,8 +181,10 @@ export async function translateArticle() {
       // Se la lingua è già quella target, avvisa
       if (originalLanguage === targetLanguage) {
         const confirmed = await Modal.confirm(
-          `L'articolo sembra già essere in ${targetLanguage}. Vuoi comunque tradurlo?`,
-          'Conferma Traduzione',
+          I18n.tf('translation.alreadyInLanguage', {
+            language: getLanguageLabel(targetLanguage, I18n.currentLanguage),
+          }),
+          I18n.t('translation.confirmTitle'),
           '🌍',
         );
 
@@ -205,10 +203,7 @@ export async function translateArticle() {
         provider,
       });
 
-      const result = unwrapServiceResponse(
-        translateResponse,
-        'Il servizio non risponde. Riapri il popup e riprova.',
-      );
+      const result = unwrapServiceResponse(translateResponse, I18n.t('popup.serviceUnavailable'));
 
       translation = result.translation;
 
@@ -236,8 +231,8 @@ export async function translateArticle() {
     Logger.error('Errore traduzione:', error);
     elements.translationContent.innerHTML = `
       <div class="translation-empty">
-        <p class="translation-error">❌ Errore durante la traduzione: ${HtmlSanitizer.escape(error.message)}</p>
-        <button id="translateBtn" class="btn btn-primary">🔄 Riprova</button>
+        <p class="translation-error">❌ ${HtmlSanitizer.escape(I18n.t('popup.translationError'))} ${HtmlSanitizer.escape(error.message)}</p>
+        <button id="translateBtn" class="btn btn-primary">${HtmlSanitizer.escape(I18n.t('translation.retry'))}</button>
       </div>
     `;
     // Re-attach event listener (once: prevents stacking on repeated failures)
@@ -250,19 +245,21 @@ export async function translateArticle() {
 }
 
 function displayTranslation(translation, targetLang, originalLang, fromCache = false) {
-  const targetName = getLanguageNameIT(targetLang);
-  const originalName = getLanguageNameIT(originalLang);
+  const targetName = getLanguageLabel(targetLang, I18n.currentLanguage);
+  const originalName = getLanguageLabel(originalLang, I18n.currentLanguage);
 
-  const cacheBadge = fromCache ? '<span class="cache-badge">Da cache</span>' : '';
+  const cacheBadge = fromCache
+    ? `<span class="cache-badge">${HtmlSanitizer.escape(I18n.t('citations.fromCache'))}</span>`
+    : '';
 
   elements.translationContent.innerHTML = `
     <div class="translation-header">
       <div class="translation-info">
-        📝 Tradotto da ${originalName} a ${targetName} ${cacheBadge}
+        ${HtmlSanitizer.escape(I18n.tf('translation.translatedFrom', { from: originalName, to: targetName }))} ${cacheBadge}
       </div>
       <div class="translation-actions">
-        <button id="copyTranslationBtn" class="btn-icon" title="Copia traduzione">📋</button>
-        <button id="retranslateBtn" class="btn-icon" title="Traduci di nuovo">🔄</button>
+        <button id="copyTranslationBtn" class="btn-icon" title="${HtmlSanitizer.escape(I18n.t('translation.copyTitle'))}">📋</button>
+        <button id="retranslateBtn" class="btn-icon" title="${HtmlSanitizer.escape(I18n.t('translation.retranslateTitle'))}">🔄</button>
       </div>
     </div>
     <div class="translation-text">${HtmlSanitizer.escape(translation)}</div>
@@ -272,8 +269,8 @@ function displayTranslation(translation, targetLang, originalLang, fromCache = f
   document.getElementById('copyTranslationBtn').addEventListener('click', copyTranslation);
   document.getElementById('retranslateBtn').addEventListener('click', async () => {
     const confirmed = await Modal.confirm(
-      'Vuoi generare una nuova traduzione? Quella in cache verrà sostituita.',
-      'Rigenera Traduzione',
+      I18n.t('translation.confirmRegenerate'),
+      I18n.t('translation.regenerateTitle'),
       '🔄',
     );
 
@@ -297,7 +294,7 @@ async function clearTranslationCache() {
 
 function resetTranslationButton() {
   elements.translateBtn.disabled = false;
-  elements.translateBtn.textContent = '🌍 Traduci Articolo';
+  elements.translateBtn.textContent = I18n.t('translation.buttonWithIcon');
 }
 
 async function copyTranslation() {

@@ -3,7 +3,6 @@ import {
   LANGUAGE_NAMES,
   LANGUAGE_NAMES_IT,
   getLanguageName,
-  getLanguageNameIT,
   getLanguageNameForPrompt,
 } from '@utils/i18n/language-names.js';
 
@@ -108,40 +107,6 @@ describe('getLanguageName()', () => {
   it('test_getLanguageName_withUppercaseCode_returnsFallbackCode', () => {
     // Le chiavi sono minuscole: IT non è presente → fallback
     expect(getLanguageName('IT')).toBe('IT');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// getLanguageNameIT
-// ---------------------------------------------------------------------------
-
-describe('getLanguageNameIT()', () => {
-  it('test_getLanguageNameIT_withItCode_returnsItaliano', () => {
-    expect(getLanguageNameIT('it')).toBe('Italiano');
-  });
-
-  it('test_getLanguageNameIT_withEnCode_returnsInglese', () => {
-    expect(getLanguageNameIT('en')).toBe('Inglese');
-  });
-
-  it('test_getLanguageNameIT_withEsCode_returnsSpagnolo', () => {
-    expect(getLanguageNameIT('es')).toBe('Spagnolo');
-  });
-
-  it('test_getLanguageNameIT_withFrCode_returnsFrancese', () => {
-    expect(getLanguageNameIT('fr')).toBe('Francese');
-  });
-
-  it('test_getLanguageNameIT_withDeCode_returnsTedesco', () => {
-    expect(getLanguageNameIT('de')).toBe('Tedesco');
-  });
-
-  it('test_getLanguageNameIT_withUnknownCode_returnsFallbackCode', () => {
-    expect(getLanguageNameIT('pt')).toBe('pt');
-  });
-
-  it('test_getLanguageNameIT_withEmptyString_returnsFallbackEmptyString', () => {
-    expect(getLanguageNameIT('')).toBe('');
   });
 });
 

@@ -16,13 +16,13 @@ import { highlightCitation, renderCitationsHtml } from './citations-render.js';
 // Citations System
 export async function extractCitations() {
   if (!state.currentArticle || !state.currentResults) {
-    showError('Nessun articolo analizzato');
+    showError(I18n.t('popup.noArticleAnalyzed'));
     return;
   }
 
   const btn = elements.extractCitationsBtn;
   btn.disabled = true;
-  btn.textContent = '⏳ Estrazione...';
+  btn.textContent = I18n.t('citations.extracting');
 
   try {
     const settings = await StorageManager.getSettings();
@@ -36,10 +36,7 @@ export async function extractCitations() {
       settings: settings,
     });
 
-    const result = unwrapServiceResponse(
-      response,
-      'Il servizio non risponde. Riapri il popup e riprova.',
-    );
+    const result = unwrapServiceResponse(response, I18n.t('popup.serviceUnavailable'));
 
     // Aggiorna la variabile di stato condivisa in features.js
     const citationsData = result.citations;
@@ -54,7 +51,7 @@ export async function extractCitations() {
       if (citationsHeader && !citationsHeader.querySelector('.cache-badge')) {
         const badge = document.createElement('span');
         badge.className = 'cache-badge';
-        badge.textContent = 'Da cache';
+        badge.textContent = I18n.t('citations.fromCache');
         badge.style.cssText =
           'background: #4caf50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;';
         citationsHeader.appendChild(badge);
@@ -74,13 +71,13 @@ export async function extractCitations() {
     elements.citationsContent.innerHTML = `
       <div class="error-box">
         <p>❌ ${HtmlSanitizer.escape(error.message)}</p>
-        <button id="retryCitationsBtn" class="btn btn-primary">🔄 Riprova</button>
+        <button id="retryCitationsBtn" class="btn btn-primary">${HtmlSanitizer.escape(I18n.t('citations.retry'))}</button>
       </div>
     `;
     document.getElementById('retryCitationsBtn').addEventListener('click', extractCitations);
   } finally {
     btn.disabled = false;
-    btn.textContent = '📖 Estrai Citazioni';
+    btn.textContent = I18n.t('citations.buttonWithIcon');
   }
 }
 
@@ -106,7 +103,7 @@ function displayCitationsData(citationsData) {
   if (!citationsData || !citationsData.citations || citationsData.citations.length === 0) {
     elements.citationsContent.innerHTML = `
       <div class="citations-empty">
-        <p>📚 Nessuna citazione trovata in questo articolo</p>
+        <p>${HtmlSanitizer.escape(I18n.t('citations.noneFound'))}</p>
       </div>
     `;
     return;
@@ -157,7 +154,7 @@ async function copyCitationsData(citationsData) {
     await navigator.clipboard.writeText(bibliography);
     const btn = document.getElementById('copyCitationsBtn');
     const originalText = btn.textContent;
-    btn.textContent = '✓ Copiato!';
+    btn.textContent = I18n.t('feedback.copied');
     setTimeout(() => {
       btn.textContent = originalText;
     }, 2000);

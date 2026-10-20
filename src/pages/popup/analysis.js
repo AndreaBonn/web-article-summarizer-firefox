@@ -52,7 +52,7 @@ export async function analyzeArticle() {
     }
 
     if (!response || !response.success) {
-      throw new Error(response?.error || "Errore durante l'estrazione");
+      throw new Error(response?.error || I18n.t('popup.extractionError'));
     }
 
     state.currentArticle = response.article;
@@ -147,10 +147,7 @@ export async function generateSummary() {
         Logger.error('❌ Errore classificazione:', error);
         await ErrorHandler.logError(error, 'Classificazione contenuto');
         finalContentType = 'general';
-        state.progressTracker.setStep(
-          'classify',
-          '⚠️ Classificazione non disponibile — uso tipo Generale',
-        );
+        state.progressTracker.setStep('classify', I18n.t('popup.classificationUnavailable'));
         await new Promise((resolve) => setTimeout(resolve, 1200));
       }
     } else {
@@ -170,10 +167,7 @@ export async function generateSummary() {
       settings: settings,
     });
 
-    const result = unwrapServiceResponse(
-      response,
-      'Il servizio non risponde. Riapri il popup e riprova.',
-    );
+    const result = unwrapServiceResponse(response, I18n.t('popup.serviceUnavailable'));
 
     state.currentResults = result;
 
