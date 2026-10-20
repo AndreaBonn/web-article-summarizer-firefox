@@ -1014,6 +1014,7 @@ select:focus {
 .modal-btn-cancel:hover {
   background: #e9ecef;
   border-color: #cbd5e0;
+  color: #535c5f;
 }
 
 /* Email Modal */
