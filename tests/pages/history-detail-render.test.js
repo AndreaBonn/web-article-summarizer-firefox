@@ -145,6 +145,8 @@ describe('detail rendering', () => {
       textareaValue: 'x'.repeat(10000),
       notes: 'x'.repeat(10000),
     });
+    expect(prepareNotes('x'.repeat(10001)).notes).toBe('x'.repeat(10000));
+    expect(prepareNotes('x'.repeat(10000)).textareaValue).toBe('x'.repeat(10000));
     expect(prepareNotes('  Note  ')).toEqual({ textareaValue: '  Note  ', notes: 'Note' });
     expect(prepareNotes('   ')).toEqual({ textareaValue: '   ', notes: null });
     expect(prepareNotes('')).toEqual({ textareaValue: '', notes: null });
