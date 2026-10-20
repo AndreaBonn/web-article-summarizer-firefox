@@ -2,6 +2,7 @@
 
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { getTranslationText } from '../../shared/translation-text.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 /**
  * Text of a PDF entry, whichever structure holds it.
@@ -88,7 +89,7 @@ export function renderExtractedCitationsHtml(citations) {
   if (citations && citations.citations && citations.citations.length > 0) {
     const totalCitations =
       citations.total_citations || citations.totalCount || citations.citations.length;
-    html += `<h3>${totalCitations} Citazioni Trovate</h3>`;
+    html += `<h3>${HtmlSanitizer.escape(I18n.tf('reading.citationsFoundPlain', { count: totalCitations }))}</h3>`;
 
     citations.citations.forEach((citation, index) => {
       // Estrai i campi per questa citazione
@@ -98,14 +99,14 @@ export function renderExtractedCitationsHtml(citations) {
       html += `
           <div class="citation-item">
             <div class="citation-number">[${index + 1}]</div>
-            <div class="citation-text">${HtmlSanitizer.escape(text || 'Testo citazione non disponibile')}</div>
+            <div class="citation-text">${HtmlSanitizer.escape(text || I18n.t('reading.citationTextUnavailable'))}</div>
             ${author ? `<div class="citation-author">— ${HtmlSanitizer.escape(author)}</div>` : ''}
             ${citation.paragraph ? `<div class="citation-ref">§${HtmlSanitizer.escape(String(citation.paragraph))}</div>` : ''}
           </div>
         `;
     });
   } else {
-    html += '<p>Nessuna citazione trovata in questo articolo</p>';
+    html += `<p>${HtmlSanitizer.escape(I18n.t('reading.noCitationsFound'))}</p>`;
   }
 
   html += '</div>';

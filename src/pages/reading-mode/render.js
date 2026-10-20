@@ -3,6 +3,7 @@ import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { Logger } from '../../utils/core/logger.js';
 import { CitationFormatter } from '../../utils/ai/citation-formatter.js';
 import { parseParagraphRange } from '../../content/text-match.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 const MAX_QUOTE_CHARS = 300;
 const SAFE_PROTOCOLS = ['https:', 'http:'];
@@ -23,7 +24,7 @@ export function renderReadingCitationsHtml(citations) {
   Logger.debug('📚 Prima citazione:', citationsList[0]);
 
   const totalCitations = citations.total_citations || citations.totalCount || citationsList.length;
-  let html = `<div class="citations-content"><h3>📚 ${totalCitations} Citazioni Trovate</h3>`;
+  let html = `<div class="citations-content"><h3>${HtmlSanitizer.escape(I18n.tf('reading.citationsFound', { count: totalCitations }))}</h3>`;
 
   citationsList.forEach((citation, index) => {
     // Use correct field names from citation structure - handle null/undefined
@@ -53,7 +54,7 @@ export function renderReadingCitationsHtml(citations) {
               ${author ? `<span class="citation-author-badge">${HtmlSanitizer.escape(author)}</span>` : ''}
               ${paragraph ? `<div class="citation-ref">§${HtmlSanitizer.escape(String(paragraph))}</div>` : ''}
             </div>
-            ${text ? `<div class="citation-text">"${HtmlSanitizer.escape(text.substring(0, MAX_QUOTE_CHARS))}${text.length > MAX_QUOTE_CHARS ? '...' : ''}"</div>` : '<div class="citation-text citation-no-text">Riferimento senza testo citato</div>'}
+            ${text ? `<div class="citation-text">"${HtmlSanitizer.escape(text.substring(0, MAX_QUOTE_CHARS))}${text.length > MAX_QUOTE_CHARS ? '...' : ''}"</div>` : `<div class="citation-text citation-no-text">${HtmlSanitizer.escape(I18n.t('reading.citationNoText'))}</div>`}
             ${context ? `<div class="citation-context">📝 ${HtmlSanitizer.escape(context)}</div>` : ''}
             <div class="citation-meta">
               <span class="citation-type">${typeLabel}</span>
@@ -72,7 +73,7 @@ export function renderArticleTextHtml(article) {
   // Prepare text view (always available as fallback)
   let html = `
     <div class="article-content">
-      <h1>${HtmlSanitizer.escape(article.title || 'Articolo')}</h1>
+      <h1>${HtmlSanitizer.escape(article.title || I18n.t('reading.untitledArticle'))}</h1>
       ${article.excerpt ? `<p class="article-excerpt"><em>${HtmlSanitizer.escape(article.excerpt)}</em></p>` : ''}
       <hr class="article-divider">
   `;
@@ -86,7 +87,7 @@ export function renderArticleTextHtml(article) {
       }
     });
   } else {
-    html += `<p class="content-unavailable">Contenuto non disponibile.</p>`;
+    html += `<p class="content-unavailable">${HtmlSanitizer.escape(I18n.t('reading.contentUnavailable'))}</p>`;
   }
 
   html += `</div>`;
@@ -133,7 +134,7 @@ export function renderKeypointsTabHtml(keyPoints) {
   if (!keyPoints || keyPoints.length === 0) {
     return `
       <div class="empty-state">
-        <p>Nessun punto chiave disponibile</p>
+        <p>${HtmlSanitizer.escape(I18n.t('reading.noKeypoints'))}</p>
       </div>
     `;
   }

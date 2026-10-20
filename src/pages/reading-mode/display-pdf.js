@@ -5,25 +5,26 @@ import { state, elements } from './state.js';
 import { renderPdfPagesHtml, describePdfMeta, renderQuotesHtml } from './pdf-text.js';
 import { Logger } from '../../utils/core/logger.js';
 import { displaySummaryInTab, displayKeypointsInTab } from './display.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 // Display PDF content
 export function displayPDFContent() {
   Logger.info('📄 Rendering PDF content:', state.currentData);
 
   // Update header
-  document.querySelector('.reading-header h1').textContent = '📄 Analisi PDF';
+  document.querySelector('.reading-header h1').textContent = I18n.t('reading.pdfAnalysisTitle');
 
   // Update metadata - gestisci diverse strutture dati
   const { pageCount, filename, provider, languageLabel } = describePdfMeta(state.currentData);
 
-  elements.articleWordCount.textContent = `${pageCount} pagine`;
+  elements.articleWordCount.textContent = I18n.tf('reading.pdfPages', { count: pageCount });
   elements.articleReadTime.textContent = filename;
   elements.summaryProvider.textContent = provider;
   elements.summaryLanguage.textContent = languageLabel;
 
   // Left panel: Always show extracted text
   const articlePanel = document.querySelector('.article-panel .panel-header h2');
-  articlePanel.textContent = '📄 Testo Estratto';
+  articlePanel.textContent = I18n.t('reading.extractedTextTitle');
 
   // Hide view toggle buttons for PDF
   const viewToggle = document.querySelector('.view-toggle');
@@ -57,9 +58,9 @@ function displayExtractedText(text) {
     articleText.innerHTML = `
       <div class="extracted-text-container">
         <div class="text-metadata">
-          <p><strong>⚠️ Testo non disponibile</strong></p>
+          <p><strong>${I18n.t('reading.pdfTextUnavailable')}</strong></p>
           <p class="text-meta-secondary">
-            Il testo estratto non è disponibile per questo PDF.
+            ${I18n.t('reading.pdfTextUnavailableDesc')}
           </p>
         </div>
       </div>
@@ -73,9 +74,9 @@ function displayExtractedText(text) {
   articleText.innerHTML = `
     <div class="extracted-text-container">
       <div class="text-metadata">
-        <p><strong>Testo estratto dal PDF</strong></p>
+        <p><strong>${I18n.t('reading.pdfTextHeading')}</strong></p>
         <p class="text-meta-secondary">
-          Questo è il testo estratto automaticamente dal documento PDF.
+          ${I18n.t('reading.pdfTextDesc')}
         </p>
       </div>
       <hr class="content-divider">

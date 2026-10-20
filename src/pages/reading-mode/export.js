@@ -6,6 +6,7 @@ import { PDFExporter } from '../../utils/export/pdf-exporter.js';
 import { Logger } from '../../utils/core/logger.js';
 import { getTranslationText } from '../../shared/translation-text.js';
 import { buildReadingModeCopyText, buildPdfExportArgs } from './copy-text.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 // Copy all content
 export async function copyAll() {
@@ -17,27 +18,27 @@ export async function copyAll() {
     await navigator.clipboard.writeText(text);
 
     const originalText = elements.copyBtn.textContent;
-    elements.copyBtn.textContent = '✓ Copiato!';
+    elements.copyBtn.textContent = I18n.t('feedback.copied');
     setTimeout(() => {
       elements.copyBtn.textContent = originalText;
     }, 2000);
   } catch (error) {
     Logger.error('Copy error:', error);
-    alert('Errore durante la copia');
+    alert(I18n.t('history.copyError'));
   }
 }
 
 // Export to PDF
 export async function exportToPDF() {
   if (!state.currentData) {
-    alert('Nessun dato da esportare');
+    alert(I18n.t('reading.noDataToExport'));
     return;
   }
 
   try {
     // Mostra loading
     const originalText = elements.exportBtn.textContent;
-    elements.exportBtn.textContent = '⏳ Esportazione...';
+    elements.exportBtn.textContent = I18n.t('reading.exporting');
     elements.exportBtn.disabled = true;
 
     const { summary, keyPoints } = state.currentData;
@@ -54,14 +55,14 @@ export async function exportToPDF() {
     );
 
     // Successo
-    elements.exportBtn.textContent = '✓ Esportato!';
+    elements.exportBtn.textContent = I18n.t('feedback.exported');
     setTimeout(() => {
       elements.exportBtn.textContent = originalText;
       elements.exportBtn.disabled = false;
     }, 2000);
   } catch (error) {
     Logger.error('Export error:', error);
-    alert("Errore durante l'esportazione PDF: " + error.message);
+    alert(I18n.t('popup.exportPdfError') + ' ' + error.message);
     elements.exportBtn.textContent = 'PDF';
     elements.exportBtn.disabled = false;
   }

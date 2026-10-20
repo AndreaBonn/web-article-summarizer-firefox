@@ -1,4 +1,5 @@
 import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 /**
  * Splits extracted PDF text on "--- Pagina N ---" markers.
@@ -26,7 +27,7 @@ export function renderPdfPagesHtml(text) {
   return splitPdfTextSegments(text)
     .map(({ kind, value }) =>
       kind === 'page'
-        ? `<div class="page-marker">📄 Pagina ${HtmlSanitizer.escape(value)}</div>`
+        ? `<div class="page-marker">${HtmlSanitizer.escape(I18n.tf('reading.pageMarker', { page: value }))}</div>`
         : `<div class="page-content">${HtmlSanitizer.escape(value).replace(/\n/g, '<br>')}</div>`,
     )
     .join('');
@@ -47,7 +48,7 @@ export function describePdfMeta(data) {
 }
 
 export function renderQuotesHtml(quotes) {
-  let html = '<div class="quotes-content"><h3>💬 Citazioni Importanti</h3>';
+  let html = `<div class="quotes-content"><h3>${HtmlSanitizer.escape(I18n.t('reading.importantQuotes'))}</h3>`;
 
   quotes.forEach((quote, index) => {
     html += `

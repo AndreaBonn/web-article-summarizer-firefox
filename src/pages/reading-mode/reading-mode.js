@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       showNoDataMessage();
     } else {
       Logger.error('Initialization error:', error);
-      showError(error.message || 'Errore durante il caricamento dei dati');
+      showError(error.message || I18n.t('reading.loadError'));
     }
   }
 });

@@ -33,7 +33,7 @@ export function displayContent() {
   // Safety check for article
   if (!article) {
     Logger.error('Article data is missing');
-    showError('Dati articolo mancanti');
+    showError(I18n.t('reading.missingData'));
     return;
   }
 
@@ -111,7 +111,7 @@ function displayArticle(article) {
           Logger.warn('⚠️ Iframe bloccato, switch automatico a vista testo');
           switchArticleView('text');
           elements.viewIframeBtn.disabled = true;
-          elements.viewIframeBtn.title = 'Iframe bloccato dal sito';
+          elements.viewIframeBtn.title = I18n.t('reading.iframeBlocked');
         } else {
           Logger.info('✅ Iframe caricato correttamente');
         }
@@ -124,7 +124,7 @@ function displayArticle(article) {
     // No URL = use text view
     switchArticleView('text');
     elements.viewIframeBtn.disabled = true;
-    elements.viewIframeBtn.title = 'URL non disponibile';
+    elements.viewIframeBtn.title = I18n.t('reading.urlUnavailable');
   }
 }
 
@@ -150,7 +150,7 @@ function highlightParagraph(paragraphNumber) {
     }
   } else {
     // In iframe view, show a message
-    Modal.alert('Passa alla vista "Testo" per evidenziare i paragrafi');
+    Modal.alert(I18n.t('reading.switchToTextView'));
   }
 }
 
@@ -189,7 +189,7 @@ export function displaySummaryInTab(summary) {
   const isFromCache =
     state.currentData?.isFromCache || state.currentData?.metadata?.fromCache || false;
   const cacheBadge = isFromCache
-    ? '<span class="cache-badge cache-badge-green">⚡ Da Cache!</span>'
+    ? `<span class="cache-badge cache-badge-green">${I18n.t('reading.fromCacheBadge')}</span>`
     : '';
 
   elements.summaryTabContent.innerHTML = `

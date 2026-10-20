@@ -1,6 +1,7 @@
 // Reading Mode - testo da leggere per tab
 import { getTranslationText } from '../../shared/translation-text.js';
 import { formatKeyPointsForSpeech, formatQAForSpeech } from '../../shared/speech-text.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 /**
  * Testo TTS del tab indicato, o null se non c'è nulla da leggere.
@@ -25,7 +26,7 @@ export function getSpeechTextForTab(tabName, data) {
       if (!data?.citations?.citations) return null;
       return data.citations.citations
         .map((citation, index) => {
-          let text = `Citazione ${index + 1}. `;
+          let text = I18n.tf('voice.citationNumber', { n: index + 1 }) + ' ';
           if (citation.author) text += `${citation.author}. `;
           if (citation.quote_text) text += citation.quote_text;
           return text;

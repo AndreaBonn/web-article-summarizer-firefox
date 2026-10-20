@@ -27,7 +27,7 @@ export async function translateArticle() {
   const extractedText = resolvePdfText(state.currentData);
   if (state.currentData.isPDF && !extractedText) {
     Logger.error('No extracted text for PDF translation');
-    await Modal.error('Testo non disponibile per la traduzione');
+    await Modal.error(I18n.t('translation.textUnavailable'));
     return;
   }
 
@@ -38,7 +38,7 @@ export async function translateArticle() {
   }
 
   elements.translateBtn.disabled = true;
-  elements.translateBtn.textContent = '⏳ Traduzione in corso...';
+  elements.translateBtn.textContent = '⏳ ' + I18n.t('feedback.translating');
 
   try {
     // Get settings
@@ -58,10 +58,7 @@ export async function translateArticle() {
         forceTranslate: false,
       });
 
-      const result = unwrapServiceResponse(
-        pdfResponse,
-        'Il servizio non risponde. Ricarica la pagina e riprova.',
-      );
+      const result = unwrapServiceResponse(pdfResponse, I18n.t('error.serviceUnavailable'));
 
       translationResult = result;
 
@@ -79,7 +76,7 @@ export async function translateArticle() {
           });
 
           if (!forceResponse || !forceResponse.success) {
-            throw new Error(forceResponse?.error || 'Errore durante la traduzione forzata.');
+            throw new Error(forceResponse?.error || I18n.t('reading.forceTranslateError'));
           }
           translationResult = forceResponse.result;
         } else if (choice === 'ignore') {
@@ -89,7 +86,7 @@ export async function translateArticle() {
           };
         } else {
           elements.translateBtn.disabled = false;
-          elements.translateBtn.textContent = 'Traduci Articolo';
+          elements.translateBtn.textContent = I18n.t('translation.button');
           return;
         }
       }
@@ -102,10 +99,7 @@ export async function translateArticle() {
         provider,
       });
 
-      const result = unwrapServiceResponse(
-        translateResponse,
-        'Il servizio non risponde. Ricarica la pagina e riprova.',
-      );
+      const result = unwrapServiceResponse(translateResponse, I18n.t('error.serviceUnavailable'));
 
       translationResult = {
         sameLanguage: false,
@@ -131,13 +125,13 @@ export async function translateArticle() {
     elements.translationTabContent.innerHTML = `
       <div class="empty-state">
         <p class="error-text">❌ ${HtmlSanitizer.escape(error.message)}</p>
-        <button id="translateBtn" class="btn btn-primary">Riprova</button>
+        <button id="translateBtn" class="btn btn-primary">${HtmlSanitizer.escape(I18n.t('action.retry'))}</button>
       </div>
     `;
     document.getElementById('translateBtn').addEventListener('click', translateArticle);
   } finally {
     elements.translateBtn.disabled = false;
-    elements.translateBtn.textContent = 'Traduci Articolo';
+    elements.translateBtn.textContent = I18n.t('translation.button');
   }
 }
 
@@ -150,7 +144,7 @@ export async function extractCitations() {
   const extractedText = resolvePdfText(state.currentData);
   if (state.currentData.isPDF && !extractedText) {
     Logger.error('No extracted text for PDF citations');
-    await Modal.error("Testo non disponibile per l'estrazione citazioni");
+    await Modal.error(I18n.t('reading.citationsTextUnavailable'));
     return;
   }
 
@@ -161,7 +155,7 @@ export async function extractCitations() {
   }
 
   elements.extractCitationsBtn.disabled = true;
-  elements.extractCitationsBtn.textContent = '⏳ Estrazione in corso...';
+  elements.extractCitationsBtn.textContent = I18n.t('reading.extractingCitations');
 
   try {
     // Get settings
@@ -180,10 +174,7 @@ export async function extractCitations() {
         provider,
       });
 
-      const result = unwrapServiceResponse(
-        pdfResponse,
-        'Il servizio non risponde. Ricarica la pagina e riprova.',
-      );
+      const result = unwrapServiceResponse(pdfResponse, I18n.t('error.serviceUnavailable'));
 
       citations = result;
     } else {
@@ -196,10 +187,10 @@ export async function extractCitations() {
       });
 
       if (!response) {
-        throw new Error('Il servizio non risponde. Ricarica la pagina e riprova.');
+        throw new Error(I18n.t('error.serviceUnavailable'));
       }
       if (!response.success) {
-        throw new Error(response.error || "Errore durante l'estrazione");
+        throw new Error(response.error || I18n.t('popup.extractionError'));
       }
 
       citations = response.result.citations;
@@ -218,7 +209,7 @@ export async function extractCitations() {
     elements.citationsTabContent.innerHTML = `
       <div class="empty-state">
         <p class="error-text">❌ ${HtmlSanitizer.escape(error.message)}</p>
-        <button id="extractCitationsBtn" class="btn btn-primary">Riprova</button>
+        <button id="extractCitationsBtn" class="btn btn-primary">${HtmlSanitizer.escape(I18n.t('action.retry'))}</button>
       </div>
     `;
     document.getElementById('extractCitationsBtn').addEventListener('click', extractCitations);
@@ -339,9 +330,6 @@ export async function updateDataInStorage() {
     }
   } catch (error) {
     Logger.error('Error updating storage:', error);
-    await Modal.warning(
-      'I dati restano visibili ma non sono stati salvati nella cronologia.',
-      'Errore salvataggio',
-    );
+    await Modal.warning(I18n.t('reading.saveFailed'), I18n.t('reading.saveFailedTitle'));
   }
 }

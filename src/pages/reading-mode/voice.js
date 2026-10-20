@@ -14,6 +14,7 @@ import {
 import { eventCleanup } from '../../utils/core/event-cleanup.js';
 import { createFontSizeControl } from '../../shared/font-size-control.js';
 import { getSpeechTextForTab } from './speech.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 // ============================================
 // VOICE CONTROLS
@@ -27,7 +28,7 @@ export function setupVoiceEventListeners() {
   setupTTSEventListeners({
     elements,
     onError: (errorDetail) => {
-      alert('Errore nella lettura vocale: ' + errorDetail.error);
+      alert(I18n.t('voice.readError') + ' ' + errorDetail.error);
     },
   });
 
@@ -35,8 +36,8 @@ export function setupVoiceEventListeners() {
   eventCleanup.addEventListener(window, 'stt:started', () => {
     if (elements.qaVoiceBtn) {
       elements.qaVoiceBtn.classList.add('listening');
-      elements.qaVoiceBtn.textContent = 'Voce';
-      elements.qaVoiceBtn.title = 'Ascolto in corso...';
+      elements.qaVoiceBtn.textContent = I18n.t('reading.voiceText');
+      elements.qaVoiceBtn.title = I18n.t('qa.listening');
     }
   });
 
@@ -56,16 +57,16 @@ export function setupVoiceEventListeners() {
     }
     if (elements.qaVoiceBtn) {
       elements.qaVoiceBtn.classList.remove('listening');
-      elements.qaVoiceBtn.textContent = 'Voce';
-      elements.qaVoiceBtn.title = 'Domanda vocale';
+      elements.qaVoiceBtn.textContent = I18n.t('reading.voiceText');
+      elements.qaVoiceBtn.title = I18n.t('reading.voiceTitle');
     }
   });
 
   eventCleanup.addEventListener(window, 'stt:ended', () => {
     if (elements.qaVoiceBtn) {
       elements.qaVoiceBtn.classList.remove('listening');
-      elements.qaVoiceBtn.textContent = 'Voce';
-      elements.qaVoiceBtn.title = 'Domanda vocale';
+      elements.qaVoiceBtn.textContent = I18n.t('reading.voiceText');
+      elements.qaVoiceBtn.title = I18n.t('reading.voiceTitle');
     }
   });
 
@@ -73,10 +74,10 @@ export function setupVoiceEventListeners() {
     Logger.error('STT Error:', event.detail);
     if (elements.qaVoiceBtn) {
       elements.qaVoiceBtn.classList.remove('listening');
-      elements.qaVoiceBtn.textContent = 'Voce';
-      elements.qaVoiceBtn.title = 'Domanda vocale';
+      elements.qaVoiceBtn.textContent = I18n.t('reading.voiceText');
+      elements.qaVoiceBtn.title = I18n.t('reading.voiceTitle');
     }
-    alert(event.detail.message || 'Errore nel riconoscimento vocale');
+    alert(event.detail.message || I18n.t('voice.recognitionError'));
   });
 }
 
@@ -88,7 +89,7 @@ export function handleTTSPlay() {
   const voiceLang = VoiceController.mapLanguageCode(lang);
 
   helperTTSPlay(state.voiceController, getCurrentTabText, voiceLang, () => {
-    alert('Nessun testo da leggere');
+    alert(I18n.t('voice.noText'));
   });
 }
 
@@ -121,14 +122,12 @@ function getCurrentTabText() {
  */
 export async function handleVoiceInput() {
   if (!state.voiceController) {
-    alert('Controller vocale non inizializzato');
+    alert(I18n.t('voice.notInitialized'));
     return;
   }
 
   if (!STTManager.isSupported()) {
-    alert(
-      'Il riconoscimento vocale non è supportato in questo browser. Usa Chrome, Edge o Safari.',
-    );
+    alert(I18n.t('voice.sttUnsupported'));
     return;
   }
 

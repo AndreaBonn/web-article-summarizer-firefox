@@ -34,7 +34,7 @@ export async function askQuestion() {
   qaItem.className = 'qa-item';
   qaItem.innerHTML = `
     <div class="qa-question">Q: ${HtmlSanitizer.escape(question)}</div>
-    <div class="qa-answer">⏳ Sto pensando...</div>
+    <div class="qa-answer">⏳ ${HtmlSanitizer.escape(I18n.t('feedback.thinking'))}</div>
   `;
   elements.qaHistory.appendChild(qaItem);
 
@@ -61,10 +61,7 @@ export async function askQuestion() {
         provider,
       });
 
-      const result = unwrapServiceResponse(
-        pdfResponse,
-        'Il servizio non risponde. Ricarica la pagina e riprova.',
-      );
+      const result = unwrapServiceResponse(pdfResponse, I18n.t('error.serviceUnavailable'));
 
       answer = result.answer;
     } else {
@@ -81,10 +78,7 @@ export async function askQuestion() {
         settings,
       });
 
-      const result = unwrapServiceResponse(
-        qaResponse,
-        'Il servizio non risponde. Ricarica la pagina e riprova.',
-      );
+      const result = unwrapServiceResponse(qaResponse, I18n.t('error.serviceUnavailable'));
 
       answer = result.answer;
     }
@@ -104,6 +98,7 @@ export async function askQuestion() {
     await updateDataInStorage();
   } catch (error) {
     Logger.error('Q&A error:', error);
-    qaItem.querySelector('.qa-answer').textContent = `❌ Errore: ${error.message}`;
+    qaItem.querySelector('.qa-answer').textContent =
+      `❌ ${I18n.t('feedback.error')} ${error.message}`;
   }
 }
