@@ -7,6 +7,7 @@ import { Modal } from '@utils/core/modal.js';
 import { getTranslationText } from '../../shared/translation-text.js';
 import { computeExportAvailability } from '../../shared/export-modal.js';
 import { mergeEmailOptions, hasAnySelected } from '../../shared/email-options.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 function getEmailAvailability(entry) {
   return computeExportAvailability({
@@ -72,12 +73,12 @@ export async function sendCurrentEmail() {
       const email = emailInput.value.trim();
 
       if (!email) {
-        await Modal.alert('Inserisci un indirizzo email', 'Email Mancante', '⚠️');
+        await Modal.alert(I18n.t('email.missing'), I18n.t('email.missingTitle'), '⚠️');
         return;
       }
 
       if (!EmailManager.isValidEmail(email)) {
-        await Modal.alert('Inserisci un indirizzo email valido', 'Email Non Valida', '⚠️');
+        await Modal.alert(I18n.t('email.invalid'), I18n.t('email.invalidTitle'), '⚠️');
         return;
       }
 
@@ -95,7 +96,7 @@ export async function sendCurrentEmail() {
 
       // Verifica che almeno una opzione sia selezionata
       if (!hasAnySelected(options)) {
-        await Modal.alert('Seleziona almeno una sezione da includere', 'Nessuna Selezione', '⚠️');
+        await Modal.alert(I18n.t('email.noSection'), I18n.t('export.noSelectionTitle'), '⚠️');
         return;
       }
 
@@ -121,11 +122,7 @@ export async function sendCurrentEmail() {
       modal.classList.add('hidden');
 
       // Feedback
-      await Modal.alert(
-        'Il client email è stato aperto. Verifica e invia il messaggio.',
-        'Email Preparata',
-        '✅',
-      );
+      await Modal.alert(I18n.t('email.clientOpened'), I18n.t('email.preparedTitle'), '✅');
 
       // Cleanup
       cleanup();

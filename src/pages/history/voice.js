@@ -11,6 +11,7 @@ import {
   handleTTSStop as helperTTSStop,
 } from '../../shared/voice-page-helper.js';
 import { getModalSpeechText } from './speech.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 // ============================================
 // VOICE CONTROLS
@@ -28,7 +29,7 @@ export function setupVoiceEventListeners() {
       stopBtn: document.getElementById('modalTtsStopBtn'),
     }),
     onError: (errorDetail) => {
-      Modal.error('Errore nella lettura vocale: ' + errorDetail.error);
+      Modal.error(I18n.t('voice.readError') + ' ' + errorDetail.error);
     },
   });
 }
@@ -43,7 +44,7 @@ export function handleModalTTSPlay() {
   const voiceLang = VoiceController.mapLanguageCode(lang);
 
   helperTTSPlay(state.voiceController, getCurrentModalTabText, voiceLang, () => {
-    Modal.alert('Nessun testo da leggere', 'Lettura Vocale', 'ℹ️');
+    Modal.alert(I18n.t('voice.noText'), I18n.t('voice.readAloudTitle'), 'ℹ️');
   });
 }
 

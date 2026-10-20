@@ -2,6 +2,7 @@ import { HtmlSanitizer } from '../../utils/security/html-sanitizer.js';
 import { CitationExtractor } from '../../utils/ai/citation-extractor.js';
 import { formatSummaryWithKeyPointsText } from '../../shared/export-formatters.js';
 import { getTranslationText } from '../../shared/translation-text.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 export function renderDetailKeypointsHtml(keyPoints) {
   const keypointsHtml = keyPoints
@@ -24,7 +25,7 @@ export function renderTranslationHtml(translation) {
     const info =
       typeof translation === 'object'
         ? `<div class="translation-info-modal">
-        Tradotto da ${HtmlSanitizer.escape(translation.originalLanguage)} a ${HtmlSanitizer.escape(translation.targetLanguage)}
+        ${HtmlSanitizer.escape(I18n.tf('history.translatedFrom', { from: translation.originalLanguage, to: translation.targetLanguage }))}
       </div>`
         : '';
     return `
@@ -34,7 +35,7 @@ export function renderTranslationHtml(translation) {
   } else {
     return `
       <p class="modal-empty-state">
-        Nessuna traduzione disponibile per questo riassunto
+        ${HtmlSanitizer.escape(I18n.t('history.noTranslation'))}
       </p>
     `;
   }
@@ -59,7 +60,7 @@ export function renderQAHtml(qa) {
   } else {
     return `
       <p class="modal-empty-state">
-        Nessuna domanda e risposta disponibile per questo riassunto
+        ${HtmlSanitizer.escape(I18n.t('history.noQA'))}
       </p>
     `;
   }
@@ -69,11 +70,11 @@ export function renderCitationsHtml(entry) {
   if (entry.citations && entry.citations.citations && entry.citations.citations.length > 0) {
     let citationsHtml = `
       <div class="citations-info">
-        <strong>${entry.citations.total_citations || entry.citations.citations.length} citazioni trovate</strong>
+        <strong>${HtmlSanitizer.escape(I18n.tf('history.citationsFound', { count: entry.citations.total_citations || entry.citations.citations.length }))}</strong>
       </div>
 
       <div class="article-citation-box-detail">
-        <h4>Citazione Articolo Principale (APA)</h4>
+        <h4>${HtmlSanitizer.escape(I18n.t('history.mainArticleCitation'))}</h4>
         <div class="article-citation-monospace">
           ${HtmlSanitizer.escape(CitationExtractor.formatCitation(entry.article, 'apa'))}
         </div>
@@ -109,7 +110,7 @@ export function renderCitationsHtml(entry) {
   } else {
     return `
       <p class="modal-empty-state">
-        Nessuna citazione disponibile per questo riassunto
+        ${HtmlSanitizer.escape(I18n.t('history.noCitations'))}
       </p>
     `;
   }

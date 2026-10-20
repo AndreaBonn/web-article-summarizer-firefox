@@ -21,8 +21,8 @@ export async function loadPDFHistory() {
     container.innerHTML = `
       <div class="empty-state">
         <div class="icon">—</div>
-        <p>Nessun PDF analizzato</p>
-        <small>I tuoi PDF analizzati appariranno qui</small>
+        <p>${I18n.t('history.pdfEmpty')}</p>
+        <small>${I18n.t('history.pdfEmptyDesc')}</small>
       </div>
     `;
     return;
@@ -54,7 +54,7 @@ export async function loadPDFHistory() {
         const isFavorite = await HistoryManager.togglePDFFavorite(id);
         favoriteBtn.classList.toggle('active', isFavorite);
         favoriteBtn.textContent = isFavorite ? '★' : '☆';
-        favoriteBtn.title = isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti';
+        favoriteBtn.title = I18n.t(isFavorite ? 'history.removeFavorite' : 'history.addFavorite');
       });
     }
   });
@@ -63,7 +63,7 @@ export async function loadPDFHistory() {
 async function openPDF(id) {
   const entry = await HistoryManager.getPDFById(id);
   if (!entry) {
-    alert('PDF non trovato');
+    alert(I18n.t('history.pdfNotFound'));
     return;
   }
 
@@ -79,8 +79,8 @@ async function openPDF(id) {
 
 async function deletePDF(id) {
   const confirmed = await Modal.confirm(
-    'Sei sicuro di voler eliminare questo PDF dalla cronologia?\n\nQuesta azione non può essere annullata.',
-    'Elimina PDF',
+    I18n.t('history.confirmDeletePdf') + '\n\n' + I18n.t('history.actionCannotUndo'),
+    I18n.t('history.deletePdfTitle'),
     '×',
   );
 
@@ -100,8 +100,8 @@ export async function loadMultiAnalysisHistory() {
     container.innerHTML = `
       <div class="empty-state">
         <div class="icon">—</div>
-        <p>Nessuna analisi Multi Articolo</p>
-        <small>Le tue analisi Multi Articolo appariranno qui</small>
+        <p>${I18n.t('history.multiEmpty')}</p>
+        <small>${I18n.t('history.multiEmptyDesc')}</small>
       </div>
     `;
     return;
@@ -138,7 +138,7 @@ export async function loadMultiAnalysisHistory() {
         // Aggiorna UI
         favoriteBtn.classList.toggle('active', isFavorite);
         favoriteBtn.textContent = isFavorite ? '★' : '☆';
-        favoriteBtn.title = isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti';
+        favoriteBtn.title = I18n.t(isFavorite ? 'history.removeFavorite' : 'history.addFavorite');
       });
     }
   });
@@ -156,9 +156,7 @@ async function openMultiAnalysis(id) {
 
   // Verifica che i dati siano validi
   if (!isValidMultiAnalysisEntry(entry)) {
-    await Modal.error(
-      "Questa analisi ha una struttura dati non valida. Prova a eliminarla e rifare l'analisi.",
-    );
+    await Modal.error(I18n.t('history.invalidMultiAnalysis'));
     return;
   }
 
@@ -177,8 +175,8 @@ async function openMultiAnalysis(id) {
 
 async function deleteMultiAnalysis(id) {
   const confirmed = await Modal.confirm(
-    'Vuoi eliminare questa analisi Multi Articolo?',
-    'Conferma Eliminazione',
+    I18n.t('history.confirmDeleteMulti'),
+    I18n.t('history.confirmDeleteTitle'),
     '⚠️',
   );
 

@@ -1,3 +1,5 @@
+import { I18n } from '../../utils/i18n/i18n.js';
+
 export function buildFilterCriteria({ provider, language, contentType }) {
   const filters = {};
   if (provider) filters.provider = provider;
@@ -17,28 +19,28 @@ export function applyFlagFilter(entries, favoriteFilter) {
 
 const CLEAR_COPY = {
   single: {
-    message: 'Sei sicuro di voler cancellare tutta la cronologia degli articoli singoli?',
-    favorites: 'articoli preferiti NON verranno eliminati.',
-    title: 'Cancella Articoli Singoli',
+    message: 'history.confirmClearSingle',
+    favorites: 'history.favoritesNotDeleted',
+    title: 'history.clearSingleTitle',
   },
   pdf: {
-    message: 'Sei sicuro di voler cancellare tutta la cronologia dei PDF analizzati?',
-    favorites: 'PDF preferiti NON verranno eliminati.',
-    title: 'Elimina Cronologia PDF',
+    message: 'history.confirmClearPdf',
+    favorites: 'history.favoritesNotDeletedPdf',
+    title: 'history.clearPdfTitle',
   },
   multi: {
-    message: 'Sei sicuro di voler cancellare tutta la cronologia delle analisi Multi Articolo?',
-    favorites: 'analisi preferite NON verranno eliminate.',
-    title: 'Cancella Analisi Multiple',
+    message: 'history.confirmClearMulti',
+    favorites: 'history.favoritesNotDeletedMulti',
+    title: 'history.clearMultiTitle',
   },
 };
 
 export function buildClearConfirmMessage(kind, favoritesCount) {
   const copy = CLEAR_COPY[kind];
-  let message = copy.message;
+  let message = I18n.t(copy.message);
   if (favoritesCount > 0) {
-    message += `\n\n⭐ ${favoritesCount} ${copy.favorites}`;
+    message += '\n\n' + I18n.tf(copy.favorites, { count: favoritesCount });
   }
-  message += '\n\nQuesta azione non può essere annullata.';
-  return { message, title: copy.title };
+  message += '\n\n' + I18n.t('history.actionCannotUndo');
+  return { message, title: I18n.t(copy.title) };
 }

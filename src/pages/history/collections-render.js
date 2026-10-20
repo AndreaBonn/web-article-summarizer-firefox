@@ -14,13 +14,14 @@ export function renderPDFCardHtml(entry) {
   const hasNotes = !!entry.notes;
 
   const badges = [];
-  if (hasTranslation) badges.push('<span class="badge">Tradotto</span>');
+  if (hasTranslation)
+    badges.push(`<span class="badge">${I18n.t('history.badgeTranslated')}</span>`);
   if (hasQA) badges.push(`<span class="badge">${Number(entry.qa.length) || 0} Q&A</span>`);
   if (hasCitations)
     badges.push(
-      `<span class="badge">${Number(entry.citations.citations.length) || 0} Citazioni</span>`,
+      `<span class="badge">${I18n.tf('history.badgeCitations', { count: Number(entry.citations.citations.length) || 0 })}</span>`,
     );
-  if (hasNotes) badges.push('<span class="badge">Note</span>');
+  if (hasNotes) badges.push(`<span class="badge">${I18n.t('tab.notes')}</span>`);
   if (entry.metadata.fromCache) badges.push('<span class="badge cache-badge">Cache</span>');
 
   return `
@@ -29,7 +30,7 @@ export function renderPDFCardHtml(entry) {
         <div class="card-title-row">
           <h3 class="card-title">${HtmlSanitizer.escape(entry.pdf.name)}</h3>
           <button class="btn-favorite ${isFavorite ? 'active' : ''}"
-                  title="${isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}">
+                  title="${I18n.t(isFavorite ? 'history.removeFavorite' : 'history.addFavorite')}">
             ${isFavorite ? '★' : '☆'}
           </button>
         </div>
@@ -50,7 +51,7 @@ export function renderPDFCardHtml(entry) {
         ${badges.length > 0 ? `<div class="badges">${badges.join('')}</div>` : ''}
 
         <div class="keypoints-preview">
-          <strong>Punti Chiave:</strong>
+          <strong>${I18n.t('history.keyPointsLabel')}</strong>
           <ul>
             ${entry.keyPoints
               .slice(0, 3)
@@ -62,8 +63,8 @@ export function renderPDFCardHtml(entry) {
       </div>
 
       <div class="card-actions">
-        <button class="history-btn btn-delete btn-delete-full" title="Elimina">
-          Elimina
+        <button class="history-btn btn-delete btn-delete-full" title="${I18n.t('action.delete')}">
+          ${I18n.t('action.delete')}
         </button>
       </div>
     </div>
@@ -109,11 +110,11 @@ export function renderMultiAnalysisCardHtml(entry) {
                 .join('')
             : `<div class="multi-analysis-article-item">${I18n.t('multi.noArticles')}</div>`
         }
-        ${entry.articles && entry.articles.length > 3 ? `<div class="multi-analysis-article-item">... e altri ${entry.articles.length - 3}</div>` : ''}
+        ${entry.articles && entry.articles.length > 3 ? `<div class="multi-analysis-article-item">${I18n.tf('history.moreArticles', { count: entry.articles.length - 3 })}</div>` : ''}
       </div>
 
       <div class="multi-analysis-actions">
-        <button class="multi-analysis-btn danger btn-delete-multi">Elimina</button>
+        <button class="multi-analysis-btn danger btn-delete-multi">${I18n.t('action.delete')}</button>
       </div>
     </div>
   `;

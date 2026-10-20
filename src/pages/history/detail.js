@@ -63,8 +63,8 @@ export async function openDetail(id) {
   // Notes (always editable)
   const notesHtml = `
     <div class="notes-container">
-      <textarea id="notesTextarea" class="notes-textarea" placeholder="Aggiungi note personali su questo articolo...">${HtmlSanitizer.escape(state.currentEntry.notes || '')}</textarea>
-      <button id="saveNotesBtn" class="btn btn-primary save-notes-btn">Salva Note</button>
+      <textarea id="notesTextarea" class="notes-textarea" placeholder="${HtmlSanitizer.escape(I18n.t('history.notesPlaceholder'))}">${HtmlSanitizer.escape(state.currentEntry.notes || '')}</textarea>
+      <button id="saveNotesBtn" class="btn btn-primary save-notes-btn">${HtmlSanitizer.escape(I18n.t('history.saveNotes'))}</button>
     </div>
   `;
   document.getElementById('modalNotes').innerHTML = notesHtml;
@@ -151,7 +151,7 @@ export function exportCurrentPdf() {
           options.includeCitations ? state.currentEntry.citations : null,
         );
       } catch (error) {
-        await Modal.error("Errore durante l'esportazione PDF: " + error.message);
+        await Modal.error(I18n.t('history.exportPdfError') + ' ' + error.message);
       }
     },
   });
@@ -161,8 +161,8 @@ export function exportCurrentMarkdown() {
   if (!state.currentEntry) return;
 
   showExportModal({
-    title: 'Esporta Markdown',
-    resetTitle: 'Esporta PDF',
+    title: I18n.t('export.markdown'),
+    resetTitle: I18n.t('export.pdf'),
     availability: _getEntryAvailability(),
     prefix: 'pdf',
     onConfirm: async (options) => {
@@ -183,7 +183,7 @@ export function exportCurrentMarkdown() {
           options.includeCitations ? state.currentEntry.citations : null,
         );
       } catch (error) {
-        await Modal.error("Errore durante l'esportazione Markdown: " + error.message);
+        await Modal.error(I18n.t('history.exportMdError') + ' ' + error.message);
       }
     },
   });

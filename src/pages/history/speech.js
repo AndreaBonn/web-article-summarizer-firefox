@@ -1,6 +1,7 @@
 // History - testo da leggere per tab del modal dettaglio
 import { formatKeyPointsForSpeech, formatQAForSpeech } from '../../shared/speech-text.js';
 import { getTranslationText } from '../../shared/translation-text.js';
+import { I18n } from '../../utils/i18n/i18n.js';
 
 /**
  * Testo TTS del tab indicato per una voce di cronologia, o null.
@@ -25,7 +26,7 @@ export function getModalSpeechText(tabName, entry) {
       if (!entry.citations?.citations) return null;
       return entry.citations.citations
         .map((citation, index) => {
-          let text = `Citazione ${index + 1}. `;
+          let text = I18n.tf('voice.citationNumber', { n: index + 1 }) + ' ';
           if (citation.author) text += `${citation.author}. `;
           if (citation.quote_text || citation.text) text += citation.quote_text || citation.text;
           return text;

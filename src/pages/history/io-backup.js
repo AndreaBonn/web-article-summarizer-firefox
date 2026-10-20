@@ -26,7 +26,7 @@ export async function downloadHistory() {
     // Mostra loading
     const btn = document.getElementById('downloadHistoryBtn');
     const originalText = btn.textContent;
-    btn.textContent = '⏳ Preparazione...';
+    btn.textContent = I18n.t('backup.preparing');
     btn.disabled = true;
 
     // Ottieni tutta la cronologia
@@ -68,7 +68,7 @@ export async function downloadHistory() {
     URL.revokeObjectURL(url);
 
     // Mostra successo
-    btn.textContent = '✓ Scaricato!';
+    btn.textContent = I18n.t('backup.downloaded');
     setTimeout(() => {
       btn.textContent = originalText;
       btn.disabled = false;
@@ -76,21 +76,22 @@ export async function downloadHistory() {
 
     // Mostra statistiche
     await Modal.alert(
-      `Backup completato con successo!\n\n` +
-        `📄 Articoli singoli: ${singleHistory.length}\n` +
-        `🔬 Analisi multiple: ${multiHistory.length}\n` +
-        `📑 Analisi PDF: ${pdfHistory.length}\n` +
-        `📊 Totale riassunti: ${stats.totalSummaries || 0}\n` +
-        `📝 Parole elaborate: ${(stats.totalWords || 0).toLocaleString()}\n\n` +
-        `File salvato:\n${filename}`,
-      'Backup Completato',
+      I18n.tf('backup.downloadDone', {
+        single: singleHistory.length,
+        multi: multiHistory.length,
+        pdf: pdfHistory.length,
+        summaries: stats.totalSummaries || 0,
+        words: (stats.totalWords || 0).toLocaleString(I18n.currentLanguage),
+        filename,
+      }),
+      I18n.t('backup.downloadDoneTitle'),
       '✅',
     );
   } catch (error) {
     Logger.error('Errore download cronologia:', error);
 
     const btn = document.getElementById('downloadHistoryBtn');
-    btn.textContent = '❌ Errore';
+    btn.textContent = I18n.t('backup.buttonError');
     btn.disabled = false;
 
     setTimeout(() => {
@@ -98,8 +99,8 @@ export async function downloadHistory() {
     }, 2000);
 
     await Modal.error(
-      'Errore durante il download della cronologia: ' + error.message,
-      'Errore Download',
+      I18n.t('backup.downloadError') + ' ' + error.message,
+      I18n.t('backup.downloadErrorTitle'),
     );
   }
 }
@@ -119,7 +120,7 @@ export async function importHistory(event) {
     // Chiedi conferma
     const confirmed = await Modal.confirm(
       buildImportConfirmMessage(backup),
-      'Conferma Importazione',
+      I18n.t('backup.importConfirmTitle'),
       '📥',
     );
 
@@ -132,7 +133,7 @@ export async function importHistory(event) {
     // Mostra loading
     const btn = document.getElementById('importHistoryBtn');
     const originalText = btn.textContent;
-    btn.textContent = '⏳ Importazione...';
+    btn.textContent = I18n.t('backup.importing');
     btn.disabled = true;
 
     // Importa articoli singoli
@@ -184,7 +185,7 @@ export async function importHistory(event) {
     await state.loadPDFHistory();
 
     // Ripristina bottone
-    btn.textContent = '✓ Importato!';
+    btn.textContent = I18n.t('backup.imported');
     setTimeout(() => {
       btn.textContent = originalText;
       btn.disabled = false;
@@ -192,19 +193,19 @@ export async function importHistory(event) {
 
     // Mostra successo
     await Modal.alert(
-      `Importazione completata con successo!\n\n` +
-        `📄 Articoli singoli importati: ${importedSingle}\n` +
-        `🔬 Analisi multiple importate: ${importedMulti}\n` +
-        `📑 Analisi PDF importate: ${importedPDF}\n\n` +
-        `La cronologia è stata aggiornata.`,
-      'Importazione Completata',
+      I18n.tf('backup.importDone', {
+        single: importedSingle,
+        multi: importedMulti,
+        pdf: importedPDF,
+      }),
+      I18n.t('backup.importDoneTitle'),
       '✅',
     );
   } catch (error) {
     Logger.error('Errore importazione cronologia:', error);
 
     const btn = document.getElementById('importHistoryBtn');
-    btn.textContent = '❌ Errore';
+    btn.textContent = I18n.t('backup.buttonError');
     btn.disabled = false;
 
     setTimeout(() => {
@@ -212,11 +213,8 @@ export async function importHistory(event) {
     }, 2000);
 
     await Modal.error(
-      `Errore durante l'importazione della cronologia:\n\n` +
-        `${error.message}\n\n` +
-        `Assicurati che il file sia un backup valido\n` +
-        `generato da questa estensione.`,
-      'Errore Importazione',
+      I18n.tf('backup.importError', { message: error.message }),
+      I18n.t('backup.importErrorTitle'),
     );
   } finally {
     // Reset input

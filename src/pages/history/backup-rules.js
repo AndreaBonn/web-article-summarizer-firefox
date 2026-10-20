@@ -1,3 +1,5 @@
+import { I18n } from '../../utils/i18n/i18n.js';
+
 const VALID_PROVIDERS = ['groq', 'openai', 'anthropic', 'gemini'];
 const VALID_CONTENT_TYPES = ['general', 'scientific', 'news', 'technical', 'opinion'];
 // Backups include the full text extracted from each PDF, which can run to megabytes
@@ -83,12 +85,12 @@ export function validateImportFile(file) {
   // Validate file type
   if (file.type && !['application/json', 'text/json', ''].includes(file.type)) {
     if (!file.name.endsWith('.json')) {
-      throw new Error('Formato file non valido. Seleziona un file .json');
+      throw new Error(I18n.t('backup.invalidFormat'));
     }
   }
 
   if (file.size > MAX_IMPORT_SIZE_MB * 1024 * 1024) {
-    throw new Error(`File troppo grande (max ${MAX_IMPORT_SIZE_MB} MB)`);
+    throw new Error(I18n.tf('backup.tooLarge', { max: MAX_IMPORT_SIZE_MB }));
   }
 }
 
@@ -104,7 +106,7 @@ export function parseBackup(text) {
     typeof backup.data !== 'object' ||
     Array.isArray(backup.data)
   ) {
-    throw new Error('File di backup non valido');
+    throw new Error(I18n.t('backup.invalidFile'));
   }
 
   // Valida che contenga almeno una delle chiavi attese
@@ -112,7 +114,7 @@ export function parseBackup(text) {
   const hasMulti = backup.data.multiAnalysis && Array.isArray(backup.data.multiAnalysis);
   const hasPDF = Array.isArray(backup.data.pdfAnalysis);
   if (!hasArticles && !hasMulti && !hasPDF) {
-    throw new Error('Il backup non contiene dati importabili');
+    throw new Error(I18n.t('backup.nothingToImport'));
   }
 
   return backup;
@@ -148,16 +150,12 @@ export function buildBackupPayload({
 }
 
 export function buildImportConfirmMessage(backup) {
-  return (
-    `Vuoi importare questo backup?\n\n` +
-    `📅 Data backup:\n${new Date(backup.exportDate).toLocaleString('it-IT')}\n\n` +
-    `📄 Articoli singoli: ${backup.metadata?.totalSingleArticles ?? backup.data?.singleArticles?.length ?? 0}\n` +
-    `🔬 Analisi multiple: ${backup.metadata?.totalMultiAnalysis ?? backup.data?.multiAnalysis?.length ?? 0}\n` +
-    `📑 Analisi PDF: ${backup.metadata?.totalPDFAnalysis ?? backup.data?.pdfAnalysis?.length ?? 0}\n\n` +
-    `⚠️ ATTENZIONE:\n` +
-    `Questo AGGIUNGERÀ i dati al tuo storico\n` +
-    `esistente (non li sostituirà).`
-  );
+  return I18n.tf('backup.importConfirm', {
+    date: new Date(backup.exportDate).toLocaleString(I18n.currentLanguage),
+    single: backup.metadata?.totalSingleArticles ?? backup.data?.singleArticles?.length ?? 0,
+    multi: backup.metadata?.totalMultiAnalysis ?? backup.data?.multiAnalysis?.length ?? 0,
+    pdf: backup.metadata?.totalPDFAnalysis ?? backup.data?.pdfAnalysis?.length ?? 0,
+  });
 }
 
 export function selectNewEntries(entries, currentIds) {
